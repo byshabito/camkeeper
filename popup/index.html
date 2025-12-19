@@ -1,0 +1,26 @@
+<!doctype html>
+<head>
+    <meta charset="utf-8" />
+    <title>CamKeeper</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script src="script.js" defer></script>
+</head>
+<body>
+    <div id="view-list">
+        <div class="list-view">
+            <div class="header">
+                <h2>CamKeeper</h2>
+                <button id="btn-add">Add</button>
+            </div>
+            <ul id="list"></ul>
+        </div>
+    </div>
+    
+    <form id="view-form" class="hidden">
+        <input id="name" placeholder="Display name" />
+        <input id="tags" placeholder="Tags (comma sep)" />
+        <div id="selector"></div>
+        <button type="submit">Save</button>
+        <button type="button" id="btn-cancel">Cancel</button>
+    </form>
+</body>

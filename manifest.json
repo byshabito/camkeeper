@@ -1,0 +1,17 @@
+{
+  "name": "CamKeeper",
+  "author": "Shabito",
+  "description": "Local webcam bookmarker for Chaturbate & Stripchat",
+  "version": "0.1.0",
+  "manifest_version": 3,
+  "permissions": ["storage", "activeTab"],
+  "action": {
+    "default_title": "CamKeeper",
+    "default_popup": "popup/index.html"
+  },
+  "background": { "service_worker": "background.js" },
+  "options_ui": {
+    "page": "options/index.html",
+    "open_in_tab": true
+  }
+}
