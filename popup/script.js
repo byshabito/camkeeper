@@ -1,5 +1,5 @@
 const SITES = {
-  "chaturbate.com": { abbr: "CB", color: "blue" },
+  "chaturbate.com": { abbr: "CB", color: "orange" },
   "stripchat.com": { abbr: "SC", color: "red" },
 };
 
@@ -93,11 +93,11 @@ function render() {
       const sites = c.site
         .map((s) => {
           const [site, username] = s;
-          return `<a href="https://${site}/${username}" target="_blank" style="color: ${SITES[site].color}; text-decoration: none;" title="${username}" >${SITES[site].abbr}</a>`;
+          return `<a href="https://${site}/${username}" target="_blank" class="site-btn" style="border-color: ${SITES[site].color}; text-decoration: none;" title="${username}" >${SITES[site].abbr}</a>`;
         })
-        .join(" ");
+        .join("");
 
-      const tags = c.tags.map((tag) => `<span>${tag}</span>`).join("");
+      const tags = c.tags.map((tag) => `<span class="tag">${tag}</span>`).join("");
 
       const li = document.createElement("li");
       li.classList = "list-item";

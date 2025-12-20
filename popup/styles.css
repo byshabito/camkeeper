@@ -4,6 +4,16 @@ body {
     height: 320px;
     margin: 0;
     padding: 8px;
+    background: linear-gradient(135deg, #151515, #181818);
+    color: #f5f5f5;
+    font-family: "Roboto", monospace;
+}
+
+button {
+    background: grey;
+    color: #f5f5f5;
+    border-radius: 4px;
+    
 }
 
 .hidden {
@@ -71,7 +81,7 @@ body {
     border: 1px solid grey;
     border-radius: 4px;
     box-sizing: border-box;
-    background-color: #f5f5f5;
+    background-color: #222;
 }
 
 .list-item .name {
@@ -93,7 +103,7 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: stretch;
-    gap: 4px;
+    gap: 4px;    
 }
 
 .list-item .tags {
@@ -111,4 +121,26 @@ body {
     justify-content: space-between;
     align-items: start;
     gap: 4px;
+}
+
+.site-btn {
+    text-align: center;
+    padding: 2px 4px;
+    margin: 0;
+    border-radius: 4px;
+    border-width: 2px;
+    border-style: solid;  
+    color: #f5f5f5;
+    font-weight: 600;
+}
+
+.site-btn:hover {
+    transition: scale 0.1s fade-in-out;
+    scale: 1.1;
+}
+
+.tag {
+    background: grey;
+    border-radius: 4px;
+    padding: 0 2px;
 }
