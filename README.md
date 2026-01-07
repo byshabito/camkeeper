@@ -4,26 +4,20 @@ Cross-site bookmark manager for Chaturbate and Stripchat models (Chrome + Firefo
 
 ## Features
 
-- One profile per model with multiple platform usernames
-- Notes, tags, and social handles with smart URL parsing
-- Detail view opens automatically on a saved model page
+- Multi-platform profiles with notes, tags, and socials
+- Smart URL parsing for platform/social inputs
+- Auto detail view on saved model pages
 - Add current platform to an existing profile
-- Bulk select + merge or delete in overview
+- Bulk select to merge or delete
 - Local-only storage with JSON export/import
 
 ## Usage
 
-### Quick add
+1. Visit a model page and click the extension icon
+2. Add or attach the platform username to an existing profile
+3. Use **Select** to merge or delete multiple bookmarks
 
-1. Visit a model page
-2. Click the extension icon
-3. Add or attach the platform username to an existing profile
-
-### Bulk merge/delete
-
-1. Open the overview list
-2. Click **Select** to enable multi-select
-3. Tap cards to select, then **Merge** or **Delete**
+Popup fallback (Zen or blocked popups): use `Alt+Shift+L` or right-click the icon → **Open CamKeeper Library**.
 
 ## Installation (Development)
 
@@ -40,11 +34,6 @@ Cross-site bookmark manager for Chaturbate and Stripchat models (Chrome + Firefo
 1. Open `about:debugging#/runtime/this-firefox`
 2. Click **Load Temporary Add-on**
 3. Select `manifest.json` from this project
-
-## Release
-
-1. Run `git tag v0.1.0`
-2. Create a ZIP with `manifest.json`, `src/`, `icons/`, and `LICENSE`
 
 ## License
 
