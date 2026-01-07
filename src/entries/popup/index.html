@@ -26,8 +26,20 @@
         <button id="bulk-cancel" class="plain-button" type="button">Cancel</button>
       </div>
     </div>
-    <div class="search">
-      <input id="search-input" type="text" placeholder="Search models, tags, socials" />
+    <div class="list-toolbar">
+      <div class="search">
+        <input id="search-input" type="text" placeholder="Search models, tags, socials" />
+      </div>
+      <div class="sort-field">
+        <span>Sort</span>
+        <select id="sort-select">
+          <option value="updated">Recently updated</option>
+          <option value="name">Name A–Z</option>
+          <option value="most">Most visited</option>
+          <option value="least">Least visited</option>
+          <option value="recent">Recently visited</option>
+        </select>
+      </div>
     </div>
     <ul id="profile-list" class="list"></ul>
     <div id="empty-state" class="empty hidden">No bookmarks yet.</div>
@@ -80,7 +92,7 @@
       <button id="back-button" class="ghost">Back</button>
       <div>
         <div class="eyebrow">CamKeeper</div>
-        <h1 id="form-title">New profile</h1>
+        <h1 id="form-title">New bookmark</h1>
       </div>
     </header>
 
@@ -128,5 +140,17 @@
         <button type="submit" class="primary">Save</button>
       </div>
     </form>
+  </div>
+
+  <div id="confirm-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3 id="confirm-title">Confirm</h3>
+      <p id="confirm-message"></p>
+      <ul id="confirm-list" class="confirm-list"></ul>
+      <div class="confirm-actions">
+        <button id="confirm-cancel" class="ghost" type="button">Cancel</button>
+        <button id="confirm-accept" class="danger" type="button">Delete</button>
+      </div>
+    </div>
   </div>
 </body>

@@ -12,15 +12,18 @@ import {
   sanitizeProfile,
   sanitizeSocials,
   saveProfiles,
-  sortProfiles,
   splitTags,
 } from "../../lib/storage.js";
+import { createBulkSelection } from "../../lib/bulkSelection.js";
+import { initConfirmModal } from "../../lib/confirmModal.js";
+import { sortBySelection } from "../../lib/sort.js";
 
 const listView = document.getElementById("list-view");
 const formView = document.getElementById("form-view");
 const detailView = document.getElementById("detail-view");
 const profileList = document.getElementById("profile-list");
 const searchInput = document.getElementById("search-input");
+const sortSelect = document.getElementById("sort-select");
 const emptyState = document.getElementById("empty-state");
 const selectButton = document.getElementById("select-button");
 const addButton = document.getElementById("add-button");
@@ -53,6 +56,7 @@ const bulkCount = document.getElementById("bulk-count");
 const bulkMerge = document.getElementById("bulk-merge");
 const bulkDelete = document.getElementById("bulk-delete");
 const bulkCancel = document.getElementById("bulk-cancel");
+const showConfirm = initConfirmModal();
 
 let editingId = null;
 let currentProfile = null;
@@ -60,15 +64,51 @@ let lastView = "list";
 let attachTargetId = null;
 let attachProfiles = [];
 let attachSeedPlatforms = [];
-let selectMode = false;
-let selectedIds = new Set();
+const selection = createBulkSelection({
+  bulkBar,
+  bulkCount,
+  bulkMerge,
+  bulkDelete,
+  bulkCancel,
+  selectButton,
+  onMerge: async (ids) => {
+    if (ids.length < 2) return;
+    const profiles = await loadProfiles();
+    const base = profiles.find((item) => item.id === ids[0]);
+    if (!base) return;
+    const toMerge = profiles.filter((item) => ids.includes(item.id) && item.id !== base.id);
+    const merged = toMerge.reduce((acc, item) => mergeProfiles(acc, item), base);
+    const updated = profiles.filter((item) => !ids.includes(item.id)).concat(merged);
+    await saveProfiles(updated);
+    selection.setSelectMode(false);
+    showDetailView(merged);
+  },
+  onDelete: async (ids) => {
+    if (!ids.length) return;
+    const profiles = await loadProfiles();
+    const names = profiles
+      .filter((item) => ids.includes(item.id))
+      .map((item) => item.name || "Unnamed");
+    const confirmed = await showConfirm({
+      titleText: "Delete bookmarks",
+      messageText: `Delete ${names.length} bookmark${names.length === 1 ? "" : "s"}? This cannot be undone.`,
+      items: names,
+    });
+    if (!confirmed) return;
+    const updated = profiles.filter((item) => !ids.includes(item.id));
+    await saveProfiles(updated);
+    selection.setSelectMode(false);
+    renderList();
+  },
+  onRender: () => renderList(),
+});
 
 function showListView() {
   listView.classList.remove("hidden");
   formView.classList.add("hidden");
   detailView.classList.add("hidden");
   formError.classList.add("hidden");
-  setSelectMode(false);
+  selection.setSelectMode(false);
   renderList();
   lastView = "list";
 }
@@ -90,7 +130,7 @@ function showFormView(title) {
 
 function showDetailView(profile) {
   currentProfile = profile;
-  detailTitle.textContent = "Profile";
+  detailTitle.textContent = "Bookmark";
   detailName.textContent = profile.name || "Unnamed";
   detailMeta.textContent = `Updated ${new Date(profile.updatedAt || Date.now()).toLocaleDateString()}`;
 
@@ -117,7 +157,8 @@ function showDetailView(profile) {
 
     const label = document.createElement("span");
     label.classList.add("username");
-    label.textContent = platform.username;
+    const count = Number.isFinite(platform.visitCount) ? platform.visitCount : 0;
+    label.textContent = `${platform.username} · ${count}`;
 
     chip.appendChild(icon);
     chip.appendChild(label);
@@ -406,7 +447,7 @@ function setAttachOptions(profiles, seedPlatforms) {
 
   const placeholder = document.createElement("option");
   placeholder.value = "";
-  placeholder.textContent = "Create new profile";
+  placeholder.textContent = "Create new bookmark";
   attachSelect.appendChild(placeholder);
 
   profiles.forEach((profile) => {
@@ -444,18 +485,19 @@ function handleAttachChange() {
 }
 
 async function renderList() {
-  const profiles = sortProfiles(await loadProfiles());
+  const profiles = await loadProfiles();
   const query = normalizeText(searchInput.value);
   const filtered = profiles.filter((profile) => matchQuery(profile, query));
+  const sorted = sortBySelection(filtered, sortSelect.value);
 
   profileList.innerHTML = "";
-  emptyState.classList.toggle("hidden", filtered.length > 0);
+  emptyState.classList.toggle("hidden", sorted.length > 0);
   emptyState.textContent = query ? "No matches found." : "No bookmarks yet.";
 
-  filtered.forEach((profile) => {
+  sorted.forEach((profile) => {
     const card = document.createElement("li");
     card.classList.add("card");
-    if (selectMode) card.classList.add("selectable");
+    if (selection.isActive()) card.classList.add("selectable");
 
     const main = document.createElement("div");
     main.classList.add("card-main");
@@ -476,9 +518,9 @@ async function renderList() {
       link.rel = "noopener noreferrer";
       link.classList.add("platform-link");
       link.addEventListener("click", (event) => {
-        if (selectMode) {
+        if (selection.isActive()) {
           event.preventDefault();
-          toggleSelection(profile.id);
+          selection.toggleSelection(profile.id);
         }
         event.stopPropagation();
       });
@@ -524,12 +566,12 @@ async function renderList() {
     main.appendChild(platformChips);
     if (profile.notes) main.appendChild(note);
 
-    if (selectMode) {
-      if (selectedIds.has(profile.id)) {
+    if (selection.isActive()) {
+      if (selection.isSelected(profile.id)) {
         card.classList.add("selected");
       }
       card.addEventListener("click", () => {
-        toggleSelection(profile.id);
+        selection.toggleSelection(profile.id);
       });
     } else {
       card.addEventListener("click", () => showDetailView(profile));
@@ -553,7 +595,7 @@ function openEditor(profile, seedPlatforms, source = "list", profiles = []) {
   attachProfiles = profiles || [];
   attachSeedPlatforms = seedPlatforms || [];
   populateForm(profile, seedPlatforms);
-  showFormView(profile ? "Edit profile" : "New profile");
+  showFormView(profile ? "Edit bookmark" : "New bookmark");
 }
 
 async function addFromCurrentTab() {
@@ -618,10 +660,6 @@ addSocialButton.addEventListener("click", () => {
 attachSelect.addEventListener("change", handleAttachChange);
 
 addButton.addEventListener("click", addFromCurrentTab);
-selectButton.addEventListener("click", () => {
-  setSelectMode(!selectMode);
-  renderList();
-});
 backButton.addEventListener("click", showListView);
 cancelButton.addEventListener("click", () => {
   if (lastView === "detail" && currentProfile) {
@@ -637,38 +675,20 @@ detailEditButton.addEventListener("click", () => {
 });
 deleteButton.addEventListener("click", async () => {
   if (!editingId) return;
+  const name = (currentProfile && currentProfile.name) || "this bookmark";
+  const confirmed = await showConfirm({
+    titleText: "Delete bookmark",
+    messageText: `Delete ${name}? This cannot be undone.`,
+  });
+  if (!confirmed) return;
   const updated = (await loadProfiles()).filter((item) => item.id !== editingId);
   await saveProfiles(updated);
   editingId = null;
   currentProfile = null;
   showListView();
 });
-bulkMerge.addEventListener("click", async () => {
-  if (selectedIds.size < 2) return;
-  const profiles = await loadProfiles();
-  const ids = Array.from(selectedIds);
-  const base = profiles.find((item) => item.id === ids[0]);
-  if (!base) return;
-  const toMerge = profiles.filter((item) => ids.includes(item.id) && item.id !== base.id);
-  const merged = toMerge.reduce((acc, item) => mergeProfiles(acc, item), base);
-  const updated = profiles.filter((item) => !ids.includes(item.id)).concat(merged);
-  await saveProfiles(updated);
-  setSelectMode(false);
-  await showDetailView(merged);
-});
-bulkDelete.addEventListener("click", async () => {
-  if (!selectedIds.size) return;
-  const profiles = await loadProfiles();
-  const updated = profiles.filter((item) => !selectedIds.has(item.id));
-  await saveProfiles(updated);
-  setSelectMode(false);
-  renderList();
-});
-bulkCancel.addEventListener("click", () => {
-  setSelectMode(false);
-  renderList();
-});
 searchInput.addEventListener("input", renderList);
+sortSelect.addEventListener("change", renderList);
 
 profileForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -753,26 +773,3 @@ async function showInitialView() {
 document.addEventListener("DOMContentLoaded", () => {
   showInitialView();
 });
-
-function setSelectMode(enabled) {
-  selectMode = enabled;
-  if (!selectMode) {
-    selectedIds = new Set();
-  }
-  updateBulkBar();
-}
-
-function updateBulkBar() {
-  const count = selectedIds.size;
-  bulkCount.textContent = count ? `${count} selected` : "Select bookmarks";
-  bulkBar.classList.toggle("hidden", !selectMode);
-  bulkMerge.disabled = count < 2;
-  bulkDelete.disabled = count === 0;
-}
-
-function toggleSelection(profileId) {
-  if (selectedIds.has(profileId)) selectedIds.delete(profileId);
-  else selectedIds.add(profileId);
-  updateBulkBar();
-  renderList();
-}

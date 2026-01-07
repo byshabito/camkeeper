@@ -1,17 +1,4 @@
-:root {
-  color-scheme: dark;
-  --bg: #0f1113;
-  --panel: #15181b;
-  --border: #252a2f;
-  --text: #f4f4f2;
-  --muted: #9da3aa;
-  --accent: #f4f4f2;
-  --shadow: 0 6px 16px rgba(0, 0, 0, 0.35);
-}
-
-* {
-  box-sizing: border-box;
-}
+@import "../../styles/common.css";
 
 body {
   margin: 0;
@@ -28,10 +15,6 @@ body {
   flex-direction: column;
   gap: 12px;
   padding-bottom: 6px;
-}
-
-.hidden {
-  display: none !important;
 }
 
 .topbar {
@@ -60,66 +43,6 @@ body {
   color: var(--muted);
 }
 
-button {
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: var(--text);
-  border-radius: 999px;
-  padding: 6px 12px;
-  cursor: default;
-  font: inherit;
-}
-
-button:hover {
-  border-color: var(--text);
-}
-
-button.primary {
-  background: var(--accent);
-  color: #0f1113;
-  border-color: var(--accent);
-}
-
-button.danger {
-  background: transparent;
-  border-color: #d24c4c;
-  color: #b32626;
-}
-
-button.ghost {
-  background: transparent;
-}
-
-.plain-button {
-  background: transparent;
-  border: none;
-  color: var(--muted);
-  padding: 0;
-  min-width: auto;
-  height: auto;
-}
-
-.plain-button:hover {
-  color: var(--text);
-}
-
-input,
-textarea,
-select {
-  width: 100%;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 7px 9px;
-  font: inherit;
-  background: var(--panel);
-  color: var(--text);
-}
-
-input::placeholder,
-textarea::placeholder {
-  color: #707781;
-}
-
 textarea {
   min-height: 90px;
   resize: vertical;
@@ -129,24 +52,13 @@ textarea {
   box-shadow: var(--shadow);
 }
 
-.list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.list-toolbar {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 10px;
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  box-shadow: var(--shadow);
   cursor: default;
 }
 
@@ -161,37 +73,9 @@ textarea {
 }
 
 .bulk-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: #14181c;
   position: sticky;
   top: 0;
   z-index: 2;
-}
-
-.bulk-actions {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.card-main {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  min-width: 0;
-}
-
-.card-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
 }
 
 .card-title h2 {
@@ -205,85 +89,12 @@ textarea {
   flex-wrap: wrap;
 }
 
-.chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.chip {
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid #2a2f35;
-  font-size: 11px;
-  color: var(--muted);
-  background: #1b1f24;
-}
-
-.chip-icon {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.chip-icon .icon {
-  width: 14px;
-  height: 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .social-chip {
   padding: 4px 10px;
   border-radius: 999px;
   border: 1px solid var(--border);
   background: #1b1f24;
   color: var(--text);
-  font-size: 12px;
-}
-
-.chip-icon svg {
-  width: 14px;
-  height: 14px;
-  display: block;
-  fill: currentColor;
-}
-
-.chip-icon svg.stroke {
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.6;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-
-.platform-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: #1b1f24;
-  color: #ffffff;
-  font-size: 12px;
-}
-
-.platform-chip .icon {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 10px;
-  font-weight: 700;
-  color: #ffffff;
-}
-
-.platform-chip .username {
-  font-family: "IBM Plex Mono", "JetBrains Mono", "Courier New", monospace;
   font-size: 12px;
 }
 
@@ -334,22 +145,17 @@ textarea {
   color: var(--muted);
 }
 
-.platform-link {
-  text-decoration: none;
-  color: inherit;
-  cursor: pointer;
-}
-
 .card.selectable .platform-link {
   cursor: default;
 }
 
-.detail-card .chips:empty {
+.detail-card .chips:empty,
+.detail-card .note:empty {
   display: none;
 }
 
-.detail-card .note:empty {
-  display: none;
+.modal-content {
+  width: min(320px, 100%);
 }
 
 .actions {
@@ -399,10 +205,6 @@ textarea {
   font-size: 12px;
 }
 
-.field span {
-  color: var(--muted);
-}
-
 .block {
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -423,12 +225,6 @@ textarea {
   color: var(--muted);
 }
 
-.block header button {
-  padding: 4px 10px;
-  font-size: 11px;
-  border-radius: 999px;
-}
-
 .block-plain {
   padding: 10px;
   gap: 8px;
@@ -438,17 +234,6 @@ textarea {
   align-self: flex-start;
   padding: 0;
   font-size: 14px;
-}
-
-.icon-button {
-  width: 26px;
-  height: 26px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  line-height: 1;
 }
 
 .rows {
@@ -474,9 +259,9 @@ textarea {
 }
 
 .error {
-  background: #fff1f0;
-  border: 1px solid #f5c2c7;
-  color: #7a1c1c;
+  background: #2b1416;
+  border: 1px solid #5a2328;
+  color: #f2b8b5;
   padding: 8px 10px;
   border-radius: 10px;
   font-size: 12px;

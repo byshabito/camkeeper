@@ -9,6 +9,8 @@ Cross-site bookmark manager for Chaturbate and Stripchat models (Chrome + Firefo
 - Auto detail view on saved model pages
 - Add current platform to an existing profile
 - Bulk select to merge or delete
+- Sort by updated/name/visits
+- Visit tracking with configurable focus time + cooldown
 - Local-only storage with JSON export/import
 
 ## Usage

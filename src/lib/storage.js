@@ -50,10 +50,31 @@ export function sanitizePlatforms(platforms) {
     .map((platform) => ({
       site: normalizeText(platform.site),
       username: normalizeText(platform.username),
+      visitCount: Number.isFinite(platform.visitCount) ? platform.visitCount : 0,
+      lastVisitedAt: Number.isFinite(platform.lastVisitedAt)
+        ? platform.lastVisitedAt
+        : null,
+      lastLeftAt: Number.isFinite(platform.lastLeftAt) ? platform.lastLeftAt : null,
     }))
     .filter((platform) => platform.site && platform.username && SITES[platform.site]);
 
-  return uniqBy(cleaned, (platform) => `${platform.site}:${platform.username}`);
+  const merged = new Map();
+  cleaned.forEach((platform) => {
+    const key = `${platform.site}:${platform.username}`;
+    const existing = merged.get(key);
+    if (!existing) {
+      merged.set(key, { ...platform });
+      return;
+    }
+    merged.set(key, {
+      ...existing,
+      visitCount: (existing.visitCount || 0) + (platform.visitCount || 0),
+      lastVisitedAt: Math.max(existing.lastVisitedAt || 0, platform.lastVisitedAt || 0) || null,
+      lastLeftAt: Math.max(existing.lastLeftAt || 0, platform.lastLeftAt || 0) || null,
+    });
+  });
+
+  return Array.from(merged.values());
 }
 
 export function sanitizeSocials(socials) {

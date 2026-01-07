@@ -11,17 +11,25 @@ import {
   sanitizeProfile,
   sanitizeSocials,
   saveProfiles,
-  sortProfiles,
   splitTags,
 } from "../../lib/storage.js";
+import { createBulkSelection } from "../../lib/bulkSelection.js";
+import { initConfirmModal } from "../../lib/confirmModal.js";
+import { sortBySelection } from "../../lib/sort.js";
+
+const SETTINGS_KEY = "camkeeper_settings_v1";
+const DEFAULT_VISIT_DELAY_MS = 20 * 1000;
+const DEFAULT_VISIT_COOLDOWN_MS = 10 * 60 * 1000;
 
 const profileList = document.getElementById("profile-list");
 const searchInput = document.getElementById("search-input");
+const sortSelect = document.getElementById("sort-select");
 const emptyState = document.getElementById("empty-state");
 const countEl = document.getElementById("count");
 const formTitle = document.getElementById("form-title");
 const formError = document.getElementById("form-error");
 const profileForm = document.getElementById("profile-form");
+const formPanel = document.getElementById("form-panel");
 const nameInput = document.getElementById("name-input");
 const tagsInput = document.getElementById("tags-input");
 const notesInput = document.getElementById("notes-input");
@@ -33,8 +41,56 @@ const resetButton = document.getElementById("reset-button");
 const newProfileButton = document.getElementById("new-profile");
 const exportButton = document.getElementById("export-button");
 const importInput = document.getElementById("import-input");
+const visitDelayInput = document.getElementById("visit-delay");
+const visitCooldownInput = document.getElementById("visit-cooldown");
+const visitSaveButton = document.getElementById("visit-save");
+const bulkBar = document.getElementById("bulk-bar");
+const bulkCount = document.getElementById("bulk-count");
+const bulkMerge = document.getElementById("bulk-merge");
+const bulkDelete = document.getElementById("bulk-delete");
+const bulkCancel = document.getElementById("bulk-cancel");
+const selectButton = document.getElementById("select-button");
 
 let editingId = null;
+const showConfirm = initConfirmModal();
+const selection = createBulkSelection({
+  bulkBar,
+  bulkCount,
+  bulkMerge,
+  bulkDelete,
+  bulkCancel,
+  selectButton,
+  onMerge: async (ids) => {
+    if (ids.length < 2) return;
+    const profiles = await loadProfiles();
+    const base = profiles.find((item) => item.id === ids[0]);
+    if (!base) return;
+    const toMerge = profiles.filter((item) => ids.includes(item.id) && item.id !== base.id);
+    const merged = toMerge.reduce((acc, item) => mergeProfiles(acc, item), base);
+    const updated = profiles.filter((item) => !ids.includes(item.id)).concat(merged);
+    await saveProfiles(updated);
+    selection.setSelectMode(false);
+    renderList();
+  },
+  onDelete: async (ids) => {
+    if (!ids.length) return;
+    const profiles = await loadProfiles();
+    const names = profiles
+      .filter((item) => ids.includes(item.id))
+      .map((item) => item.name || "Unnamed");
+    const confirmed = await showConfirm({
+      titleText: "Delete bookmarks",
+      messageText: `Delete ${names.length} bookmark${names.length === 1 ? "" : "s"}? This cannot be undone.`,
+      items: names,
+    });
+    if (!confirmed) return;
+    const updated = profiles.filter((item) => !ids.includes(item.id));
+    await saveProfiles(updated);
+    selection.setSelectMode(false);
+    renderList();
+  },
+  onRender: () => renderList(),
+});
 
 function clearRows(container) {
   while (container.firstChild) container.removeChild(container.firstChild);
@@ -70,8 +126,8 @@ function createRow({ type, values }) {
 
   const removeButton = document.createElement("button");
   removeButton.type = "button";
-  removeButton.textContent = "Remove";
-  removeButton.classList.add("ghost");
+  removeButton.textContent = "×";
+  removeButton.classList.add("plain-button");
   removeButton.addEventListener("click", () => row.remove());
 
   row.appendChild(select);
@@ -82,7 +138,7 @@ function createRow({ type, values }) {
 }
 
 function populateForm(profile, seedPlatforms) {
-  formTitle.textContent = profile ? "Edit profile" : "New profile";
+  formTitle.textContent = profile ? "Edit bookmark" : "New bookmark";
   nameInput.value = profile ? profile.name : "";
   tagsInput.value = profile ? (profile.tags || []).join(", ") : "";
   notesInput.value = profile ? profile.notes || "" : "";
@@ -103,26 +159,52 @@ function populateForm(profile, seedPlatforms) {
   });
 }
 
+function showFormPanel() {
+  formPanel.classList.remove("hidden");
+  document.body.classList.add("modal-open");
+}
+
+function hideFormPanel() {
+  formPanel.classList.add("hidden");
+  document.body.classList.remove("modal-open");
+}
+
+
 async function renderList() {
-  const profiles = sortProfiles(await loadProfiles());
+  const profiles = await loadProfiles();
   const query = normalizeText(searchInput.value);
   const filtered = profiles.filter((profile) => matchQuery(profile, query));
+  const sorted = sortBySelection(filtered, sortSelect.value);
 
   profileList.innerHTML = "";
-  emptyState.classList.toggle("hidden", filtered.length > 0);
+  emptyState.classList.toggle("hidden", sorted.length > 0);
   emptyState.textContent = query ? "No matches found." : "No bookmarks yet.";
-  countEl.textContent = `${filtered.length} profile${filtered.length === 1 ? "" : "s"}`;
+  countEl.textContent = `${sorted.length} bookmark${sorted.length === 1 ? "" : "s"}`;
 
-  filtered.forEach((profile) => {
+  sorted.forEach((profile) => {
     const card = document.createElement("li");
     card.classList.add("card");
+    if (selection.isActive()) card.classList.add("selectable");
 
     const main = document.createElement("div");
+    main.classList.add("card-main");
     const title = document.createElement("h3");
     title.textContent = profile.name || "Unnamed";
+    const titleRow = document.createElement("div");
+    titleRow.classList.add("card-title");
+    titleRow.appendChild(title);
 
-    const meta = document.createElement("small");
-    meta.textContent = `${profile.platforms.length} platform${profile.platforms.length === 1 ? "" : "s"}`;
+    const tagChips = document.createElement("div");
+    tagChips.classList.add("chips", "title-tags");
+    (profile.tags || []).forEach((tag) => {
+      const chip = document.createElement("span");
+      chip.classList.add("chip");
+      chip.textContent = tag;
+      tagChips.appendChild(chip);
+    });
+    if ((profile.tags || []).length) {
+      titleRow.appendChild(tagChips);
+    }
 
     const chips = document.createElement("div");
     chips.classList.add("chips");
@@ -149,35 +231,50 @@ async function renderList() {
       chips.appendChild(chip);
     });
 
-    main.appendChild(title);
-    main.appendChild(meta);
+    main.appendChild(titleRow);
     main.appendChild(chips);
 
-    const actions = document.createElement("div");
-    actions.classList.add("card-actions");
-
-    const editButton = document.createElement("button");
-    editButton.textContent = "Edit";
-    editButton.addEventListener("click", () => {
-      editingId = profile.id;
-      populateForm(profile);
-      clearError();
-    });
-
-    const deleteButton = document.createElement("button");
-    deleteButton.textContent = "Delete";
-    deleteButton.addEventListener("click", async () => {
-      const updated = (await loadProfiles()).filter((item) => item.id !== profile.id);
-      await saveProfiles(updated);
-      renderList();
-      if (editingId === profile.id) resetForm();
-    });
-
-    actions.appendChild(editButton);
-    actions.appendChild(deleteButton);
-
     card.appendChild(main);
-    card.appendChild(actions);
+
+    if (selection.isActive()) {
+      if (selection.isSelected(profile.id)) {
+        card.classList.add("selected");
+      }
+      card.addEventListener("click", () => selection.toggleSelection(profile.id));
+    } else {
+      const actions = document.createElement("div");
+      actions.classList.add("card-actions");
+
+      const editButton = document.createElement("button");
+      editButton.textContent = "Edit";
+      editButton.addEventListener("click", () => {
+        editingId = profile.id;
+        populateForm(profile);
+        clearError();
+        showFormPanel();
+      });
+
+      const deleteButton = document.createElement("button");
+      deleteButton.textContent = "Delete";
+      deleteButton.classList.add("danger");
+      deleteButton.addEventListener("click", async () => {
+        const name = profile.name || "this bookmark";
+        const confirmed = await showConfirm({
+          titleText: "Delete bookmark",
+          messageText: `Delete ${name}? This cannot be undone.`,
+        });
+        if (!confirmed) return;
+        const updated = (await loadProfiles()).filter((item) => item.id !== profile.id);
+        await saveProfiles(updated);
+        renderList();
+        if (editingId === profile.id) resetForm();
+      });
+
+      actions.appendChild(editButton);
+      actions.appendChild(deleteButton);
+
+      card.appendChild(actions);
+    }
     profileList.appendChild(card);
   });
 }
@@ -220,6 +317,8 @@ function resetForm() {
   editingId = null;
   populateForm(null, []);
   clearError();
+  hideFormPanel();
+  selection.setSelectMode(false);
 }
 
 addPlatformButton.addEventListener("click", () => {
@@ -231,8 +330,12 @@ addSocialButton.addEventListener("click", () => {
 });
 
 resetButton.addEventListener("click", resetForm);
-newProfileButton.addEventListener("click", resetForm);
+newProfileButton.addEventListener("click", () => {
+  resetForm();
+  showFormPanel();
+});
 searchInput.addEventListener("input", renderList);
+sortSelect.addEventListener("change", renderList);
 
 profileForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -283,6 +386,7 @@ profileForm.addEventListener("submit", async (event) => {
   await saveProfiles(updated);
   renderList();
   resetForm();
+  hideFormPanel();
 });
 
 exportButton.addEventListener("click", async () => {
@@ -292,7 +396,7 @@ exportButton.addEventListener("click", async () => {
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement("a");
   anchor.href = url;
-  anchor.download = "camkeeper-profiles.json";
+  anchor.download = "camkeeper-bookmarks.json";
   document.body.appendChild(anchor);
   anchor.click();
   anchor.remove();
@@ -318,7 +422,40 @@ importInput.addEventListener("change", async (event) => {
   }
 });
 
+async function loadSettings() {
+  const data = await new Promise((resolve) => {
+    chrome.storage.local.get(SETTINGS_KEY, (res) => resolve(res));
+  });
+  const settings = data[SETTINGS_KEY] || {};
+  const delayMs = Number.isFinite(settings.visitDelayMs)
+    ? settings.visitDelayMs
+    : DEFAULT_VISIT_DELAY_MS;
+  const cooldownMs = Number.isFinite(settings.visitCooldownMs)
+    ? settings.visitCooldownMs
+    : DEFAULT_VISIT_COOLDOWN_MS;
+  visitDelayInput.value = Math.round(delayMs / 1000);
+  visitCooldownInput.value = Math.round(cooldownMs / 60000);
+}
+
+async function saveSettings() {
+  const delaySeconds = Math.max(5, Number(visitDelayInput.value) || 20);
+  const cooldownMinutes = Math.max(1, Number(visitCooldownInput.value) || 10);
+  const settings = {
+    visitDelayMs: delaySeconds * 1000,
+    visitCooldownMs: cooldownMinutes * 60 * 1000,
+  };
+  await new Promise((resolve) => {
+    chrome.storage.local.set({ [SETTINGS_KEY]: settings }, resolve);
+  });
+}
+
+visitSaveButton.addEventListener("click", async () => {
+  await saveSettings();
+  await loadSettings();
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   resetForm();
   renderList();
+  loadSettings();
 });
