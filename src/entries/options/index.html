@@ -1,0 +1,89 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CamKeeper Library</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="script.js" defer></script>
+</head>
+<body>
+  <header class="page-header">
+    <div>
+      <div class="eyebrow">CamKeeper</div>
+      <h1>Library</h1>
+      <p>Manage your profiles, notes, and socials.</p>
+    </div>
+    <div class="header-actions">
+      <button id="new-profile" class="primary">New profile</button>
+    </div>
+  </header>
+
+  <div class="layout">
+    <section class="panel">
+      <div class="search">
+        <input id="search-input" type="text" placeholder="Search models, tags, socials" />
+      </div>
+      <div id="count" class="count"></div>
+      <ul id="profile-list" class="list"></ul>
+      <div id="empty-state" class="empty hidden">No bookmarks yet.</div>
+    </section>
+
+    <section class="panel">
+      <header class="panel-header">
+        <h2 id="form-title">New profile</h2>
+      </header>
+      <div id="form-error" class="error hidden"></div>
+      <form id="profile-form" class="form">
+        <label class="field">
+          <span>Display name</span>
+          <input id="name-input" type="text" placeholder="Display name" />
+        </label>
+
+        <section class="block">
+          <header>
+            <span>Platforms</span>
+            <button id="add-platform" type="button" class="ghost">Add platform</button>
+          </header>
+          <div id="platform-rows" class="rows"></div>
+        </section>
+
+        <section class="block">
+          <header>
+            <span>Socials</span>
+            <button id="add-social" type="button" class="ghost">Add social</button>
+          </header>
+          <div id="social-rows" class="rows"></div>
+        </section>
+
+        <label class="field">
+          <span>Tags</span>
+          <input id="tags-input" type="text" placeholder="e.g. cozy, bilingual" />
+        </label>
+
+        <label class="field">
+          <span>Notes</span>
+          <textarea id="notes-input" placeholder="Notes"></textarea>
+        </label>
+
+        <div class="actions">
+          <button type="button" id="reset-button" class="ghost">Reset</button>
+          <button type="submit" class="primary">Save</button>
+        </div>
+      </form>
+
+      <div class="export">
+        <div>
+          <h3>Backup</h3>
+          <p>Export or import your profiles as JSON.</p>
+        </div>
+        <div class="actions">
+          <button id="export-button" class="ghost">Export</button>
+          <label class="file-button">
+            Import
+            <input id="import-input" type="file" accept="application/json" />
+          </label>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>

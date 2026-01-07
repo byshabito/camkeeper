@@ -1,17 +1,22 @@
 {
   "name": "CamKeeper",
   "author": "Shabito",
-  "description": "Local webcam bookmarker for Chaturbate & Stripchat",
+  "description": "Cross-site bookmark manager for Chaturbate and Stripchat models",
   "version": "0.1.0",
   "manifest_version": 3,
   "permissions": ["storage", "activeTab"],
   "action": {
     "default_title": "CamKeeper",
-    "default_popup": "popup/index.html"
+    "default_popup": "src/entries/popup/index.html"
   },
-  "background": { "service_worker": "background.js" },
   "options_ui": {
-    "page": "options/index.html",
+    "page": "src/entries/options/index.html",
     "open_in_tab": true
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "camkeeper@shabito.net",
+      "strict_min_version": "109.0"
+    }
   }
 }

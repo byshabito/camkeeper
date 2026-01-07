@@ -1,0 +1,132 @@
+<!doctype html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CamKeeper</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="script.js" defer></script>
+</head>
+<body>
+  <div id="list-view" class="view">
+    <header class="topbar">
+      <div>
+        <div class="eyebrow">CamKeeper</div>
+        <h1>Bookmarks</h1>
+      </div>
+      <div class="topbar-actions">
+        <button id="select-button" class="plain-button" type="button">Select</button>
+        <button id="add-button" class="primary">Add</button>
+      </div>
+    </header>
+    <div id="bulk-bar" class="bulk-bar hidden">
+      <div id="bulk-count" class="muted"></div>
+      <div class="bulk-actions">
+        <button id="bulk-merge" class="plain-button" type="button">Merge</button>
+        <button id="bulk-delete" class="plain-button" type="button">Delete</button>
+        <button id="bulk-cancel" class="plain-button" type="button">Cancel</button>
+      </div>
+    </div>
+    <div class="search">
+      <input id="search-input" type="text" placeholder="Search models, tags, socials" />
+    </div>
+    <ul id="profile-list" class="list"></ul>
+    <div id="empty-state" class="empty hidden">No bookmarks yet.</div>
+  </div>
+
+  <div id="detail-view" class="view hidden">
+    <header class="topbar">
+      <button id="detail-back" class="ghost">Back</button>
+      <div>
+        <div class="eyebrow">CamKeeper</div>
+        <h1 id="detail-title">Profile</h1>
+      </div>
+      <button id="detail-edit" class="primary">Edit</button>
+    </header>
+
+    <section class="detail-card">
+      <div class="detail-head">
+        <div>
+          <div class="eyebrow">Model</div>
+          <h2 id="detail-name">Unnamed</h2>
+        </div>
+        <span id="detail-meta" class="muted"></span>
+      </div>
+
+      <div class="detail-block">
+        <div class="detail-label">Platforms</div>
+        <div id="detail-platforms" class="chips"></div>
+      </div>
+
+      <div class="detail-block">
+        <div class="detail-label">Socials</div>
+        <div id="detail-socials" class="chips"></div>
+      </div>
+
+      <div class="detail-block">
+        <div class="detail-label">Tags</div>
+        <div id="detail-tags" class="chips"></div>
+      </div>
+
+      <div class="detail-block">
+        <div class="detail-label">Notes</div>
+        <div id="detail-notes" class="note"></div>
+      </div>
+
+    </section>
+  </div>
+
+  <div id="form-view" class="view hidden">
+    <header class="topbar">
+      <button id="back-button" class="ghost">Back</button>
+      <div>
+        <div class="eyebrow">CamKeeper</div>
+        <h1 id="form-title">New profile</h1>
+      </div>
+    </header>
+
+    <div id="form-error" class="error hidden"></div>
+
+    <form id="profile-form" class="form">
+      <label id="attach-field" class="field compact hidden">
+        <span>Add to existing</span>
+        <select id="attach-select"></select>
+      </label>
+      <label class="field">
+        <span>Display name</span>
+        <input id="name-input" type="text" placeholder="Display name" />
+      </label>
+
+      <label class="field">
+        <span>Platforms</span>
+        <section class="block block-plain">
+          <div id="platform-rows" class="rows"></div>
+          <button id="add-platform" type="button" class="plain-button icon-button" aria-label="Add platform" title="Add platform">+</button>
+        </section>
+      </label>
+
+      <label class="field">
+        <span>Socials</span>
+        <section class="block block-plain">
+          <div id="social-rows" class="rows"></div>
+          <button id="add-social" type="button" class="plain-button icon-button" aria-label="Add social" title="Add social">+</button>
+        </section>
+      </label>
+
+      <label class="field">
+        <span>Tags</span>
+        <input id="tags-input" type="text" placeholder="e.g. cozy, bilingual" />
+      </label>
+
+      <label class="field">
+        <span>Notes</span>
+        <textarea id="notes-input" placeholder="Notes"></textarea>
+      </label>
+
+      <div class="actions">
+        <button type="button" id="delete-button" class="danger">Delete</button>
+        <button type="button" id="cancel-button" class="ghost">Cancel</button>
+        <button type="submit" class="primary">Save</button>
+      </div>
+    </form>
+  </div>
+</body>
