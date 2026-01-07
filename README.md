@@ -37,6 +37,14 @@ Popup fallback (Zen or blocked popups): use `Alt+Shift+L` or right-click the ico
 2. Click **Load Temporary Add-on**
 3. Select `manifest.json` from this project
 
+## Release Builds
+
+Use the build script to create Chrome and Firefox zips with the correct manifests:
+
+```bash
+./scripts/build.sh 0.2.1
+```
+
 ## License
 
 [MIT License](/LICENSE)

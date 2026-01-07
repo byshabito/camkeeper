@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.2.1
+
+- Separate Chrome/Firefox manifests with build script
+- Store-ready icon sizes (16/32/48/128/256)
+
 ## v0.2.0
 
 - Visit tracking with configurable focus time + cooldown
