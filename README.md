@@ -1,7 +1,7 @@
 
 
 <div align="center">
-    <img src="/icons/icon-128.png.png" width="512px" height="512px" align="center"/>
+    <img src="/icons/icon-128.png" width="512px" height="512px" align="center"/>
     <h1>CamKeeper</h1>
 </div>
 
