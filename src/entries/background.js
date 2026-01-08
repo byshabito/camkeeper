@@ -3,8 +3,8 @@ const STORAGE_KEY = "camkeeper_profiles_v1";
 const SETTINGS_KEY = "camkeeper_settings_v1";
 const DEFAULT_VISIT_DELAY_MS = 20 * 1000;
 const DEFAULT_VISIT_COOLDOWN_MS = 10 * 60 * 1000;
-const ONLINE_CHECK_ALARM = "camkeeper-online-check";
 const DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES = 3;
+const ONLINE_CHECK_STATE_KEY = "camkeeper_online_check_state_v1";
 const CHATURBATE_API_URL =
   "https://chaturbate.com/affiliates/api/onlinerooms/?format=json&wm=SBlL1";
 const STRIPCHAT_API_BASE = "https://stripchat.com/api/front/v2/models/username";
@@ -36,7 +36,6 @@ function loadSettings() {
         ? Math.max(3, data.onlineCheckIntervalMinutes)
         : DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES,
     };
-    ensureOnlineCheckAlarm();
     if (!settings.onlineChecksEnabled) {
       clearOnlineStatuses();
     } else if (!lastOnlineChecksEnabled && settings.onlineChecksEnabled) {
@@ -55,31 +54,6 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
 loadSettings();
 
-function ensureOnlineCheckAlarm() {
-  if (!settings.onlineChecksEnabled) {
-    chrome.alarms.clear(ONLINE_CHECK_ALARM, (cleared) => {
-      if (cleared) {
-        console.log("[CamKeeper] Online check alarm cleared");
-      }
-    });
-    return;
-  }
-  chrome.alarms.get(ONLINE_CHECK_ALARM, (alarm) => {
-    const interval = Math.max(3, settings.onlineCheckIntervalMinutes);
-    if (alarm && alarm.periodInMinutes === interval) return;
-    if (alarm) {
-      chrome.alarms.clear(ONLINE_CHECK_ALARM);
-    }
-    chrome.alarms.create(ONLINE_CHECK_ALARM, {
-      periodInMinutes: interval,
-      delayInMinutes: 1,
-    });
-    console.log("[CamKeeper] Online check alarm scheduled", {
-      minutes: interval,
-    });
-  });
-}
-
 function clearOnlineStatuses() {
   chrome.storage.local.get(STORAGE_KEY, (res) => {
     const profiles = Array.isArray(res[STORAGE_KEY]) ? res[STORAGE_KEY] : [];
@@ -95,6 +69,21 @@ function clearOnlineStatuses() {
     if (!changed) return;
     chrome.storage.local.set({ [STORAGE_KEY]: updated });
     console.log("[CamKeeper] Online status cleared", { changed });
+  });
+}
+
+function getLastOnlineCheckAt() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(ONLINE_CHECK_STATE_KEY, (res) => {
+      const stored = res[ONLINE_CHECK_STATE_KEY];
+      resolve(Number.isFinite(stored?.lastCheckAt) ? stored.lastCheckAt : 0);
+    });
+  });
+}
+
+function setLastOnlineCheckAt(timestamp) {
+  return new Promise((resolve) => {
+    chrome.storage.local.set({ [ONLINE_CHECK_STATE_KEY]: { lastCheckAt: timestamp } }, resolve);
   });
 }
 
@@ -207,6 +196,16 @@ async function fetchStripchatStatuses(usernames) {
 
 async function refreshOnlineStatus() {
   if (!settings.onlineChecksEnabled) return;
+  const minMinutes = Math.max(3, settings.onlineCheckIntervalMinutes);
+  const now = Date.now();
+  const lastCheckAt = await getLastOnlineCheckAt();
+  if (now - lastCheckAt < minMinutes * 60 * 1000) {
+    console.log("[CamKeeper] Online check skipped (cooldown)", {
+      minutes: minMinutes,
+    });
+    return;
+  }
+  await setLastOnlineCheckAt(now);
   const online = await fetchChaturbateOnlineSet();
 
   chrome.storage.local.get(STORAGE_KEY, async (res) => {
@@ -254,13 +253,6 @@ async function refreshOnlineStatus() {
   });
 }
 
-chrome.alarms.onAlarm.addListener((alarm) => {
-  if (alarm.name === ONLINE_CHECK_ALARM) {
-    console.log("[CamKeeper] Online check tick");
-    refreshOnlineStatus();
-  }
-});
-
 function openLibrary() {
   if (chrome.runtime?.openOptionsPage) {
     chrome.runtime.openOptionsPage();
@@ -280,14 +272,7 @@ chrome.runtime.onInstalled.addListener(() => {
   } catch (error) {
     // Ignore context menu creation errors in unsupported contexts.
   }
-  ensureOnlineCheckAlarm();
 });
-
-chrome.runtime.onStartup?.addListener(() => {
-  ensureOnlineCheckAlarm();
-});
-
-ensureOnlineCheckAlarm();
 
 chrome.contextMenus.onClicked.addListener((info) => {
   if (info.menuItemId !== MENU_ID) return;
@@ -297,6 +282,12 @@ chrome.contextMenus.onClicked.addListener((info) => {
 chrome.commands.onCommand.addListener((command) => {
   if (command === "open-library") {
     openLibrary();
+  }
+});
+
+chrome.runtime.onMessage.addListener((message) => {
+  if (message?.type === "online-check") {
+    refreshOnlineStatus();
   }
 });
 

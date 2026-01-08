@@ -4,7 +4,7 @@
   "description": "Cross-site bookmark manager for Chaturbate and Stripchat models",
   "version": "0.4.0",
   "manifest_version": 3,
-  "permissions": ["storage", "activeTab", "contextMenus", "tabs", "alarms"],
+  "permissions": ["storage", "activeTab", "contextMenus", "tabs"],
   "host_permissions": ["https://chaturbate.com/*", "https://stripchat.com/*"],
   "icons": {
     "16": "icons/icon-16.png",

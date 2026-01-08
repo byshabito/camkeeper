@@ -1090,5 +1090,6 @@ async function showInitialView() {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
+  chrome.runtime.sendMessage({ type: "online-check" });
   showInitialView();
 });
