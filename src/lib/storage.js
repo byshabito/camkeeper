@@ -98,6 +98,7 @@ export function sanitizeProfile(raw) {
     : [];
   const name = (raw.name || "").trim() || (platforms[0] ? platforms[0].username : "");
   const pinned = Boolean(raw.pinned);
+  const folder = (raw.folder || "").trim();
 
   return {
     id: raw.id || createId(),
@@ -105,6 +106,7 @@ export function sanitizeProfile(raw) {
     platforms,
     socials,
     tags: uniqBy(tags, (tag) => normalizeText(tag)),
+    folder,
     notes: (raw.notes || "").trim(),
     pinned,
     createdAt: typeof raw.createdAt === "number" ? raw.createdAt : now(),
@@ -123,6 +125,7 @@ export function matchQuery(profile, query) {
   const q = normalizeText(query);
   const fields = [
     profile.name,
+    profile.folder,
     profile.notes,
     ...(profile.tags || []),
     ...(profile.platforms || []).flatMap((platform) => [platform.site, platform.username]),
@@ -159,6 +162,7 @@ export function mergeProfiles(base, incoming) {
   const merged = {
     ...base,
     name: incoming.name || base.name,
+    folder: incoming.folder || base.folder,
     notes: mergeNotes(base.notes, incoming.notes),
     tags: uniqBy([...(base.tags || []), ...(incoming.tags || [])], (tag) => normalizeText(tag)),
     platforms: sanitizePlatforms([...(base.platforms || []), ...(incoming.platforms || [])]),

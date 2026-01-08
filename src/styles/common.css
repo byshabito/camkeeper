@@ -382,6 +382,16 @@ textarea::placeholder {
   pointer-events: auto;
 }
 
+.search-sort.search-active .search-input {
+  max-width: 100%;
+  opacity: 1;
+  padding: 7px 9px;
+  border-color: var(--border);
+  pointer-events: auto;
+  left: 0;
+  width: 100%;
+}
+
 .search-toggle:hover ~ .sort-field,
 .search-toggle:focus ~ .sort-field,
 .search-input:hover ~ .sort-field,
@@ -393,9 +403,22 @@ textarea::placeholder {
   pointer-events: none;
 }
 
+.search-sort.search-active .sort-field {
+  opacity: 0;
+  width: 0;
+  max-width: 0;
+  margin: 0;
+  pointer-events: none;
+}
+
 .search-toggle:hover,
 .search-toggle:focus {
   border-color: var(--text);
+}
+
+.search-sort.search-active .search-toggle {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .platform-link {

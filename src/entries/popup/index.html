@@ -33,20 +33,45 @@
         <button class="plain-button icon-button search-toggle" type="button" aria-label="Search">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
         </button>
-        <input id="search-input" class="search-input" type="text" placeholder="Search models, tags, socials" />
+        <input id="search-input" class="search-input" type="text" placeholder="Search models, tags, socials, folders" />
         <div class="sort-field">
           <select id="sort-select">
+            <option value="most">Most visited</option>
+            <option value="recent">Recently visited</option>
             <option value="updated">Recently updated</option>
             <option value="name">Name A–Z</option>
-            <option value="most">Most visited</option>
-            <option value="least">Least visited</option>
-            <option value="recent">Recently visited</option>
           </select>
         </div>
+      </div>
+      <div class="filter-row">
+        <button
+          id="folder-manager-button"
+          class="plain-button icon-button"
+          type="button"
+          aria-label="Manage folders"
+          title="Manage folders"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="lucide lucide-folder-icon lucide-folder"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+        </button>
+        <select id="folder-filter"></select>
       </div>
     </div>
     <ul id="profile-list" class="list"></ul>
     <div id="empty-state" class="empty hidden">No bookmarks yet.</div>
+  </div>
+
+  <div id="folder-view" class="view hidden">
+    <header class="topbar topbar-right-title">
+      <button id="folder-back" class="ghost">Back</button>
+      <div>
+        <div class="eyebrow">CamKeeper</div>
+        <h1>Folders</h1>
+      </div>
+      <div class="topbar-actions"></div>
+    </header>
+
+    <div id="folder-empty" class="empty hidden">No folders yet.</div>
+    <div id="folder-list" class="folder-list"></div>
   </div>
 
   <div id="detail-view" class="view hidden">
@@ -68,7 +93,10 @@
           <div class="eyebrow">Model</div>
           <h2 id="detail-name">Unnamed</h2>
         </div>
-        <span id="detail-meta" class="muted"></span>
+        <div class="detail-meta">
+          <span id="detail-meta" class="muted"></span>
+          <div id="detail-folder" class="detail-folder hidden"></div>
+        </div>
       </div>
 
       <div class="detail-block">
@@ -95,7 +123,7 @@
   </div>
 
   <div id="form-view" class="view hidden">
-    <header class="topbar">
+    <header class="topbar topbar-right-title">
       <button id="back-button" class="ghost">Back</button>
       <div>
         <div class="eyebrow">CamKeeper</div>
@@ -134,6 +162,14 @@
       <label class="field">
         <span>Tags</span>
         <input id="tags-input" type="text" placeholder="e.g. cozy, bilingual" />
+      </label>
+
+      <label class="field">
+        <span>Folder</span>
+        <div class="field-stack">
+          <select id="folder-select"></select>
+          <input id="folder-input" class="hidden" type="text" placeholder="New folder name" />
+        </div>
       </label>
 
       <label class="field">

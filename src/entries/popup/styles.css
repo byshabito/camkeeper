@@ -4,6 +4,9 @@ body {
   margin: 0;
   padding: 14px 14px 20px;
   width: 360px;
+  min-width: 320px;
+  max-width: 420px;
+  min-height: 420px;
   max-height: 520px;
   font: 14px/1.45 "IBM Plex Sans", "Source Sans 3", "Noto Sans", sans-serif;
   color: var(--text);
@@ -20,14 +23,28 @@ body {
 .topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 12px;
+}
+
+.topbar.topbar-right-title > div {
+  margin-left: auto;
+  text-align: right;
 }
 
 .topbar-actions {
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  margin-left: auto;
+}
+
+.topbar-actions:empty {
+  display: none;
+}
+
+.topbar.topbar-right-title .topbar-actions {
+  margin-left: 0;
 }
 
 .topbar h1 {
@@ -54,7 +71,62 @@ textarea {
 
 .list-toolbar {
   display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.filter-row {
+  display: flex;
   align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.filter-row .icon-button svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.filter-row select {
+  flex: 1;
+  width: auto;
+  font-size: 12px;
+  padding: 6px 10px;
+}
+
+.folder-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.folder-row {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px;
+  background: var(--panel);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: var(--shadow);
+}
+
+.folder-row-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.folder-row-actions input {
+  flex: 1;
 }
 
 .card {
@@ -103,6 +175,23 @@ textarea {
   color: var(--muted);
 }
 
+.folder-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.folder-chip svg {
+  width: 12px;
+  height: 12px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .detail-card {
   background: var(--panel);
   border: 1px solid var(--border);
@@ -119,6 +208,32 @@ textarea {
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
+}
+
+.detail-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.detail-folder {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text);
+}
+
+.detail-folder svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .detail-head h2 {
@@ -211,6 +326,12 @@ textarea {
   gap: 6px;
   font-size: 11px;
   color: var(--muted);
+}
+
+.field-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 
 .field.compact {

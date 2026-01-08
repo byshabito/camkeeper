@@ -23,8 +23,14 @@ const formView = document.getElementById("form-view");
 const detailView = document.getElementById("detail-view");
 const profileList = document.getElementById("profile-list");
 const searchInput = document.getElementById("search-input");
+const searchSort = document.querySelector(".search-sort");
 const sortSelect = document.getElementById("sort-select");
 const emptyState = document.getElementById("empty-state");
+const folderView = document.getElementById("folder-view");
+const folderBackButton = document.getElementById("folder-back");
+const folderList = document.getElementById("folder-list");
+const folderEmpty = document.getElementById("folder-empty");
+const folderManagerButton = document.getElementById("folder-manager-button");
 const selectButton = document.getElementById("select-button");
 const addButton = document.getElementById("add-button");
 const backButton = document.getElementById("back-button");
@@ -40,6 +46,8 @@ const attachField = document.getElementById("attach-field");
 const attachSelect = document.getElementById("attach-select");
 const nameInput = document.getElementById("name-input");
 const tagsInput = document.getElementById("tags-input");
+const folderSelect = document.getElementById("folder-select");
+const folderInput = document.getElementById("folder-input");
 const notesInput = document.getElementById("notes-input");
 const platformRows = document.getElementById("platform-rows");
 const socialRows = document.getElementById("social-rows");
@@ -51,12 +59,14 @@ const detailMeta = document.getElementById("detail-meta");
 const detailPlatforms = document.getElementById("detail-platforms");
 const detailSocials = document.getElementById("detail-socials");
 const detailTags = document.getElementById("detail-tags");
+const detailFolder = document.getElementById("detail-folder");
 const detailNotes = document.getElementById("detail-notes");
 const bulkBar = document.getElementById("bulk-bar");
 const bulkCount = document.getElementById("bulk-count");
 const bulkMerge = document.getElementById("bulk-merge");
 const bulkDelete = document.getElementById("bulk-delete");
 const bulkCancel = document.getElementById("bulk-cancel");
+const folderFilter = document.getElementById("folder-filter");
 const showConfirm = initConfirmModal();
 
 let editingId = null;
@@ -108,6 +118,7 @@ function showListView() {
   listView.classList.remove("hidden");
   formView.classList.add("hidden");
   detailView.classList.add("hidden");
+  folderView.classList.add("hidden");
   formError.classList.add("hidden");
   selection.setSelectMode(false);
   renderList();
@@ -118,6 +129,7 @@ function showFormView(title) {
   formTitle.textContent = title;
   listView.classList.add("hidden");
   detailView.classList.add("hidden");
+  folderView.classList.add("hidden");
   formView.classList.remove("hidden");
   deleteButton.classList.toggle("hidden", !editingId);
   if (editingId) {
@@ -214,12 +226,31 @@ function showDetailView(profile) {
     detailTags.appendChild(chip);
   });
 
+  detailFolder.innerHTML = "";
+  if (profile.folder) {
+    detailFolder.classList.remove("hidden");
+    detailFolder.innerHTML = `<span>${profile.folder}</span>${getFolderIconSvg()}`;
+  } else {
+    detailFolder.classList.add("hidden");
+  }
+
   detailNotes.textContent = profile.notes || "";
 
   listView.classList.add("hidden");
   formView.classList.add("hidden");
+  folderView.classList.add("hidden");
   detailView.classList.remove("hidden");
   lastView = "detail";
+}
+
+function showFolderView() {
+  listView.classList.add("hidden");
+  formView.classList.add("hidden");
+  detailView.classList.add("hidden");
+  folderView.classList.remove("hidden");
+  selection.setSelectMode(false);
+  renderFolderManager();
+  lastView = "list";
 }
 
 function buildSocialUrl(social) {
@@ -286,6 +317,188 @@ const ICONS = {
 
 function clearRows(container) {
   while (container.firstChild) container.removeChild(container.firstChild);
+}
+
+function getFolderOptions(profiles) {
+  const map = new Map();
+  profiles.forEach((profile) => {
+    const folder = (profile.folder || "").trim();
+    if (!folder) return;
+    const key = normalizeText(folder);
+    if (!map.has(key)) map.set(key, folder);
+  });
+  return Array.from(map.values()).sort((a, b) => a.localeCompare(b));
+}
+
+function renderFolderFilter(folders) {
+  if (!folderFilter) return;
+  const current = folderFilter.value;
+  folderFilter.innerHTML = "";
+
+  const allOption = document.createElement("option");
+  allOption.value = "";
+  allOption.textContent = "All folders";
+  folderFilter.appendChild(allOption);
+
+  folders.forEach((folder) => {
+    const option = document.createElement("option");
+    option.value = folder;
+    option.textContent = folder;
+    folderFilter.appendChild(option);
+  });
+
+  if (current) {
+    const match = folders.find((folder) => normalizeText(folder) === normalizeText(current));
+    folderFilter.value = match || "";
+  } else {
+    folderFilter.value = "";
+  }
+}
+
+function renderFolderSelect(folders, currentFolder) {
+  if (!folderSelect) return;
+  const current = currentFolder || folderSelect.value;
+  folderSelect.innerHTML = "";
+
+  const noneOption = document.createElement("option");
+  noneOption.value = "";
+  noneOption.textContent = "No folder";
+  folderSelect.appendChild(noneOption);
+
+  folders.forEach((folder) => {
+    const option = document.createElement("option");
+    option.value = folder;
+    option.textContent = folder;
+    folderSelect.appendChild(option);
+  });
+
+  const newOption = document.createElement("option");
+  newOption.value = "__new__";
+  newOption.textContent = "New folder…";
+  folderSelect.appendChild(newOption);
+
+  if (current) {
+    const match = folders.find((folder) => normalizeText(folder) === normalizeText(current));
+    folderSelect.value = match || "__new__";
+    if (!match) {
+      folderInput.value = current;
+      folderInput.classList.remove("hidden");
+    } else {
+      folderInput.value = "";
+      folderInput.classList.add("hidden");
+    }
+  } else {
+    folderSelect.value = "";
+    folderInput.value = "";
+    folderInput.classList.add("hidden");
+  }
+}
+
+function updateFolderOptions(profiles, currentFolder) {
+  const folders = getFolderOptions(profiles);
+  renderFolderFilter(folders);
+  renderFolderSelect(folders, currentFolder);
+}
+
+function matchesFolder(profile, selectedFolder) {
+  if (!selectedFolder) return true;
+  return normalizeText(profile.folder) === selectedFolder;
+}
+
+async function renameFolder(folderName, nextName) {
+  const trimmed = (nextName || "").trim();
+  if (!trimmed) return;
+  const currentKey = normalizeText(folderName);
+  const nextKey = normalizeText(trimmed);
+  const profiles = await loadProfiles();
+  const updated = profiles.map((profile) => {
+    const folderKey = normalizeText(profile.folder);
+    if (!folderKey) return profile;
+    if (folderKey !== currentKey && folderKey !== nextKey) return profile;
+    return {
+      ...profile,
+      folder: trimmed,
+      updatedAt: Date.now(),
+    };
+  });
+  await saveProfiles(updated);
+  updateFolderOptions(updated, trimmed);
+  renderFolderManager(updated);
+}
+
+async function deleteFolder(folderName) {
+  const currentKey = normalizeText(folderName);
+  const profiles = await loadProfiles();
+  const updated = profiles.map((profile) => {
+    const folderKey = normalizeText(profile.folder);
+    if (!folderKey || folderKey !== currentKey) return profile;
+    return {
+      ...profile,
+      folder: "",
+      updatedAt: Date.now(),
+    };
+  });
+  await saveProfiles(updated);
+  updateFolderOptions(updated);
+  renderFolderManager(updated);
+}
+
+async function renderFolderManager(prefetchedProfiles = null) {
+  if (!folderList) return;
+  const profiles = prefetchedProfiles || (await loadProfiles());
+  const folders = getFolderOptions(profiles);
+  folderList.innerHTML = "";
+  folderEmpty.classList.toggle("hidden", folders.length > 0);
+
+  folders.forEach((folder) => {
+    const row = document.createElement("div");
+    row.classList.add("folder-row");
+
+    const actions = document.createElement("div");
+    actions.classList.add("folder-row-actions");
+
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = folder;
+    input.setAttribute("aria-label", `Rename folder ${folder}`);
+    input.addEventListener("blur", () => {
+      const nextValue = input.value.trim();
+      if (!nextValue) {
+        input.value = folder;
+        return;
+      }
+      if (normalizeText(nextValue) === normalizeText(folder)) {
+        if (nextValue !== folder) renameFolder(folder, nextValue);
+        return;
+      }
+      renameFolder(folder, nextValue);
+    });
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        event.preventDefault();
+        input.blur();
+      }
+    });
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.classList.add("danger");
+    deleteButton.textContent = "Delete";
+    deleteButton.addEventListener("click", async () => {
+      const confirmed = await showConfirm({
+        titleText: "Delete folder",
+        messageText: `Delete folder "${folder}"? Bookmarks in this folder will move to "No folder".`,
+      });
+      if (!confirmed) return;
+      deleteFolder(folder);
+    });
+
+    actions.appendChild(input);
+    actions.appendChild(deleteButton);
+
+    row.appendChild(actions);
+    folderList.appendChild(row);
+  });
 }
 
 function createRow({ type, values }) {
@@ -426,6 +639,7 @@ function parsePlatformInput(value) {
 function populateForm(profile, seedPlatforms) {
   nameInput.value = profile ? profile.name : "";
   tagsInput.value = profile ? (profile.tags || []).join(", ") : "";
+  folderInput.value = profile ? profile.folder || "" : "";
   notesInput.value = profile ? profile.notes || "" : "";
 
   clearRows(platformRows);
@@ -495,8 +709,12 @@ function handleAttachChange() {
 
 async function renderList() {
   const profiles = await loadProfiles();
+  updateFolderOptions(profiles);
   const query = normalizeText(searchInput.value);
-  const filtered = profiles.filter((profile) => matchQuery(profile, query));
+  const selectedFolder = normalizeText(folderFilter?.value || "");
+  const filtered = profiles.filter(
+    (profile) => matchQuery(profile, query) && matchesFolder(profile, selectedFolder),
+  );
   const sorted = sortBySelection(filtered, sortSelect.value);
 
   profileList.innerHTML = "";
@@ -623,6 +841,10 @@ function getPinIconSvg(pinned) {
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>';
 }
 
+function getFolderIconSvg() {
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="lucide lucide-folder-icon lucide-folder"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>';
+}
+
 function openEditor(profile, seedPlatforms, source = "list", profiles = []) {
   editingId = profile ? profile.id : null;
   currentProfile = profile || null;
@@ -630,6 +852,12 @@ function openEditor(profile, seedPlatforms, source = "list", profiles = []) {
   attachProfiles = profiles || [];
   attachSeedPlatforms = seedPlatforms || [];
   populateForm(profile, seedPlatforms);
+  const currentFolder = profile ? profile.folder : "";
+  if (attachProfiles.length) {
+    updateFolderOptions(attachProfiles, currentFolder);
+  } else {
+    loadProfiles().then((profiles) => updateFolderOptions(profiles, currentFolder));
+  }
   showFormView(profile ? "Edit bookmark" : "New bookmark");
 }
 
@@ -685,6 +913,26 @@ function clearError() {
   formError.textContent = "";
 }
 
+function getSelectedFolder() {
+  const value = folderSelect ? folderSelect.value : "";
+  if (value === "__new__") {
+    return folderInput.value.trim();
+  }
+  return (value || "").trim();
+}
+
+if (folderSelect) {
+  folderSelect.addEventListener("change", () => {
+    if (folderSelect.value === "__new__") {
+      folderInput.classList.remove("hidden");
+      folderInput.focus();
+    } else {
+      folderInput.classList.add("hidden");
+      folderInput.value = "";
+    }
+  });
+}
+
 addPlatformButton.addEventListener("click", () => {
   platformRows.appendChild(createRow({ type: "platform", values: {} }));
 });
@@ -696,6 +944,12 @@ attachSelect.addEventListener("change", handleAttachChange);
 
 addButton.addEventListener("click", addFromCurrentTab);
 backButton.addEventListener("click", showListView);
+if (folderManagerButton) {
+  folderManagerButton.addEventListener("click", showFolderView);
+}
+if (folderBackButton) {
+  folderBackButton.addEventListener("click", showListView);
+}
 cancelButton.addEventListener("click", () => {
   if (lastView === "detail" && currentProfile) {
     showDetailView(currentProfile);
@@ -734,6 +988,24 @@ deleteButton.addEventListener("click", async () => {
 });
 searchInput.addEventListener("input", renderList);
 sortSelect.addEventListener("change", renderList);
+if (folderFilter) {
+  folderFilter.addEventListener("change", renderList);
+}
+if (searchSort && searchInput) {
+  const searchToggle = searchSort.querySelector(".search-toggle");
+  const activateSearch = () => searchSort.classList.add("search-active");
+  const deactivateSearch = () => {
+    if (document.activeElement === searchInput) return;
+    searchSort.classList.remove("search-active");
+  };
+  if (searchToggle) {
+    searchToggle.addEventListener("mouseenter", activateSearch);
+  }
+  searchInput.addEventListener("mouseenter", activateSearch);
+  searchInput.addEventListener("focus", activateSearch);
+  searchInput.addEventListener("blur", deactivateSearch);
+  searchSort.addEventListener("mouseleave", deactivateSearch);
+}
 
 profileForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -747,12 +1019,14 @@ profileForm.addEventListener("submit", async (event) => {
 
   const socials = sanitizeSocials(collectSocials());
 
+  const folder = getSelectedFolder();
   const profile = sanitizeProfile({
     id: editingId || createId(),
     name: nameInput.value.trim(),
     platforms,
     socials,
     tags: splitTags(tagsInput.value),
+    folder,
     notes: notesInput.value.trim(),
     updatedAt: Date.now(),
   });
