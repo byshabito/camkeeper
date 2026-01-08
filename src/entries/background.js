@@ -4,7 +4,9 @@ const SETTINGS_KEY = "camkeeper_settings_v1";
 const DEFAULT_VISIT_DELAY_MS = 20 * 1000;
 const DEFAULT_VISIT_COOLDOWN_MS = 10 * 60 * 1000;
 const DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES = 3;
+const POPUP_ONLINE_CHECK_COOLDOWN_MINUTES = 1;
 const ONLINE_CHECK_STATE_KEY = "camkeeper_online_check_state_v1";
+const BACKGROUND_ONLINE_CHECK_STATE_KEY = "camkeeper_online_check_state_background_v1";
 const BACKGROUND_ONLINE_CHECK_ALARM = "camkeeper-online-check";
 const CHATURBATE_API_URL =
   "https://chaturbate.com/affiliates/api/onlinerooms/?format=json&wm=SBlL1";
@@ -115,6 +117,38 @@ function updateBadgeFromStorage() {
   });
 }
 
+function summarizeOnlineProfiles(profiles, onlineSet, stripchatStatus) {
+  return profiles.map((profile) => {
+    const platforms = profile?.platforms || [];
+    const platformResults = platforms
+      .filter((platform) =>
+        platform?.site === "chaturbate.com" || platform?.site === "stripchat.com"
+      )
+      .map((platform) => {
+        const username = (platform?.username || "").toLowerCase();
+        if (platform.site === "chaturbate.com") {
+          const checked = Boolean(onlineSet && username);
+          const result = checked ? onlineSet.has(username) : null;
+          return { site: platform.site, username, checked, result };
+        }
+        if (platform.site === "stripchat.com") {
+          const checked = Boolean(stripchatStatus && stripchatStatus.has(username));
+          const result = checked ? stripchatStatus.get(username) : null;
+          return { site: platform.site, username, checked, result };
+        }
+        return null;
+      })
+      .filter(Boolean);
+    const online = platforms.some((platform) => Boolean(platform?.online));
+    return {
+      id: profile?.id || null,
+      name: profile?.name || "",
+      online,
+      platforms: platformResults,
+    };
+  });
+}
+
 function clearOnlineStatuses() {
   chrome.storage.local.get(STORAGE_KEY, (res) => {
     const profiles = Array.isArray(res[STORAGE_KEY]) ? res[STORAGE_KEY] : [];
@@ -134,18 +168,18 @@ function clearOnlineStatuses() {
   });
 }
 
-function getLastOnlineCheckAt() {
+function getLastOnlineCheckAt(stateKey) {
   return new Promise((resolve) => {
-    chrome.storage.local.get(ONLINE_CHECK_STATE_KEY, (res) => {
-      const stored = res[ONLINE_CHECK_STATE_KEY];
+    chrome.storage.local.get(stateKey, (res) => {
+      const stored = res[stateKey];
       resolve(Number.isFinite(stored?.lastCheckAt) ? stored.lastCheckAt : 0);
     });
   });
 }
 
-function setLastOnlineCheckAt(timestamp) {
+function setLastOnlineCheckAt(stateKey, timestamp) {
   return new Promise((resolve) => {
-    chrome.storage.local.set({ [ONLINE_CHECK_STATE_KEY]: { lastCheckAt: timestamp } }, resolve);
+    chrome.storage.local.set({ [stateKey]: { lastCheckAt: timestamp } }, resolve);
   });
 }
 
@@ -222,8 +256,11 @@ async function fetchStripchatStatus(username) {
       return null;
     }
     const data = await response.json();
-    if (!data?.cam) return null;
-    return Boolean(data.cam.isCamAvailable);
+    if (typeof data?.cam?.isCamAvailable === "boolean") {
+      return data.cam.isCamAvailable;
+    }
+    // Treat missing cam info as offline so stale online flags clear.
+    return false;
   } catch (error) {
     console.warn("[CamKeeper] Stripchat fetch failed", username, error);
     return null;
@@ -256,28 +293,39 @@ async function fetchStripchatStatuses(usernames) {
   return results;
 }
 
-async function refreshOnlineStatus() {
+async function refreshOnlineStatus(options = {}) {
   if (!settings.onlineChecksEnabled) return;
-  const minMinutes = Math.max(3, settings.onlineCheckIntervalMinutes);
+  const requestedMinutes =
+    typeof options.minMinutes === "number"
+      ? options.minMinutes
+      : settings.onlineCheckIntervalMinutes;
+  const minMinutes = Math.max(1, Number.isFinite(requestedMinutes) ? requestedMinutes : 3);
+  const stateKey = options.stateKey || ONLINE_CHECK_STATE_KEY;
   const now = Date.now();
-  const lastCheckAt = await getLastOnlineCheckAt();
+  const lastCheckAt = await getLastOnlineCheckAt(stateKey);
   if (now - lastCheckAt < minMinutes * 60 * 1000) {
     console.log("[CamKeeper] Online check skipped (cooldown)", {
       minutes: minMinutes,
     });
     return;
   }
-  await setLastOnlineCheckAt(now);
+  await setLastOnlineCheckAt(stateKey, now);
   const online = await fetchChaturbateOnlineSet();
 
   chrome.storage.local.get(STORAGE_KEY, async (res) => {
     const profiles = Array.isArray(res[STORAGE_KEY]) ? res[STORAGE_KEY] : [];
     const stripchatUsers = [];
+    const chaturbateUsers = [];
     profiles.forEach((profile) => {
       (profile.platforms || []).forEach((platform) => {
         if (platform.site !== "stripchat.com") return;
         const username = (platform.username || "").trim().toLowerCase();
         if (username) stripchatUsers.push(username);
+      });
+      (profile.platforms || []).forEach((platform) => {
+        if (platform.site !== "chaturbate.com") return;
+        const username = (platform.username || "").trim().toLowerCase();
+        if (username) chaturbateUsers.push(username);
       });
     });
 
@@ -309,8 +357,11 @@ async function refreshOnlineStatus() {
     console.log("[CamKeeper] Online status updated", {
       profiles: profiles.length,
       changed,
+      chaturbateChecked: chaturbateUsers,
+      stripchatChecked: stripchatUsers,
       stripchatChecks: stripchatUsers.length,
       chaturbateChecks: online ? online.size : 0,
+      results: summarizeOnlineProfiles(updated, online, stripchatStatus),
     });
     updateBadgeCount(countOnlineProfiles(updated));
   });
@@ -350,13 +401,18 @@ chrome.commands.onCommand.addListener((command) => {
 
 chrome.runtime.onMessage.addListener((message) => {
   if (message?.type === "online-check") {
-    refreshOnlineStatus();
+    refreshOnlineStatus({
+      minMinutes: POPUP_ONLINE_CHECK_COOLDOWN_MINUTES,
+      stateKey: ONLINE_CHECK_STATE_KEY,
+    });
   }
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm?.name === BACKGROUND_ONLINE_CHECK_ALARM) {
-    refreshOnlineStatus();
+    refreshOnlineStatus({
+      stateKey: BACKGROUND_ONLINE_CHECK_STATE_KEY,
+    });
   }
 });
 
