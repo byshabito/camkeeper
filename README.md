@@ -42,7 +42,7 @@ Popup fallback (Zen or blocked popups): use `Alt+Shift+L` or right-click the ico
 Use the build script to create Chrome and Firefox zips with the correct manifests:
 
 ```bash
-./scripts/build.sh 0.2.1
+./scripts/build.sh 0.3.0
 ```
 
 ## License

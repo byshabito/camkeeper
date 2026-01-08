@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.3.0
+
+- Add folder organization with filter and manager
+- Add folder dropdown + new folder input in add/edit
+- Refine popup layout, titles, and search interactions
+
 ## v0.2.3
 
 - Fix firefox manifest version
