@@ -3,6 +3,10 @@ const STORAGE_KEY = "camkeeper_profiles_v1";
 const SETTINGS_KEY = "camkeeper_settings_v1";
 const DEFAULT_VISIT_DELAY_MS = 20 * 1000;
 const DEFAULT_VISIT_COOLDOWN_MS = 10 * 60 * 1000;
+const ONLINE_CHECK_ALARM = "camkeeper-online-check";
+const ONLINE_CHECK_INTERVAL_MINUTES = 3;
+const CHATURBATE_API_URL =
+  "https://chaturbate.com/affiliates/api/onlinerooms/?format=json&wm=SBlL1";
 const pendingTimers = new Map();
 const lastLoaded = new Map();
 let activeTabId = null;
@@ -34,6 +38,113 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
 loadSettings();
 
+function ensureOnlineCheckAlarm() {
+  chrome.alarms.get(ONLINE_CHECK_ALARM, (alarm) => {
+    if (alarm) return;
+    chrome.alarms.create(ONLINE_CHECK_ALARM, {
+      periodInMinutes: ONLINE_CHECK_INTERVAL_MINUTES,
+      delayInMinutes: 1,
+    });
+    console.log("[CamKeeper] Online check alarm scheduled", {
+      minutes: ONLINE_CHECK_INTERVAL_MINUTES,
+    });
+  });
+}
+
+async function fetchChaturbateOnlineSet() {
+  try {
+    const response = await fetch(CHATURBATE_API_URL, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) {
+      console.warn("[CamKeeper] Online check fetch failed", response.status);
+      return null;
+    }
+    const data = await response.json();
+    const online = new Set();
+    let foundList = false;
+
+    const collect = (list) => {
+      if (!list) return;
+      foundList = true;
+      if (Array.isArray(list)) {
+        list.forEach((item) => {
+          if (typeof item === "string") {
+            online.add(item.toLowerCase());
+            return;
+          }
+          const name =
+            item?.username ||
+            item?.room_name ||
+            item?.roomName ||
+            item?.roomname ||
+            item?.name;
+          if (name) online.add(String(name).toLowerCase());
+        });
+        return;
+      }
+      if (typeof list === "object") {
+        Object.keys(list).forEach((key) => {
+          online.add(key.toLowerCase());
+        });
+      }
+    };
+
+    if (Array.isArray(data)) {
+      collect(data);
+    } else {
+      collect(data?.rooms);
+      collect(data?.roomlist);
+      collect(data?.results);
+      collect(data?.data);
+    }
+
+    if (!foundList) {
+      console.warn("[CamKeeper] Online check response missing list");
+      return null;
+    }
+    console.log("[CamKeeper] Online check fetched", { count: online.size });
+    return online;
+  } catch (error) {
+    console.warn("[CamKeeper] Online check failed", error);
+    return null;
+  }
+}
+
+async function refreshOnlineStatus() {
+  const online = await fetchChaturbateOnlineSet();
+  if (!online) return;
+
+  chrome.storage.local.get(STORAGE_KEY, (res) => {
+    const profiles = Array.isArray(res[STORAGE_KEY]) ? res[STORAGE_KEY] : [];
+    let changed = 0;
+    const updated = profiles.map((profile) => {
+      const platforms = (profile.platforms || []).map((platform) => {
+        if (platform.site !== "chaturbate.com") return platform;
+        const username = (platform.username || "").toLowerCase();
+        const isOnline = online.has(username);
+        if (platform.online === isOnline) return platform;
+        changed += 1;
+        return { ...platform, online: isOnline };
+      });
+      return { ...profile, platforms };
+    });
+    chrome.storage.local.set({ [STORAGE_KEY]: updated });
+    console.log("[CamKeeper] Online status updated", {
+      profiles: profiles.length,
+      changed,
+    });
+  });
+}
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm.name === ONLINE_CHECK_ALARM) {
+    console.log("[CamKeeper] Online check tick");
+    refreshOnlineStatus();
+  }
+});
+
 function openLibrary() {
   if (chrome.runtime?.openOptionsPage) {
     chrome.runtime.openOptionsPage();
@@ -53,7 +164,14 @@ chrome.runtime.onInstalled.addListener(() => {
   } catch (error) {
     // Ignore context menu creation errors in unsupported contexts.
   }
+  ensureOnlineCheckAlarm();
 });
+
+chrome.runtime.onStartup?.addListener(() => {
+  ensureOnlineCheckAlarm();
+});
+
+ensureOnlineCheckAlarm();
 
 chrome.contextMenus.onClicked.addListener((info) => {
   if (info.menuItemId !== MENU_ID) return;
