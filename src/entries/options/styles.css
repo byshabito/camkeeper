@@ -62,6 +62,18 @@ body {
   display: none;
 }
 
+.toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.toggle input {
+  width: auto;
+}
+
 textarea {
   min-height: 120px;
   resize: vertical;

@@ -4,20 +4,26 @@ const SETTINGS_KEY = "camkeeper_settings_v1";
 const DEFAULT_VISIT_DELAY_MS = 20 * 1000;
 const DEFAULT_VISIT_COOLDOWN_MS = 10 * 60 * 1000;
 const ONLINE_CHECK_ALARM = "camkeeper-online-check";
-const ONLINE_CHECK_INTERVAL_MINUTES = 3;
+const DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES = 3;
 const CHATURBATE_API_URL =
   "https://chaturbate.com/affiliates/api/onlinerooms/?format=json&wm=SBlL1";
+const STRIPCHAT_API_BASE = "https://stripchat.com/api/front/v2/models/username";
 const pendingTimers = new Map();
 const lastLoaded = new Map();
 let activeTabId = null;
 let settings = {
   visitDelayMs: DEFAULT_VISIT_DELAY_MS,
   visitCooldownMs: DEFAULT_VISIT_COOLDOWN_MS,
+  onlineChecksEnabled: true,
+  onlineCheckIntervalMinutes: DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES,
 };
+let lastOnlineChecksEnabled = true;
 
 function loadSettings() {
   chrome.storage.local.get(SETTINGS_KEY, (res) => {
     const data = res[SETTINGS_KEY] || {};
+    const nextOnlineChecksEnabled =
+      typeof data.onlineChecksEnabled === "boolean" ? data.onlineChecksEnabled : true;
     settings = {
       visitDelayMs: Number.isFinite(data.visitDelayMs)
         ? data.visitDelayMs
@@ -25,7 +31,18 @@ function loadSettings() {
       visitCooldownMs: Number.isFinite(data.visitCooldownMs)
         ? data.visitCooldownMs
         : DEFAULT_VISIT_COOLDOWN_MS,
+      onlineChecksEnabled: nextOnlineChecksEnabled,
+      onlineCheckIntervalMinutes: Number.isFinite(data.onlineCheckIntervalMinutes)
+        ? Math.max(3, data.onlineCheckIntervalMinutes)
+        : DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES,
     };
+    ensureOnlineCheckAlarm();
+    if (!settings.onlineChecksEnabled) {
+      clearOnlineStatuses();
+    } else if (!lastOnlineChecksEnabled && settings.onlineChecksEnabled) {
+      refreshOnlineStatus();
+    }
+    lastOnlineChecksEnabled = settings.onlineChecksEnabled;
   });
 }
 
@@ -39,15 +56,45 @@ chrome.storage.onChanged.addListener((changes, area) => {
 loadSettings();
 
 function ensureOnlineCheckAlarm() {
+  if (!settings.onlineChecksEnabled) {
+    chrome.alarms.clear(ONLINE_CHECK_ALARM, (cleared) => {
+      if (cleared) {
+        console.log("[CamKeeper] Online check alarm cleared");
+      }
+    });
+    return;
+  }
   chrome.alarms.get(ONLINE_CHECK_ALARM, (alarm) => {
-    if (alarm) return;
+    const interval = Math.max(3, settings.onlineCheckIntervalMinutes);
+    if (alarm && alarm.periodInMinutes === interval) return;
+    if (alarm) {
+      chrome.alarms.clear(ONLINE_CHECK_ALARM);
+    }
     chrome.alarms.create(ONLINE_CHECK_ALARM, {
-      periodInMinutes: ONLINE_CHECK_INTERVAL_MINUTES,
+      periodInMinutes: interval,
       delayInMinutes: 1,
     });
     console.log("[CamKeeper] Online check alarm scheduled", {
-      minutes: ONLINE_CHECK_INTERVAL_MINUTES,
+      minutes: interval,
     });
+  });
+}
+
+function clearOnlineStatuses() {
+  chrome.storage.local.get(STORAGE_KEY, (res) => {
+    const profiles = Array.isArray(res[STORAGE_KEY]) ? res[STORAGE_KEY] : [];
+    let changed = 0;
+    const updated = profiles.map((profile) => {
+      const platforms = (profile.platforms || []).map((platform) => {
+        if (!platform.online) return platform;
+        changed += 1;
+        return { ...platform, online: false };
+      });
+      return { ...profile, platforms };
+    });
+    if (!changed) return;
+    chrome.storage.local.set({ [STORAGE_KEY]: updated });
+    console.log("[CamKeeper] Online status cleared", { changed });
   });
 }
 
@@ -112,28 +159,97 @@ async function fetchChaturbateOnlineSet() {
   }
 }
 
-async function refreshOnlineStatus() {
-  const online = await fetchChaturbateOnlineSet();
-  if (!online) return;
+async function fetchStripchatStatus(username) {
+  const url = `${STRIPCHAT_API_BASE}/${encodeURIComponent(username)}/cam`;
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { Accept: "application/json" },
+    });
+    if (!response.ok) {
+      console.warn("[CamKeeper] Stripchat fetch failed", username, response.status);
+      return null;
+    }
+    const data = await response.json();
+    if (!data?.cam) return null;
+    return Boolean(data.cam.isCamAvailable);
+  } catch (error) {
+    console.warn("[CamKeeper] Stripchat fetch failed", username, error);
+    return null;
+  }
+}
 
-  chrome.storage.local.get(STORAGE_KEY, (res) => {
+async function fetchStripchatStatuses(usernames) {
+  const unique = Array.from(new Set(usernames));
+  if (!unique.length) return new Map();
+
+  const concurrency = 5;
+  const results = new Map();
+  let index = 0;
+
+  const worker = async () => {
+    while (index < unique.length) {
+      const current = unique[index];
+      index += 1;
+      const status = await fetchStripchatStatus(current);
+      if (status === null) continue;
+      results.set(current, status);
+    }
+  };
+
+  await Promise.all(Array.from({ length: concurrency }, worker));
+  console.log("[CamKeeper] Stripchat status fetched", {
+    checked: unique.length,
+    results: results.size,
+  });
+  return results;
+}
+
+async function refreshOnlineStatus() {
+  if (!settings.onlineChecksEnabled) return;
+  const online = await fetchChaturbateOnlineSet();
+
+  chrome.storage.local.get(STORAGE_KEY, async (res) => {
     const profiles = Array.isArray(res[STORAGE_KEY]) ? res[STORAGE_KEY] : [];
+    const stripchatUsers = [];
+    profiles.forEach((profile) => {
+      (profile.platforms || []).forEach((platform) => {
+        if (platform.site !== "stripchat.com") return;
+        const username = (platform.username || "").trim().toLowerCase();
+        if (username) stripchatUsers.push(username);
+      });
+    });
+
+    const stripchatStatus = await fetchStripchatStatuses(stripchatUsers);
     let changed = 0;
     const updated = profiles.map((profile) => {
       const platforms = (profile.platforms || []).map((platform) => {
-        if (platform.site !== "chaturbate.com") return platform;
         const username = (platform.username || "").toLowerCase();
-        const isOnline = online.has(username);
-        if (platform.online === isOnline) return platform;
-        changed += 1;
-        return { ...platform, online: isOnline };
+        if (platform.site === "chaturbate.com") {
+          if (!online) return platform;
+          const isOnline = online.has(username);
+          if (platform.online === isOnline) return platform;
+          changed += 1;
+          return { ...platform, online: isOnline };
+        }
+        if (platform.site === "stripchat.com") {
+          if (!stripchatStatus.has(username)) return platform;
+          const isOnline = stripchatStatus.get(username);
+          if (platform.online === isOnline) return platform;
+          changed += 1;
+          return { ...platform, online: isOnline };
+        }
+        return platform;
       });
       return { ...profile, platforms };
     });
+
     chrome.storage.local.set({ [STORAGE_KEY]: updated });
     console.log("[CamKeeper] Online status updated", {
       profiles: profiles.length,
       changed,
+      stripchatChecks: stripchatUsers.length,
+      chaturbateChecks: online ? online.size : 0,
     });
   });
 }

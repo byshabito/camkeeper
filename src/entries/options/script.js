@@ -8,6 +8,8 @@ const exportButton = document.getElementById("export-button");
 const importInput = document.getElementById("import-input");
 const visitDelayInput = document.getElementById("visit-delay");
 const visitCooldownInput = document.getElementById("visit-cooldown");
+const onlineCheckInput = document.getElementById("online-check");
+const onlineCheckIntervalInput = document.getElementById("online-check-interval");
 const visitSaveButton = document.getElementById("visit-save");
 
 function secondsFromMs(ms) {
@@ -28,7 +30,8 @@ function setDefaultInputs() {
 }
 
 async function loadSettings() {
-  if (!visitDelayInput || !visitCooldownInput) return;
+  if (!visitDelayInput || !visitCooldownInput || !onlineCheckInput || !onlineCheckIntervalInput)
+    return;
 
   const data = await new Promise((resolve) => {
     chrome.storage.local.get(SETTINGS_KEY, (res) => resolve(res));
@@ -40,19 +43,29 @@ async function loadSettings() {
   const cooldownMs = Number.isFinite(settings.visitCooldownMs)
     ? settings.visitCooldownMs
     : DEFAULT_VISIT_COOLDOWN_MS;
+  const onlineChecksEnabled =
+    typeof settings.onlineChecksEnabled === "boolean" ? settings.onlineChecksEnabled : true;
+  const onlineCheckIntervalMinutes = Number.isFinite(settings.onlineCheckIntervalMinutes)
+    ? settings.onlineCheckIntervalMinutes
+    : 3;
 
   visitDelayInput.value = String(secondsFromMs(delayMs));
   visitCooldownInput.value = String(minutesFromMs(cooldownMs));
+  onlineCheckInput.checked = onlineChecksEnabled;
+  onlineCheckIntervalInput.value = String(onlineCheckIntervalMinutes);
 }
 
 async function saveSettings() {
-  if (!visitDelayInput || !visitCooldownInput) return;
+  if (!visitDelayInput || !visitCooldownInput || !onlineCheckInput || !onlineCheckIntervalInput)
+    return;
 
   const delaySeconds = Math.max(5, Number(visitDelayInput.value) || 20);
   const cooldownMinutes = Math.max(1, Number(visitCooldownInput.value) || 10);
   const settings = {
     visitDelayMs: delaySeconds * 1000,
     visitCooldownMs: cooldownMinutes * 60 * 1000,
+    onlineChecksEnabled: onlineCheckInput.checked,
+    onlineCheckIntervalMinutes: Math.max(3, Number(onlineCheckIntervalInput.value) || 3),
   };
   await new Promise((resolve) => {
     chrome.storage.local.set({ [SETTINGS_KEY]: settings }, resolve);
