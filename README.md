@@ -40,7 +40,7 @@ Download the latest release zip for your browser from GitHub Releases.
 1. Open `about:addons`
 2. Navigate to **Extensions**
 3. Click the **gear icon** on the top right
-4. Click on **Install add-on From File...**
+4. Click on **Install Add-on From File...**
 5. Select `camkeeper-*-firefox.zip` file
 
 ## Temporary Installation (Development)
