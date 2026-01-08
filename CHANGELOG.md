@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.4.1
+
+- Run online checks on popup open with cooldown (no background polling)
+
 ## v0.4.0
 
 - Add background online status checks (Chaturbate + Stripchat)

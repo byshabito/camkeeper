@@ -14,7 +14,7 @@
 - Folder organization with filtering and manager
 - Sort by updated/name/visits
 - Visit tracking with configurable focus time + cooldown
-- Optional background online status checks
+- Optional online status checks when opening the popup
 - Local-only storage with JSON export/import
 
 ## Usage
