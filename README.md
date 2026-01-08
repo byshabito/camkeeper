@@ -11,8 +11,10 @@
 - Auto detail view on saved model pages
 - Add current platform to an existing profile
 - Bulk select to merge or delete
+- Folder organization with filtering and manager
 - Sort by updated/name/visits
 - Visit tracking with configurable focus time + cooldown
+- Optional background online status checks
 - Local-only storage with JSON export/import
 
 ## Usage

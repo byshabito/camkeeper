@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.4.0
+
+- Add background online status checks (Chaturbate + Stripchat)
+- Add settings to enable checks and set the interval
+
 ## v0.3.0
 
 - Add folder organization with filter and manager
