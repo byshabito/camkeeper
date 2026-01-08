@@ -7,27 +7,24 @@ import {
   SETTINGS_KEY,
   STORAGE_KEY,
 } from "../lib/db.js";
+import {
+  BACKGROUND_ONLINE_CHECK_ALARM,
+  BACKGROUND_ONLINE_CHECK_STATE_KEY,
+  DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES,
+  DEFAULT_VISIT_COOLDOWN_MS,
+  DEFAULT_VISIT_DELAY_MS,
+  MENU_ID,
+  ONLINE_CHECK_STATE_KEY,
+  POPUP_ONLINE_CHECK_COOLDOWN_MINUTES,
+  getDefaultSettings,
+} from "../lib/config/background.js";
 import { fetchOnlineStatuses as fetchChaturbateStatuses } from "../lib/onlineStatus/chaturbate.js";
 import { fetchOnlineStatuses as fetchStripchatStatuses } from "../lib/onlineStatus/stripchat.js";
 
-const MENU_ID = "camkeeper-open-library";
-const DEFAULT_VISIT_DELAY_MS = 20 * 1000;
-const DEFAULT_VISIT_COOLDOWN_MS = 10 * 60 * 1000;
-const DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES = 3;
-const POPUP_ONLINE_CHECK_COOLDOWN_MINUTES = 1;
-const ONLINE_CHECK_STATE_KEY = "camkeeper_online_check_state_v1";
-const BACKGROUND_ONLINE_CHECK_STATE_KEY = "camkeeper_online_check_state_background_v1";
-const BACKGROUND_ONLINE_CHECK_ALARM = "camkeeper-online-check";
 const pendingTimers = new Map();
 const lastLoaded = new Map();
 let activeTabId = null;
-let settings = {
-  visitDelayMs: DEFAULT_VISIT_DELAY_MS,
-  visitCooldownMs: DEFAULT_VISIT_COOLDOWN_MS,
-  onlineChecksEnabled: true,
-  backgroundOnlineChecksEnabled: false,
-  onlineCheckIntervalMinutes: DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES,
-};
+let settings = getDefaultSettings();
 let lastOnlineChecksEnabled = true;
 let lastBackgroundChecksEnabled = false;
 

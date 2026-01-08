@@ -1,8 +1,11 @@
 import { getProfiles, getSettings, saveProfiles, saveSettings } from "../../lib/db.js";
+import {
+  DEFAULT_BACKGROUND_ONLINE_CHECKS_ENABLED,
+  DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES,
+  DEFAULT_VISIT_COOLDOWN_MS,
+  DEFAULT_VISIT_DELAY_MS,
+} from "../../lib/config/background.js";
 import { sanitizeProfile } from "../../lib/storage.js";
-const DEFAULT_VISIT_DELAY_MS = 20 * 1000;
-const DEFAULT_VISIT_COOLDOWN_MS = 10 * 60 * 1000;
-const DEFAULT_BACKGROUND_ONLINE_CHECKS_ENABLED = false;
 const BUILD_COMMIT = "cc8f9b8";
 const RELEASE_TIMESTAMP = "2026-01-08T15:56:26+01:00";
 const DEVELOPER_NAME = "Shabito";
@@ -92,7 +95,7 @@ async function loadSettings() {
       : DEFAULT_BACKGROUND_ONLINE_CHECKS_ENABLED;
   const onlineCheckIntervalMinutes = Number.isFinite(settings.onlineCheckIntervalMinutes)
     ? settings.onlineCheckIntervalMinutes
-    : 3;
+    : DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES;
 
   visitDelayInput.value = String(secondsFromMs(delayMs));
   visitCooldownInput.value = String(minutesFromMs(cooldownMs));
@@ -120,7 +123,10 @@ async function persistSettings() {
     onlineChecksEnabled: onlineCheckInput.checked,
     backgroundOnlineChecksEnabled:
       onlineCheckInput.checked && backgroundOnlineCheckInput.checked,
-    onlineCheckIntervalMinutes: Math.max(3, Number(onlineCheckIntervalInput.value) || 3),
+    onlineCheckIntervalMinutes: Math.max(
+      DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES,
+      Number(onlineCheckIntervalInput.value) || DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES
+    ),
   };
   await saveSettings(settings);
 }
