@@ -259,7 +259,10 @@ async function fetchStripchatStatus(username) {
     if (typeof data?.cam?.isCamAvailable === "boolean") {
       return data.cam.isCamAvailable;
     }
-    // Treat missing cam info as offline so stale online flags clear.
+    if (typeof data?.user?.isLive === "boolean") {
+      return data.user.isLive;
+    }
+    // Treat missing status info as offline so stale online flags clear.
     return false;
   } catch (error) {
     console.warn("[CamKeeper] Stripchat fetch failed", username, error);
