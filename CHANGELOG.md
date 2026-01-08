@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.2.2
+
+- Pin bookmarks and prioritize pinned items in sorting
+- Refined popup search/sort row with icon-triggered search
+- Settings page is now settings-only
+- Platform chips support online/offline styling
+
 ## v0.2.1
 
 - Separate Chrome/Firefox manifests with build script

@@ -54,12 +54,12 @@ textarea {
 
 .list-toolbar {
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
 }
 
 .card {
   cursor: default;
+  position: relative;
 }
 
 .card.selectable {
@@ -168,6 +168,29 @@ textarea {
   display: flex;
   flex-direction: column;
   gap: 6px;
+}
+
+.card-pin {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pin-toggle.detail-pin {
+  width: auto;
+  height: 28px;
+  padding: 0 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
 }
 
 .empty {

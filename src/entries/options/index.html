@@ -18,7 +18,7 @@
   <section class="panel settings-panel">
     <header class="panel-header">
       <h2>Extension settings</h2>
-      <button id="visit-save" class="ghost">Save</button>
+      <button id="visit-save" class="primary">Save</button>
     </header>
     <div class="export no-divider">
       <div>
@@ -45,7 +45,7 @@
       </div>
       <div class="actions">
         <button id="export-button" class="ghost">Export</button>
-        <label class="file-button">
+        <label class="file-button ghost">
           Import
           <input id="import-input" type="file" accept="application/json" />
         </label>
@@ -53,97 +53,4 @@
     </div>
   </section>
 
-  <section class="panel">
-    <header class="panel-header">
-      <h2>Bookmarks</h2>
-      <div class="panel-actions">
-        <button id="select-button" class="plain-button" type="button">Select</button>
-        <button id="new-profile" class="primary">Add</button>
-      </div>
-    </header>
-    <div id="bulk-bar" class="bulk-bar hidden">
-      <div id="bulk-count" class="muted"></div>
-      <div class="bulk-actions">
-        <button id="bulk-merge" class="plain-button" type="button">Merge</button>
-        <button id="bulk-delete" class="plain-button" type="button">Delete</button>
-        <button id="bulk-cancel" class="plain-button" type="button">Cancel</button>
-      </div>
-    </div>
-    <div class="search">
-      <input id="search-input" type="text" placeholder="Search models, tags, socials" />
-    </div>
-    <div class="list-meta">
-      <div id="count" class="count"></div>
-      <div class="sort-field">
-        <span>Sort</span>
-        <select id="sort-select">
-          <option value="updated">Recently updated</option>
-          <option value="name">Name A–Z</option>
-          <option value="most">Most visited</option>
-          <option value="least">Least visited</option>
-          <option value="recent">Recently visited</option>
-        </select>
-      </div>
-    </div>
-    <ul id="profile-list" class="list"></ul>
-    <div id="empty-state" class="empty hidden">No bookmarks yet.</div>
-  </section>
-
-  <div id="form-panel" class="modal hidden">
-    <div class="modal-content panel">
-      <header class="panel-header">
-      <h2 id="form-title">New bookmark</h2>
-      </header>
-      <div id="form-error" class="error hidden"></div>
-      <form id="profile-form" class="form">
-        <label class="field">
-          <span>Display name</span>
-          <input id="name-input" type="text" placeholder="Display name" />
-        </label>
-
-        <label class="field">
-          <span>Platforms</span>
-          <section class="block block-plain">
-            <div id="platform-rows" class="rows"></div>
-            <button id="add-platform" type="button" class="plain-button icon-button" aria-label="Add platform" title="Add platform">+</button>
-          </section>
-        </label>
-
-        <label class="field">
-          <span>Socials</span>
-          <section class="block block-plain">
-            <div id="social-rows" class="rows"></div>
-            <button id="add-social" type="button" class="plain-button icon-button" aria-label="Add social" title="Add social">+</button>
-          </section>
-        </label>
-
-        <label class="field">
-          <span>Tags</span>
-          <input id="tags-input" type="text" placeholder="e.g. cozy, bilingual" />
-        </label>
-
-        <label class="field">
-          <span>Notes</span>
-          <textarea id="notes-input" placeholder="Notes"></textarea>
-        </label>
-
-        <div class="actions">
-          <button type="button" id="reset-button" class="ghost">Cancel</button>
-          <button type="submit" class="primary">Save</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <div id="confirm-modal" class="modal hidden">
-    <div class="modal-content panel">
-      <h3 id="confirm-title">Confirm</h3>
-      <p id="confirm-message"></p>
-      <ul id="confirm-list" class="confirm-list"></ul>
-      <div class="confirm-actions">
-        <button id="confirm-cancel" class="ghost" type="button">Cancel</button>
-        <button id="confirm-accept" class="danger" type="button">Delete</button>
-      </div>
-    </div>
-  </div>
 </body>

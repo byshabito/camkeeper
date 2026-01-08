@@ -14,7 +14,9 @@
         <h1>Bookmarks</h1>
       </div>
       <div class="topbar-actions">
-        <button id="select-button" class="plain-button" type="button">Select</button>
+        <button id="select-button" class="plain-button icon-button" type="button" title="Select" aria-label="Select">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="lucide lucide-wand-icon lucide-wand"><path d="M15 4V2"/><path d="M15 16v-2"/><path d="M8 9h2"/><path d="M20 9h2"/><path d="M17.8 11.8 19 13"/><path d="M15 9h.01"/><path d="M17.8 6.2 19 5"/><path d="m3 21 9-9"/><path d="M12.2 6.2 11 5"/></svg>
+        </button>
         <button id="add-button" class="primary">Add</button>
       </div>
     </header>
@@ -27,18 +29,20 @@
       </div>
     </div>
     <div class="list-toolbar">
-      <div class="search">
-        <input id="search-input" type="text" placeholder="Search models, tags, socials" />
-      </div>
-      <div class="sort-field">
-        <span>Sort</span>
-        <select id="sort-select">
-          <option value="updated">Recently updated</option>
-          <option value="name">Name A–Z</option>
-          <option value="most">Most visited</option>
-          <option value="least">Least visited</option>
-          <option value="recent">Recently visited</option>
-        </select>
+      <div class="search-sort">
+        <button class="plain-button icon-button search-toggle" type="button" aria-label="Search">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        </button>
+        <input id="search-input" class="search-input" type="text" placeholder="Search models, tags, socials" />
+        <div class="sort-field">
+          <select id="sort-select">
+            <option value="updated">Recently updated</option>
+            <option value="name">Name A–Z</option>
+            <option value="most">Most visited</option>
+            <option value="least">Least visited</option>
+            <option value="recent">Recently visited</option>
+          </select>
+        </div>
       </div>
     </div>
     <ul id="profile-list" class="list"></ul>
@@ -52,7 +56,10 @@
         <div class="eyebrow">CamKeeper</div>
         <h1 id="detail-title">Profile</h1>
       </div>
-      <button id="detail-edit" class="primary">Edit</button>
+      <div class="topbar-actions">
+        <button id="detail-pin" class="ghost" type="button">Pin</button>
+        <button id="detail-edit" class="primary">Edit</button>
+      </div>
     </header>
 
     <section class="detail-card">

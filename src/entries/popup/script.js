@@ -31,6 +31,7 @@ const backButton = document.getElementById("back-button");
 const cancelButton = document.getElementById("cancel-button");
 const deleteButton = document.getElementById("delete-button");
 const detailBackButton = document.getElementById("detail-back");
+const detailPinButton = document.getElementById("detail-pin");
 const detailEditButton = document.getElementById("detail-edit");
 const formTitle = document.getElementById("form-title");
 const formError = document.getElementById("form-error");
@@ -133,6 +134,13 @@ function showDetailView(profile) {
   detailTitle.textContent = "Bookmark";
   detailName.textContent = profile.name || "Unnamed";
   detailMeta.textContent = `Updated ${new Date(profile.updatedAt || Date.now()).toLocaleDateString()}`;
+  detailPinButton.classList.add("pin-toggle", "detail-pin");
+  detailPinButton.classList.toggle("pinned", profile.pinned);
+  detailPinButton.title = profile.pinned ? "Unpin" : "Pin";
+  detailPinButton.setAttribute("aria-label", detailPinButton.title);
+  detailPinButton.innerHTML = `${getPinIconSvg(profile.pinned)}<span>${
+    profile.pinned ? "Unpin" : "Pin"
+  }</span>`;
 
   detailPlatforms.innerHTML = "";
   profile.platforms.forEach((platform) => {
@@ -146,13 +154,14 @@ function showDetailView(profile) {
 
     const chip = document.createElement("span");
     chip.classList.add("platform-chip");
-    chip.style.borderColor = site.color;
-    chip.style.background = site.color;
+    const isOnline = Boolean(platform.online);
+    chip.classList.add(isOnline ? "online" : "offline");
+    chip.style.setProperty("--platform-color", site.color);
 
     const icon = document.createElement("span");
     icon.classList.add("icon");
-    icon.style.background = "#ffffff";
     icon.style.color = site.color;
+    icon.style.borderColor = "transparent";
     icon.textContent = site.abbr;
 
     const label = document.createElement("span");
@@ -507,6 +516,24 @@ async function renderList() {
     const name = document.createElement("h2");
     name.textContent = profile.name || "Unnamed";
 
+    const pinButton = document.createElement("button");
+    pinButton.type = "button";
+    pinButton.classList.add("pin-toggle", "card-pin");
+    if (profile.pinned) pinButton.classList.add("pinned");
+    pinButton.title = profile.pinned ? "Unpin" : "Pin";
+    pinButton.setAttribute("aria-label", pinButton.title);
+    pinButton.innerHTML = getPinIconSvg(profile.pinned);
+    pinButton.addEventListener("click", async (event) => {
+      event.stopPropagation();
+      const profiles = await loadProfiles();
+      const updated = profiles.map((item) =>
+        item.id === profile.id ? { ...item, pinned: !item.pinned } : item,
+      );
+      await saveProfiles(updated);
+      renderList();
+    });
+    card.appendChild(pinButton);
+
     const platformChips = document.createElement("div");
     platformChips.classList.add("chips");
     profile.platforms.forEach((platform) => {
@@ -527,13 +554,14 @@ async function renderList() {
 
       const chip = document.createElement("span");
       chip.classList.add("platform-chip");
-      chip.style.borderColor = site.color;
-      chip.style.background = site.color;
+      const isOnline = Boolean(platform.online);
+      chip.classList.add(isOnline ? "online" : "offline");
+      chip.style.setProperty("--platform-color", site.color);
 
       const icon = document.createElement("span");
       icon.classList.add("icon");
-      icon.style.background = "#ffffff";
       icon.style.color = site.color;
+      icon.style.borderColor = "transparent";
       icon.textContent = site.abbr;
 
       const label = document.createElement("span");
@@ -586,6 +614,13 @@ function truncate(text, length) {
   const clean = (text || "").trim();
   if (clean.length <= length) return clean;
   return `${clean.slice(0, length - 1)}...`;
+}
+
+function getPinIconSvg(pinned) {
+  if (pinned) {
+    return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="lucide lucide-pin-off-icon lucide-pin-off"><path d="M12 17v5"/><path d="M15 9.34V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H7.89"/><path d="m2 2 20 20"/><path d="M9 9v1.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h11"/></svg>';
+  }
+  return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="lucide lucide-pin-icon lucide-pin"><path d="M12 17v5"/><path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/></svg>';
 }
 
 function openEditor(profile, seedPlatforms, source = "list", profiles = []) {
@@ -669,6 +704,16 @@ cancelButton.addEventListener("click", () => {
   }
 });
 detailBackButton.addEventListener("click", showListView);
+detailPinButton.addEventListener("click", async () => {
+  if (!currentProfile) return;
+  const profiles = await loadProfiles();
+  const updated = profiles.map((item) =>
+    item.id === currentProfile.id ? { ...item, pinned: !item.pinned } : item,
+  );
+  await saveProfiles(updated);
+  const refreshed = updated.find((item) => item.id === currentProfile.id);
+  if (refreshed) showDetailView(refreshed);
+});
 detailEditButton.addEventListener("click", () => {
   if (!currentProfile) return;
   openEditor(currentProfile, null, "detail");

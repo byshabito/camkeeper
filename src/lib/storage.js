@@ -50,6 +50,7 @@ export function sanitizePlatforms(platforms) {
     .map((platform) => ({
       site: normalizeText(platform.site),
       username: normalizeText(platform.username),
+      online: Boolean(platform.online),
       visitCount: Number.isFinite(platform.visitCount) ? platform.visitCount : 0,
       lastVisitedAt: Number.isFinite(platform.lastVisitedAt)
         ? platform.lastVisitedAt
@@ -71,6 +72,7 @@ export function sanitizePlatforms(platforms) {
       visitCount: (existing.visitCount || 0) + (platform.visitCount || 0),
       lastVisitedAt: Math.max(existing.lastVisitedAt || 0, platform.lastVisitedAt || 0) || null,
       lastLeftAt: Math.max(existing.lastLeftAt || 0, platform.lastLeftAt || 0) || null,
+      online: Boolean(existing.online || platform.online),
     });
   });
 
@@ -95,6 +97,7 @@ export function sanitizeProfile(raw) {
     ? raw.tags.map((tag) => (tag || "").trim()).filter(Boolean)
     : [];
   const name = (raw.name || "").trim() || (platforms[0] ? platforms[0].username : "");
+  const pinned = Boolean(raw.pinned);
 
   return {
     id: raw.id || createId(),
@@ -103,6 +106,7 @@ export function sanitizeProfile(raw) {
     socials,
     tags: uniqBy(tags, (tag) => normalizeText(tag)),
     notes: (raw.notes || "").trim(),
+    pinned,
     createdAt: typeof raw.createdAt === "number" ? raw.createdAt : now(),
     updatedAt: typeof raw.updatedAt === "number" ? raw.updatedAt : now(),
   };
@@ -159,6 +163,7 @@ export function mergeProfiles(base, incoming) {
     tags: uniqBy([...(base.tags || []), ...(incoming.tags || [])], (tag) => normalizeText(tag)),
     platforms: sanitizePlatforms([...(base.platforms || []), ...(incoming.platforms || [])]),
     socials: sanitizeSocials([...(base.socials || []), ...(incoming.socials || [])]),
+    pinned: Boolean(base.pinned || incoming.pinned),
     updatedAt: now(),
   };
 

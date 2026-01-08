@@ -2,8 +2,8 @@
   "name": "CamKeeper",
   "author": "Shabito",
   "description": "Cross-site bookmark manager for Chaturbate and Stripchat models",
-  "version": "0.2.0",
-  "manifest_version": 3,
+  "version": "0.2.2",
+  "manifest_version": 2,
   "permissions": ["storage", "activeTab", "contextMenus", "tabs", "alarms"],
   "icons": {
     "16": "icons/icon-16.png",

@@ -43,6 +43,21 @@ body {
   gap: 8px;
 }
 
+.file-button.ghost {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  border-radius: 999px;
+  padding: 6px 12px;
+  cursor: default;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.file-button.ghost:hover {
+  border-color: var(--text);
+  background: #1b1f24;
+}
+
 .file-button input {
   display: none;
 }
@@ -119,6 +134,11 @@ textarea {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+}
+
+.list-meta .search-sort {
+  margin-left: auto;
+  flex: 1 1 auto;
 }
 
 .empty {
