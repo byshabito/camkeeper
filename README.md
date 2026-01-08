@@ -56,6 +56,14 @@ Download the latest release zip for your browser from GitHub Releases.
 2. Click **Load Temporary Add-on**
 3. Select `manifest.firefox.json` from this project
 
+## Support
+
+If you like CamKeeper, consider supporting its development.
+
+<a href="https://www.buymeacoffee.com/shabito" target="_blank" align="center">
+  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" >
+</a>
+
 ## License
 
 [MIT License](/LICENSE)

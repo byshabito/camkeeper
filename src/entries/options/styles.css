@@ -94,6 +94,25 @@ textarea {
   margin-top: 20px;
 }
 
+.donation {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  text-align: right;
+}
+
+.donation p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.donation-badge {
+  height: 44px;
+  width: auto;
+}
+
 .panel-header {
   display: flex;
   justify-content: space-between;
