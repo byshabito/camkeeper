@@ -1,10 +1,13 @@
 # Changelog
 
+## v0.5.1
+
+- Switch Stripchat status endpoint and parsing
+
 ## v0.5.0
 
 - Add extension metadata to settings page
 - Add background online check toggle and badge count
-- Switch Stripchat status endpoint and parsing
 
 ## v0.4.2
 
