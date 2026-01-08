@@ -1,6 +1,12 @@
+import {
+  getProfiles,
+  saveProfiles,
+  getSettings,
+  SETTINGS_KEY,
+  STORAGE_KEY,
+} from "../lib/db.js";
+
 const MENU_ID = "camkeeper-open-library";
-const STORAGE_KEY = "camkeeper_profiles_v1";
-const SETTINGS_KEY = "camkeeper_settings_v1";
 const DEFAULT_VISIT_DELAY_MS = 20 * 1000;
 const DEFAULT_VISIT_COOLDOWN_MS = 10 * 60 * 1000;
 const DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES = 3;
@@ -24,39 +30,36 @@ let settings = {
 let lastOnlineChecksEnabled = true;
 let lastBackgroundChecksEnabled = false;
 
-function loadSettings() {
-  chrome.storage.local.get(SETTINGS_KEY, (res) => {
-    const data = res[SETTINGS_KEY] || {};
-    const nextOnlineChecksEnabled =
-      typeof data.onlineChecksEnabled === "boolean" ? data.onlineChecksEnabled : true;
-    settings = {
-      visitDelayMs: Number.isFinite(data.visitDelayMs)
-        ? data.visitDelayMs
-        : DEFAULT_VISIT_DELAY_MS,
-      visitCooldownMs: Number.isFinite(data.visitCooldownMs)
-        ? data.visitCooldownMs
-        : DEFAULT_VISIT_COOLDOWN_MS,
-      onlineChecksEnabled: nextOnlineChecksEnabled,
-      backgroundOnlineChecksEnabled:
-        typeof data.backgroundOnlineChecksEnabled === "boolean"
-          ? data.backgroundOnlineChecksEnabled
-          : false,
-      onlineCheckIntervalMinutes: Number.isFinite(data.onlineCheckIntervalMinutes)
-        ? Math.max(3, data.onlineCheckIntervalMinutes)
-        : DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES,
-    };
-    if (!settings.onlineChecksEnabled) {
-      clearOnlineStatuses();
-      settings.backgroundOnlineChecksEnabled = false;
-    } else if (!lastOnlineChecksEnabled && settings.onlineChecksEnabled) {
-      refreshOnlineStatus();
-    }
-    lastOnlineChecksEnabled = settings.onlineChecksEnabled;
+async function loadSettings() {
+  const data = await getSettings();
+  const nextOnlineChecksEnabled =
+    typeof data.onlineChecksEnabled === "boolean" ? data.onlineChecksEnabled : true;
+  settings = {
+    visitDelayMs: Number.isFinite(data.visitDelayMs)
+      ? data.visitDelayMs
+      : DEFAULT_VISIT_DELAY_MS,
+    visitCooldownMs: Number.isFinite(data.visitCooldownMs)
+      ? data.visitCooldownMs
+      : DEFAULT_VISIT_COOLDOWN_MS,
+    onlineChecksEnabled: nextOnlineChecksEnabled,
+    backgroundOnlineChecksEnabled:
+      typeof data.backgroundOnlineChecksEnabled === "boolean"
+        ? data.backgroundOnlineChecksEnabled
+        : false,
+    onlineCheckIntervalMinutes: Number.isFinite(data.onlineCheckIntervalMinutes)
+      ? Math.max(3, data.onlineCheckIntervalMinutes)
+      : DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES,
+  };
+  if (!settings.onlineChecksEnabled) {
+    clearOnlineStatuses();
+    settings.backgroundOnlineChecksEnabled = false;
+  } else if (!lastOnlineChecksEnabled && settings.onlineChecksEnabled) {
+    refreshOnlineStatus();
+  }
+  lastOnlineChecksEnabled = settings.onlineChecksEnabled;
 
-    syncBackgroundOnlineChecks();
-  });
+  syncBackgroundOnlineChecks();
 }
-
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== "local") return;
   if (changes[SETTINGS_KEY]) {
@@ -109,12 +112,10 @@ function updateBadgeCount(count) {
   setBadgeCount(count);
 }
 
-function updateBadgeFromStorage() {
+async function updateBadgeFromStorage() {
   if (!settings.onlineChecksEnabled || !settings.backgroundOnlineChecksEnabled) return;
-  chrome.storage.local.get(STORAGE_KEY, (res) => {
-    const profiles = Array.isArray(res[STORAGE_KEY]) ? res[STORAGE_KEY] : [];
-    updateBadgeCount(countOnlineProfiles(profiles));
-  });
+  const profiles = await getProfiles();
+  updateBadgeCount(countOnlineProfiles(profiles));
 }
 
 function summarizeOnlineProfiles(profiles, onlineSet, stripchatStatus) {
@@ -149,23 +150,21 @@ function summarizeOnlineProfiles(profiles, onlineSet, stripchatStatus) {
   });
 }
 
-function clearOnlineStatuses() {
-  chrome.storage.local.get(STORAGE_KEY, (res) => {
-    const profiles = Array.isArray(res[STORAGE_KEY]) ? res[STORAGE_KEY] : [];
-    let changed = 0;
-    const updated = profiles.map((profile) => {
-      const platforms = (profile.platforms || []).map((platform) => {
-        if (!platform.online) return platform;
-        changed += 1;
-        return { ...platform, online: false };
-      });
-      return { ...profile, platforms };
+async function clearOnlineStatuses() {
+  const profiles = await getProfiles();
+  let changed = 0;
+  const updated = profiles.map((profile) => {
+    const platforms = (profile.platforms || []).map((platform) => {
+      if (!platform.online) return platform;
+      changed += 1;
+      return { ...platform, online: false };
     });
-    if (!changed) return;
-    chrome.storage.local.set({ [STORAGE_KEY]: updated });
-    console.log("[CamKeeper] Online status cleared", { changed });
-    updateBadgeCount(0);
+    return { ...profile, platforms };
   });
+  if (!changed) return;
+  await saveProfiles(updated);
+  console.log("[CamKeeper] Online status cleared", { changed });
+  updateBadgeCount(0);
 }
 
 function getLastOnlineCheckAt(stateKey) {
@@ -312,59 +311,57 @@ async function refreshOnlineStatus(options = {}) {
   await setLastOnlineCheckAt(stateKey, now);
   const online = await fetchChaturbateOnlineSet();
 
-  chrome.storage.local.get(STORAGE_KEY, async (res) => {
-    const profiles = Array.isArray(res[STORAGE_KEY]) ? res[STORAGE_KEY] : [];
-    const stripchatUsers = [];
-    const chaturbateUsers = [];
-    profiles.forEach((profile) => {
-      (profile.platforms || []).forEach((platform) => {
-        if (platform.site !== "stripchat.com") return;
-        const username = (platform.username || "").trim().toLowerCase();
-        if (username) stripchatUsers.push(username);
-      });
-      (profile.platforms || []).forEach((platform) => {
-        if (platform.site !== "chaturbate.com") return;
-        const username = (platform.username || "").trim().toLowerCase();
-        if (username) chaturbateUsers.push(username);
-      });
+  const profiles = await getProfiles();
+  const stripchatUsers = [];
+  const chaturbateUsers = [];
+  profiles.forEach((profile) => {
+    (profile.platforms || []).forEach((platform) => {
+      if (platform.site !== "stripchat.com") return;
+      const username = (platform.username || "").trim().toLowerCase();
+      if (username) stripchatUsers.push(username);
     });
-
-    const stripchatStatus = await fetchStripchatStatuses(stripchatUsers);
-    let changed = 0;
-    const updated = profiles.map((profile) => {
-      const platforms = (profile.platforms || []).map((platform) => {
-        const username = (platform.username || "").toLowerCase();
-        if (platform.site === "chaturbate.com") {
-          if (!online) return platform;
-          const isOnline = online.has(username);
-          if (platform.online === isOnline) return platform;
-          changed += 1;
-          return { ...platform, online: isOnline };
-        }
-        if (platform.site === "stripchat.com") {
-          if (!stripchatStatus.has(username)) return platform;
-          const isOnline = stripchatStatus.get(username);
-          if (platform.online === isOnline) return platform;
-          changed += 1;
-          return { ...platform, online: isOnline };
-        }
-        return platform;
-      });
-      return { ...profile, platforms };
+    (profile.platforms || []).forEach((platform) => {
+      if (platform.site !== "chaturbate.com") return;
+      const username = (platform.username || "").trim().toLowerCase();
+      if (username) chaturbateUsers.push(username);
     });
-
-    chrome.storage.local.set({ [STORAGE_KEY]: updated });
-    console.log("[CamKeeper] Online status updated", {
-      profiles: profiles.length,
-      changed,
-      chaturbateChecked: chaturbateUsers,
-      stripchatChecked: stripchatUsers,
-      stripchatChecks: stripchatUsers.length,
-      chaturbateChecks: online ? online.size : 0,
-      results: summarizeOnlineProfiles(updated, online, stripchatStatus),
-    });
-    updateBadgeCount(countOnlineProfiles(updated));
   });
+
+  const stripchatStatus = await fetchStripchatStatuses(stripchatUsers);
+  let changed = 0;
+  const updated = profiles.map((profile) => {
+    const platforms = (profile.platforms || []).map((platform) => {
+      const username = (platform.username || "").toLowerCase();
+      if (platform.site === "chaturbate.com") {
+        if (!online) return platform;
+        const isOnline = online.has(username);
+        if (platform.online === isOnline) return platform;
+        changed += 1;
+        return { ...platform, online: isOnline };
+      }
+      if (platform.site === "stripchat.com") {
+        if (!stripchatStatus.has(username)) return platform;
+        const isOnline = stripchatStatus.get(username);
+        if (platform.online === isOnline) return platform;
+        changed += 1;
+        return { ...platform, online: isOnline };
+      }
+      return platform;
+    });
+    return { ...profile, platforms };
+  });
+
+  await saveProfiles(updated);
+  console.log("[CamKeeper] Online status updated", {
+    profiles: profiles.length,
+    changed,
+    chaturbateChecked: chaturbateUsers,
+    stripchatChecked: stripchatUsers,
+    stripchatChecks: stripchatUsers.length,
+    chaturbateChecks: online ? online.size : 0,
+    results: summarizeOnlineProfiles(updated, online, stripchatStatus),
+  });
+  updateBadgeCount(countOnlineProfiles(updated));
 }
 
 function openLibrary() {
@@ -525,7 +522,7 @@ function parseUrlSafe(url) {
 }
 
 function recordVisit(tabId) {
-  chrome.tabs.get(tabId, (tab) => {
+  chrome.tabs.get(tabId, async (tab) => {
     pendingTimers.delete(tabId);
     if (!tab || !tab.active || !tab.url) return;
     const parsed = parseUrlSafe(tab.url);
@@ -556,77 +553,65 @@ function recordVisit(tabId) {
     loaded.counted = true;
     console.log("[CamKeeper] Recording visit", { tabId, parsed });
 
-    chrome.storage.local.get(STORAGE_KEY, (res) => {
-      const profiles = Array.isArray(res[STORAGE_KEY]) ? res[STORAGE_KEY] : [];
-      let shouldCount = false;
-      const updated = profiles.map((profile) => {
-        const platforms = (profile.platforms || []).map((platform) => {
-          if (
-            platform.site === parsed.site &&
-            platform.username === parsed.username
-          ) {
-            const lastLeftAt = Number.isFinite(platform.lastLeftAt)
-              ? platform.lastLeftAt
-              : 0;
-            if (Date.now() - lastLeftAt < settings.visitCooldownMs) {
-              console.log("[CamKeeper] Visit skipped (cooldown)", {
-                tabId,
-                site: parsed.site,
-                username: parsed.username,
-              });
-              return platform;
-            }
-            shouldCount = true;
-            const count = Number.isFinite(platform.visitCount)
-              ? platform.visitCount
-              : 0;
-            return {
-              ...platform,
-              visitCount: count + 1,
-              lastVisitedAt: Date.now(),
-            };
-          }
-          return platform;
-        });
-        return { ...profile, platforms };
-      });
-      loaded.recorded = shouldCount;
-      if (!shouldCount) return;
-      chrome.storage.local.set({ [STORAGE_KEY]: updated });
-      console.log("[CamKeeper] Visit saved", {
-        tabId,
-        site: parsed.site,
-        username: parsed.username,
-      });
-    });
-  });
-}
-
-function markLeft(tabId) {
-  const loaded = lastLoaded.get(tabId);
-  if (!loaded || !loaded.recorded) return;
-  chrome.storage.local.get(STORAGE_KEY, (res) => {
-    const profiles = Array.isArray(res[STORAGE_KEY]) ? res[STORAGE_KEY] : [];
+    const profiles = await getProfiles();
+    let shouldCount = false;
     const updated = profiles.map((profile) => {
       const platforms = (profile.platforms || []).map((platform) => {
-        if (
-          platform.site === loaded.site &&
-          platform.username === loaded.username
-        ) {
+        if (platform.site === parsed.site && platform.username === parsed.username) {
+          const lastLeftAt = Number.isFinite(platform.lastLeftAt)
+            ? platform.lastLeftAt
+            : 0;
+          if (Date.now() - lastLeftAt < settings.visitCooldownMs) {
+            console.log("[CamKeeper] Visit skipped (cooldown)", {
+              tabId,
+              site: parsed.site,
+              username: parsed.username,
+            });
+            return platform;
+          }
+          shouldCount = true;
+          const count = Number.isFinite(platform.visitCount) ? platform.visitCount : 0;
           return {
             ...platform,
-            lastLeftAt: Date.now(),
+            visitCount: count + 1,
+            lastVisitedAt: Date.now(),
           };
         }
         return platform;
       });
       return { ...profile, platforms };
     });
-    chrome.storage.local.set({ [STORAGE_KEY]: updated });
-    console.log("[CamKeeper] Left page", {
+    loaded.recorded = shouldCount;
+    if (!shouldCount) return;
+    await saveProfiles(updated);
+    console.log("[CamKeeper] Visit saved", {
       tabId,
-      site: loaded.site,
-      username: loaded.username,
+      site: parsed.site,
+      username: parsed.username,
     });
+  });
+}
+
+async function markLeft(tabId) {
+  const loaded = lastLoaded.get(tabId);
+  if (!loaded || !loaded.recorded) return;
+  const profiles = await getProfiles();
+  const updated = profiles.map((profile) => {
+    const platforms = (profile.platforms || []).map((platform) => {
+      if (platform.site === loaded.site && platform.username === loaded.username) {
+        return {
+          ...platform,
+          lastLeftAt: Date.now(),
+        };
+      }
+      return platform;
+    });
+    return { ...profile, platforms };
+  });
+  await saveProfiles(updated);
+  console.log("[CamKeeper] Left page", {
+    tabId,
+    site: loaded.site,
+    username: loaded.username,
   });
 }

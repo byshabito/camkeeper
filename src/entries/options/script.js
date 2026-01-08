@@ -1,6 +1,5 @@
-import { loadProfiles, sanitizeProfile, saveProfiles } from "../../lib/storage.js";
-
-const SETTINGS_KEY = "camkeeper_settings_v1";
+import { getProfiles, getSettings, saveProfiles, saveSettings } from "../../lib/db.js";
+import { sanitizeProfile } from "../../lib/storage.js";
 const DEFAULT_VISIT_DELAY_MS = 20 * 1000;
 const DEFAULT_VISIT_COOLDOWN_MS = 10 * 60 * 1000;
 const DEFAULT_BACKGROUND_ONLINE_CHECKS_ENABLED = false;
@@ -78,10 +77,7 @@ async function loadSettings() {
   )
     return;
 
-  const data = await new Promise((resolve) => {
-    chrome.storage.local.get(SETTINGS_KEY, (res) => resolve(res));
-  });
-  const settings = data[SETTINGS_KEY] || {};
+  const settings = await getSettings();
   const delayMs = Number.isFinite(settings.visitDelayMs)
     ? settings.visitDelayMs
     : DEFAULT_VISIT_DELAY_MS;
@@ -106,7 +102,7 @@ async function loadSettings() {
   onlineCheckIntervalInput.value = String(onlineCheckIntervalMinutes);
 }
 
-async function saveSettings() {
+async function persistSettings() {
   if (
     !visitDelayInput ||
     !visitCooldownInput ||
@@ -126,9 +122,7 @@ async function saveSettings() {
       onlineCheckInput.checked && backgroundOnlineCheckInput.checked,
     onlineCheckIntervalMinutes: Math.max(3, Number(onlineCheckIntervalInput.value) || 3),
   };
-  await new Promise((resolve) => {
-    chrome.storage.local.set({ [SETTINGS_KEY]: settings }, resolve);
-  });
+  await saveSettings(settings);
 }
 
 function loadMetadata() {
@@ -147,7 +141,7 @@ function loadMetadata() {
 
 if (exportButton) {
   exportButton.addEventListener("click", async () => {
-    const profiles = await loadProfiles();
+    const profiles = await getProfiles();
     const data = JSON.stringify(profiles, null, 2);
     const blob = new Blob([data], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -182,7 +176,7 @@ if (importInput) {
 
 if (visitSaveButton) {
   visitSaveButton.addEventListener("click", async () => {
-    await saveSettings();
+    await persistSettings();
     await loadSettings();
   });
 }

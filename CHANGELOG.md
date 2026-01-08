@@ -1,5 +1,9 @@
 # Changelog
 
+## Next
+
+- Add unified storage API for profiles and settings
+
 ## v0.5.1
 
 - Switch Stripchat status endpoint and parsing

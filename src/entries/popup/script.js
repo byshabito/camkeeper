@@ -4,16 +4,15 @@ import {
   SOCIAL_OPTIONS,
   createId,
   findDuplicateProfile,
-  loadProfiles,
   matchQuery,
   mergeProfiles,
   normalizeText,
   sanitizePlatforms,
   sanitizeProfile,
   sanitizeSocials,
-  saveProfiles,
   splitTags,
 } from "../../lib/storage.js";
+import { getProfiles, saveProfiles } from "../../lib/db.js";
 import { createBulkSelection } from "../../lib/bulkSelection.js";
 import { initConfirmModal } from "../../lib/confirmModal.js";
 import { sortBySelection } from "../../lib/sort.js";
@@ -84,7 +83,7 @@ const selection = createBulkSelection({
   selectButton,
   onMerge: async (ids) => {
     if (ids.length < 2) return;
-    const profiles = await loadProfiles();
+    const profiles = await getProfiles();
     const base = profiles.find((item) => item.id === ids[0]);
     if (!base) return;
     const toMerge = profiles.filter((item) => ids.includes(item.id) && item.id !== base.id);
@@ -96,7 +95,7 @@ const selection = createBulkSelection({
   },
   onDelete: async (ids) => {
     if (!ids.length) return;
-    const profiles = await loadProfiles();
+    const profiles = await getProfiles();
     const names = profiles
       .filter((item) => ids.includes(item.id))
       .map((item) => item.name || "Unnamed");
@@ -410,7 +409,7 @@ async function renameFolder(folderName, nextName) {
   if (!trimmed) return;
   const currentKey = normalizeText(folderName);
   const nextKey = normalizeText(trimmed);
-  const profiles = await loadProfiles();
+  const profiles = await getProfiles();
   const updated = profiles.map((profile) => {
     const folderKey = normalizeText(profile.folder);
     if (!folderKey) return profile;
@@ -428,7 +427,7 @@ async function renameFolder(folderName, nextName) {
 
 async function deleteFolder(folderName) {
   const currentKey = normalizeText(folderName);
-  const profiles = await loadProfiles();
+  const profiles = await getProfiles();
   const updated = profiles.map((profile) => {
     const folderKey = normalizeText(profile.folder);
     if (!folderKey || folderKey !== currentKey) return profile;
@@ -445,7 +444,7 @@ async function deleteFolder(folderName) {
 
 async function renderFolderManager(prefetchedProfiles = null) {
   if (!folderList) return;
-  const profiles = prefetchedProfiles || (await loadProfiles());
+  const profiles = prefetchedProfiles || (await getProfiles());
   const folders = getFolderOptions(profiles);
   folderList.innerHTML = "";
   folderEmpty.classList.toggle("hidden", folders.length > 0);
@@ -708,7 +707,7 @@ function handleAttachChange() {
 }
 
 async function renderList() {
-  const profiles = await loadProfiles();
+  const profiles = await getProfiles();
   updateFolderOptions(profiles);
   const query = normalizeText(searchInput.value);
   const selectedFolder = normalizeText(folderFilter?.value || "");
@@ -743,7 +742,7 @@ async function renderList() {
     pinButton.innerHTML = getPinIconSvg(profile.pinned);
     pinButton.addEventListener("click", async (event) => {
       event.stopPropagation();
-      const profiles = await loadProfiles();
+      const profiles = await getProfiles();
       const updated = profiles.map((item) =>
         item.id === profile.id ? { ...item, pinned: !item.pinned } : item,
       );
@@ -856,7 +855,7 @@ function openEditor(profile, seedPlatforms, source = "list", profiles = []) {
   if (attachProfiles.length) {
     updateFolderOptions(attachProfiles, currentFolder);
   } else {
-    loadProfiles().then((profiles) => updateFolderOptions(profiles, currentFolder));
+    getProfiles().then((profiles) => updateFolderOptions(profiles, currentFolder));
   }
   showFormView(profile ? "Edit bookmark" : "New bookmark");
 }
@@ -866,11 +865,11 @@ async function addFromCurrentTab() {
   const parsed = tab?.url ? parseUrl(tab.url) : null;
   const seedPlatforms = parsed ? [{ site: parsed.site, username: parsed.username }] : [];
   if (!seedPlatforms.length) {
-    openEditor(null, [], "list", await loadProfiles());
+    openEditor(null, [], "list", await getProfiles());
     return;
   }
 
-  const profiles = await loadProfiles();
+  const profiles = await getProfiles();
   const duplicate = findDuplicateProfile(profiles, { platforms: seedPlatforms }, null);
   if (duplicate) {
     openEditor(duplicate, null, "detail");
@@ -981,7 +980,7 @@ cancelButton.addEventListener("click", () => {
 detailBackButton.addEventListener("click", showListView);
 detailPinButton.addEventListener("click", async () => {
   if (!currentProfile) return;
-  const profiles = await loadProfiles();
+  const profiles = await getProfiles();
   const updated = profiles.map((item) =>
     item.id === currentProfile.id ? { ...item, pinned: !item.pinned } : item,
   );
@@ -1001,7 +1000,7 @@ deleteButton.addEventListener("click", async () => {
     messageText: `Delete ${name}? This cannot be undone.`,
   });
   if (!confirmed) return;
-  const updated = (await loadProfiles()).filter((item) => item.id !== editingId);
+  const updated = (await getProfiles()).filter((item) => item.id !== editingId);
   await saveProfiles(updated);
   editingId = null;
   currentProfile = null;
@@ -1052,7 +1051,7 @@ profileForm.addEventListener("submit", async (event) => {
     updatedAt: Date.now(),
   });
 
-  const profiles = await loadProfiles();
+  const profiles = await getProfiles();
   let updated = profiles.slice();
   const selectedAttachId = attachField.classList.contains("hidden")
     ? null
@@ -1096,7 +1095,7 @@ profileForm.addEventListener("submit", async (event) => {
 });
 
 async function showInitialView() {
-  const profiles = await loadProfiles();
+  const profiles = await getProfiles();
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const parsed = tab?.url ? parseUrl(tab.url) : null;
   if (parsed) {
