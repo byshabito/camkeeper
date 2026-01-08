@@ -29,7 +29,7 @@ Download the latest release zip for your browser from GitHub Releases.
 
 ### Chrome / Chromium
 
-1. Extract the Chrome release `.zip`
+1. Extract the `camkeeper-*-chrome.zip`
 2. Open `chrome://extensions`
 3. Enable **Developer mode**
 4. Click **Load unpacked**
@@ -37,14 +37,18 @@ Download the latest release zip for your browser from GitHub Releases.
 
 ### Firefox
 
-1. Drag and drop the Firefox release `.zip` into the browser window
-2. Click **Install**
+1. Open `about:addons`
+2. Navigate to **Extensions**
+3. Click the **gear icon** on the top right
+4. Click on **Install add-on From File...**
+5. Select `camkeeper-*-firefox.zip` file
 
-## Installation (Development)
+## Temporary Installation (Development)
+
+1. Clone this repo
 
 ### Chrome / Chromium
 
-1. Clone this repo
 2. Open `chrome://extensions`
 3. Enable **Developer mode**
 4. Click **Load unpacked**
@@ -52,15 +56,15 @@ Download the latest release zip for your browser from GitHub Releases.
 
 ### Firefox
 
-1. Open `about:debugging#/runtime/this-firefox`
-2. Click **Load Temporary Add-on**
-3. Select `manifest.firefox.json` from this project
+2. Open `about:debugging#/runtime/this-firefox`
+3. Click **Load Temporary Add-on**
+4. Select `manifest.firefox.json` from this project
 
 ## Support
 
 If you like CamKeeper, consider supporting its development.
 
-<a href="https://www.buymeacoffee.com/shabito" target="_blank" align="center">
+<a href="https://www.buymeacoffee.com/shabito" target="_blank">
   <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" >
 </a>
 
