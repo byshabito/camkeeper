@@ -2,6 +2,8 @@ import {
   getProfiles,
   saveProfiles,
   getSettings,
+  getState,
+  setState,
   SETTINGS_KEY,
   STORAGE_KEY,
 } from "../lib/db.js";
@@ -168,18 +170,13 @@ async function clearOnlineStatuses() {
 }
 
 function getLastOnlineCheckAt(stateKey) {
-  return new Promise((resolve) => {
-    chrome.storage.local.get(stateKey, (res) => {
-      const stored = res[stateKey];
-      resolve(Number.isFinite(stored?.lastCheckAt) ? stored.lastCheckAt : 0);
-    });
-  });
+  return getState(stateKey).then((stored) =>
+    Number.isFinite(stored?.lastCheckAt) ? stored.lastCheckAt : 0
+  );
 }
 
 function setLastOnlineCheckAt(stateKey, timestamp) {
-  return new Promise((resolve) => {
-    chrome.storage.local.set({ [stateKey]: { lastCheckAt: timestamp } }, resolve);
-  });
+  return setState(stateKey, { lastCheckAt: timestamp });
 }
 
 async function fetchChaturbateOnlineSet() {

@@ -48,3 +48,17 @@ export async function saveSettings(settings) {
   });
   return settings;
 }
+
+export async function getState(key) {
+  const data = await new Promise((resolve) => {
+    storage.get(key, (res) => resolve(res));
+  });
+  return data[key];
+}
+
+export async function setState(key, value) {
+  await new Promise((resolve) => {
+    storage.set({ [key]: value }, resolve);
+  });
+  return value;
+}
