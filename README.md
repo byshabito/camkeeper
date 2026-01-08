@@ -1,9 +1,8 @@
 <div align="center">
     <img src="/icons/icon-128.png" width="128px" height="128px" align="center"/>
     <h1>CamKeeper</h1>
-    <strong>Cross-site bookmark manager for Chaturbate and Stripchat models (Chrome + Firefox)</strong>
+    <strong>Cross-site bookmark manager for Chaturbate and Stripchat models</strong>
 </div>
-
 
 ## Features
 
@@ -22,7 +21,22 @@
 2. Add or attach the platform username to an existing profile
 3. Use **Select** to merge or delete multiple bookmarks
 
-Popup fallback (Zen or blocked popups): use `Alt+Shift+L` or right-click the icon → **Open CamKeeper Library**.
+## Manual Installation
+
+Download the latest release zip for your browser from GitHub Releases.
+
+### Chrome / Chromium
+
+1. Extract the Chrome release `.zip`
+2. Open `chrome://extensions`
+3. Enable **Developer mode**
+4. Click **Load unpacked**
+5. Select the unzipped folder that contains `manifest.json`
+
+### Firefox
+
+1. Drag and drop the Firefox release `.zip` into the browser window
+2. Click **Install**
 
 ## Installation (Development)
 
@@ -38,15 +52,7 @@ Popup fallback (Zen or blocked popups): use `Alt+Shift+L` or right-click the ico
 
 1. Open `about:debugging#/runtime/this-firefox`
 2. Click **Load Temporary Add-on**
-3. Select `manifest.json` from this project
-
-## Release Builds
-
-Use the build script to create Chrome and Firefox zips with the correct manifests:
-
-```bash
-./scripts/build.sh 0.3.0
-```
+3. Select `manifest.firefox.json` from this project
 
 ## License
 
