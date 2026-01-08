@@ -7,6 +7,8 @@ import {
   SETTINGS_KEY,
   STORAGE_KEY,
 } from "../lib/db.js";
+import { fetchOnlineStatuses as fetchChaturbateStatuses } from "../lib/onlineStatus/chaturbate.js";
+import { fetchOnlineStatuses as fetchStripchatStatuses } from "../lib/onlineStatus/stripchat.js";
 
 const MENU_ID = "camkeeper-open-library";
 const DEFAULT_VISIT_DELAY_MS = 20 * 1000;
@@ -16,9 +18,6 @@ const POPUP_ONLINE_CHECK_COOLDOWN_MINUTES = 1;
 const ONLINE_CHECK_STATE_KEY = "camkeeper_online_check_state_v1";
 const BACKGROUND_ONLINE_CHECK_STATE_KEY = "camkeeper_online_check_state_background_v1";
 const BACKGROUND_ONLINE_CHECK_ALARM = "camkeeper-online-check";
-const CHATURBATE_API_URL =
-  "https://chaturbate.com/affiliates/api/onlinerooms/?format=json&wm=SBlL1";
-const STRIPCHAT_API_BASE = "https://stripchat.com/api/front/v1/broadcasts";
 const pendingTimers = new Map();
 const lastLoaded = new Map();
 let activeTabId = null;
@@ -120,7 +119,7 @@ async function updateBadgeFromStorage() {
   updateBadgeCount(countOnlineProfiles(profiles));
 }
 
-function summarizeOnlineProfiles(profiles, onlineSet, stripchatStatus) {
+function summarizeOnlineProfiles(profiles, chaturbateStatus, stripchatStatus) {
   return profiles.map((profile) => {
     const platforms = profile?.platforms || [];
     const platformResults = platforms
@@ -130,8 +129,8 @@ function summarizeOnlineProfiles(profiles, onlineSet, stripchatStatus) {
       .map((platform) => {
         const username = (platform?.username || "").toLowerCase();
         if (platform.site === "chaturbate.com") {
-          const checked = Boolean(onlineSet && username);
-          const result = checked ? onlineSet.has(username) : null;
+          const checked = Boolean(chaturbateStatus && chaturbateStatus.has(username));
+          const result = checked ? chaturbateStatus.get(username) : null;
           return { site: platform.site, username, checked, result };
         }
         if (platform.site === "stripchat.com") {
@@ -179,116 +178,6 @@ function setLastOnlineCheckAt(stateKey, timestamp) {
   return setState(stateKey, { lastCheckAt: timestamp });
 }
 
-async function fetchChaturbateOnlineSet() {
-  try {
-    const response = await fetch(CHATURBATE_API_URL, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-    });
-    if (!response.ok) {
-      console.warn("[CamKeeper] Online check fetch failed", response.status);
-      return null;
-    }
-    const data = await response.json();
-    const online = new Set();
-    let foundList = false;
-
-    const collect = (list) => {
-      if (!list) return;
-      foundList = true;
-      if (Array.isArray(list)) {
-        list.forEach((item) => {
-          if (typeof item === "string") {
-            online.add(item.toLowerCase());
-            return;
-          }
-          const name =
-            item?.username ||
-            item?.room_name ||
-            item?.roomName ||
-            item?.roomname ||
-            item?.name;
-          if (name) online.add(String(name).toLowerCase());
-        });
-        return;
-      }
-      if (typeof list === "object") {
-        Object.keys(list).forEach((key) => {
-          online.add(key.toLowerCase());
-        });
-      }
-    };
-
-    if (Array.isArray(data)) {
-      collect(data);
-    } else {
-      collect(data?.rooms);
-      collect(data?.roomlist);
-      collect(data?.results);
-      collect(data?.data);
-    }
-
-    if (!foundList) {
-      console.warn("[CamKeeper] Online check response missing list");
-      return null;
-    }
-    console.log("[CamKeeper] Online check fetched", { count: online.size });
-    return online;
-  } catch (error) {
-    console.warn("[CamKeeper] Online check failed", error);
-    return null;
-  }
-}
-
-async function fetchStripchatStatus(username) {
-  const url = `${STRIPCHAT_API_BASE}/${encodeURIComponent(username)}`;
-  try {
-    const response = await fetch(url, {
-      method: "GET",
-      headers: { Accept: "application/json" },
-    });
-    if (!response.ok) {
-      console.warn("[CamKeeper] Stripchat fetch failed", username, response.status);
-      return null;
-    }
-    const data = await response.json();
-    if (typeof data?.item?.isLive === "boolean") {
-      return data.item.isLive;
-    }
-    // Treat missing status info as offline so stale online flags clear.
-    return false;
-  } catch (error) {
-    console.warn("[CamKeeper] Stripchat fetch failed", username, error);
-    return null;
-  }
-}
-
-async function fetchStripchatStatuses(usernames) {
-  const unique = Array.from(new Set(usernames));
-  if (!unique.length) return new Map();
-
-  const concurrency = 5;
-  const results = new Map();
-  let index = 0;
-
-  const worker = async () => {
-    while (index < unique.length) {
-      const current = unique[index];
-      index += 1;
-      const status = await fetchStripchatStatus(current);
-      if (status === null) continue;
-      results.set(current, status);
-    }
-  };
-
-  await Promise.all(Array.from({ length: concurrency }, worker));
-  console.log("[CamKeeper] Stripchat status fetched", {
-    checked: unique.length,
-    results: results.size,
-  });
-  return results;
-}
-
 async function refreshOnlineStatus(options = {}) {
   if (!settings.onlineChecksEnabled) return;
   const requestedMinutes =
@@ -306,7 +195,6 @@ async function refreshOnlineStatus(options = {}) {
     return;
   }
   await setLastOnlineCheckAt(stateKey, now);
-  const online = await fetchChaturbateOnlineSet();
 
   const profiles = await getProfiles();
   const stripchatUsers = [];
@@ -324,14 +212,17 @@ async function refreshOnlineStatus(options = {}) {
     });
   });
 
-  const stripchatStatus = await fetchStripchatStatuses(stripchatUsers);
+  const [chaturbateStatus, stripchatStatus] = await Promise.all([
+    fetchChaturbateStatuses(chaturbateUsers),
+    fetchStripchatStatuses(stripchatUsers),
+  ]);
   let changed = 0;
   const updated = profiles.map((profile) => {
     const platforms = (profile.platforms || []).map((platform) => {
       const username = (platform.username || "").toLowerCase();
       if (platform.site === "chaturbate.com") {
-        if (!online) return platform;
-        const isOnline = online.has(username);
+        if (!chaturbateStatus.has(username)) return platform;
+        const isOnline = chaturbateStatus.get(username);
         if (platform.online === isOnline) return platform;
         changed += 1;
         return { ...platform, online: isOnline };
@@ -355,8 +246,8 @@ async function refreshOnlineStatus(options = {}) {
     chaturbateChecked: chaturbateUsers,
     stripchatChecked: stripchatUsers,
     stripchatChecks: stripchatUsers.length,
-    chaturbateChecks: online ? online.size : 0,
-    results: summarizeOnlineProfiles(updated, online, stripchatStatus),
+    chaturbateChecks: chaturbateStatus.size,
+    results: summarizeOnlineProfiles(updated, chaturbateStatus, stripchatStatus),
   });
   updateBadgeCount(countOnlineProfiles(updated));
 }

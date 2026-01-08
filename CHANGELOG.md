@@ -2,7 +2,8 @@
 
 ## Next
 
-- Add unified storage API for profiles and settings
+- Add storage access behind unified API
+- Add shared online status API modules for Chaturbate and Stripchat
 
 ## v0.5.1
 
