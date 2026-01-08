@@ -22,6 +22,29 @@ if [[ ! -f "${ROOT_DIR}/manifest.firefox.json" ]]; then
   exit 1
 fi
 
+update_manifest_version() {
+  local manifest_path="$1"
+  python - "$manifest_path" "$VERSION" <<'PY'
+import json
+import sys
+
+path = sys.argv[1]
+version = sys.argv[2]
+
+with open(path, "r", encoding="utf-8") as f:
+    data = json.load(f)
+
+data["version"] = version
+
+with open(path, "w", encoding="utf-8") as f:
+    json.dump(data, f, indent=2, ensure_ascii=True)
+    f.write("\n")
+PY
+}
+
+update_manifest_version "${ROOT_DIR}/manifest.json"
+update_manifest_version "${ROOT_DIR}/manifest.firefox.json"
+
 mkdir -p "${DIST_DIR}"
 rm -rf "${TMP_CHROME}" "${TMP_FIREFOX}"
 mkdir -p "${TMP_CHROME}" "${TMP_FIREFOX}"
