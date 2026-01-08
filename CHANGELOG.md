@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.3
+
+- Fix firefox manifest version
+
 ## v0.2.2
 
 - Pin bookmarks and prioritize pinned items in sorting
