@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.4.2
+
+- Preserve pinned and online stats when editing bookmarks
+- Add BMC sponsor link
+
 ## v0.4.1
 
 - Run online checks on popup open with cooldown (no background polling)
