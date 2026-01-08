@@ -1,6 +1,6 @@
-# CamKeeper
-
 <img src="/src/assets/camkeeper-logo.png" width="512px" height="512px" align="right"/>
+
+# CamKeeper
 
 Cross-site bookmark manager for Chaturbate and Stripchat models (Chrome + Firefox).
 
