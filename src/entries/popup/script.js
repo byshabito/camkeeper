@@ -903,6 +903,27 @@ function collectSocials() {
   });
 }
 
+function mergePlatformStats(existingPlatforms, updatedPlatforms) {
+  const existingMap = new Map(
+    (existingPlatforms || []).map((platform) => [
+      `${normalizeText(platform.site)}:${normalizeText(platform.username)}`,
+      platform,
+    ]),
+  );
+  return (updatedPlatforms || []).map((platform) => {
+    const key = `${normalizeText(platform.site)}:${normalizeText(platform.username)}`;
+    const existing = existingMap.get(key);
+    if (!existing) return platform;
+    return {
+      ...platform,
+      online: Boolean(existing.online),
+      visitCount: Number.isFinite(existing.visitCount) ? existing.visitCount : 0,
+      lastVisitedAt: Number.isFinite(existing.lastVisitedAt) ? existing.lastVisitedAt : null,
+      lastLeftAt: Number.isFinite(existing.lastLeftAt) ? existing.lastLeftAt : null,
+    };
+  });
+}
+
 function showError(message) {
   formError.textContent = message;
   formError.classList.remove("hidden");
@@ -1040,10 +1061,13 @@ profileForm.addEventListener("submit", async (event) => {
   if (editingId) {
     updated = updated.map((item) => {
       if (item.id !== editingId) return item;
+      const mergedPlatforms = mergePlatformStats(item.platforms || [], profile.platforms || []);
       return sanitizeProfile({
         ...item,
         ...profile,
         id: item.id,
+        platforms: mergedPlatforms,
+        pinned: item.pinned,
         createdAt: item.createdAt,
         updatedAt: Date.now(),
       });
