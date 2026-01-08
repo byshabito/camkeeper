@@ -10,7 +10,7 @@ const BACKGROUND_ONLINE_CHECK_STATE_KEY = "camkeeper_online_check_state_backgrou
 const BACKGROUND_ONLINE_CHECK_ALARM = "camkeeper-online-check";
 const CHATURBATE_API_URL =
   "https://chaturbate.com/affiliates/api/onlinerooms/?format=json&wm=SBlL1";
-const STRIPCHAT_API_BASE = "https://stripchat.com/api/front/v2/models/username";
+const STRIPCHAT_API_BASE = "https://stripchat.com/api/front/v1/broadcasts";
 const pendingTimers = new Map();
 const lastLoaded = new Map();
 let activeTabId = null;
@@ -245,7 +245,7 @@ async function fetchChaturbateOnlineSet() {
 }
 
 async function fetchStripchatStatus(username) {
-  const url = `${STRIPCHAT_API_BASE}/${encodeURIComponent(username)}/cam`;
+  const url = `${STRIPCHAT_API_BASE}/${encodeURIComponent(username)}`;
   try {
     const response = await fetch(url, {
       method: "GET",
@@ -256,11 +256,8 @@ async function fetchStripchatStatus(username) {
       return null;
     }
     const data = await response.json();
-    if (typeof data?.cam?.isCamAvailable === "boolean") {
-      return data.cam.isCamAvailable;
-    }
-    if (typeof data?.user?.isLive === "boolean") {
-      return data.user.isLive;
+    if (typeof data?.item?.isLive === "boolean") {
+      return data.item.isLive;
     }
     // Treat missing status info as offline so stale online flags clear.
     return false;
