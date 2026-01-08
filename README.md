@@ -1,4 +1,8 @@
-<img src="/src/assets/camkeeper-logo.png" width="512px" height="512px" align="right"/>
+
+
+<div align="center">
+    <img src="/src/assets/camkeeper-logo.png" width="512px" height="512px" align="center"/>
+</div>
 
 # CamKeeper
 
