@@ -1,6 +1,6 @@
 # Changelog
 
-## Next
+## v0.5.0
 
 - Add extension metadata to settings page
 - Add background online check toggle and badge count
