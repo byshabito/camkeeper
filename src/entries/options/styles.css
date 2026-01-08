@@ -72,6 +72,9 @@ body {
 
 .toggle input {
   width: auto;
+  height: 18px;
+  width: 36px;
+  accent-color: var(--accent);
 }
 
 textarea {

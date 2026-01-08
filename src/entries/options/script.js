@@ -3,6 +3,7 @@ import { loadProfiles, sanitizeProfile, saveProfiles } from "../../lib/storage.j
 const SETTINGS_KEY = "camkeeper_settings_v1";
 const DEFAULT_VISIT_DELAY_MS = 20 * 1000;
 const DEFAULT_VISIT_COOLDOWN_MS = 10 * 60 * 1000;
+const DEFAULT_BACKGROUND_ONLINE_CHECKS_ENABLED = false;
 const BUILD_COMMIT = "cc8f9b8";
 const RELEASE_TIMESTAMP = "2026-01-08T15:56:26+01:00";
 const DEVELOPER_NAME = "Shabito";
@@ -15,6 +16,7 @@ const importInput = document.getElementById("import-input");
 const visitDelayInput = document.getElementById("visit-delay");
 const visitCooldownInput = document.getElementById("visit-cooldown");
 const onlineCheckInput = document.getElementById("online-check");
+const backgroundOnlineCheckInput = document.getElementById("background-online-check");
 const onlineCheckIntervalInput = document.getElementById("online-check-interval");
 const visitSaveButton = document.getElementById("visit-save");
 const metaVersion = document.getElementById("meta-version");
@@ -48,6 +50,15 @@ function formatReleaseTimestamp(timestamp) {
   )} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}${suffix}`;
 }
 
+function syncOnlineToggleState() {
+  if (!onlineCheckInput || !backgroundOnlineCheckInput) return;
+  const enabled = onlineCheckInput.checked;
+  backgroundOnlineCheckInput.disabled = !enabled;
+  if (!enabled) {
+    backgroundOnlineCheckInput.checked = false;
+  }
+}
+
 function setDefaultInputs() {
   if (visitDelayInput && !visitDelayInput.value) {
     visitDelayInput.value = String(secondsFromMs(DEFAULT_VISIT_DELAY_MS));
@@ -58,7 +69,13 @@ function setDefaultInputs() {
 }
 
 async function loadSettings() {
-  if (!visitDelayInput || !visitCooldownInput || !onlineCheckInput || !onlineCheckIntervalInput)
+  if (
+    !visitDelayInput ||
+    !visitCooldownInput ||
+    !onlineCheckInput ||
+    !backgroundOnlineCheckInput ||
+    !onlineCheckIntervalInput
+  )
     return;
 
   const data = await new Promise((resolve) => {
@@ -73,6 +90,10 @@ async function loadSettings() {
     : DEFAULT_VISIT_COOLDOWN_MS;
   const onlineChecksEnabled =
     typeof settings.onlineChecksEnabled === "boolean" ? settings.onlineChecksEnabled : true;
+  const backgroundOnlineChecksEnabled =
+    typeof settings.backgroundOnlineChecksEnabled === "boolean"
+      ? settings.backgroundOnlineChecksEnabled
+      : DEFAULT_BACKGROUND_ONLINE_CHECKS_ENABLED;
   const onlineCheckIntervalMinutes = Number.isFinite(settings.onlineCheckIntervalMinutes)
     ? settings.onlineCheckIntervalMinutes
     : 3;
@@ -80,11 +101,19 @@ async function loadSettings() {
   visitDelayInput.value = String(secondsFromMs(delayMs));
   visitCooldownInput.value = String(minutesFromMs(cooldownMs));
   onlineCheckInput.checked = onlineChecksEnabled;
+  backgroundOnlineCheckInput.checked = backgroundOnlineChecksEnabled;
+  syncOnlineToggleState();
   onlineCheckIntervalInput.value = String(onlineCheckIntervalMinutes);
 }
 
 async function saveSettings() {
-  if (!visitDelayInput || !visitCooldownInput || !onlineCheckInput || !onlineCheckIntervalInput)
+  if (
+    !visitDelayInput ||
+    !visitCooldownInput ||
+    !onlineCheckInput ||
+    !backgroundOnlineCheckInput ||
+    !onlineCheckIntervalInput
+  )
     return;
 
   const delaySeconds = Math.max(5, Number(visitDelayInput.value) || 20);
@@ -93,6 +122,8 @@ async function saveSettings() {
     visitDelayMs: delaySeconds * 1000,
     visitCooldownMs: cooldownMinutes * 60 * 1000,
     onlineChecksEnabled: onlineCheckInput.checked,
+    backgroundOnlineChecksEnabled:
+      onlineCheckInput.checked && backgroundOnlineCheckInput.checked,
     onlineCheckIntervalMinutes: Math.max(3, Number(onlineCheckIntervalInput.value) || 3),
   };
   await new Promise((resolve) => {
@@ -153,6 +184,12 @@ if (visitSaveButton) {
   visitSaveButton.addEventListener("click", async () => {
     await saveSettings();
     await loadSettings();
+  });
+}
+
+if (onlineCheckInput) {
+  onlineCheckInput.addEventListener("change", () => {
+    syncOnlineToggleState();
   });
 }
 

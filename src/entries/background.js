@@ -5,6 +5,7 @@ const DEFAULT_VISIT_DELAY_MS = 20 * 1000;
 const DEFAULT_VISIT_COOLDOWN_MS = 10 * 60 * 1000;
 const DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES = 3;
 const ONLINE_CHECK_STATE_KEY = "camkeeper_online_check_state_v1";
+const BACKGROUND_ONLINE_CHECK_ALARM = "camkeeper-online-check";
 const CHATURBATE_API_URL =
   "https://chaturbate.com/affiliates/api/onlinerooms/?format=json&wm=SBlL1";
 const STRIPCHAT_API_BASE = "https://stripchat.com/api/front/v2/models/username";
@@ -15,9 +16,11 @@ let settings = {
   visitDelayMs: DEFAULT_VISIT_DELAY_MS,
   visitCooldownMs: DEFAULT_VISIT_COOLDOWN_MS,
   onlineChecksEnabled: true,
+  backgroundOnlineChecksEnabled: false,
   onlineCheckIntervalMinutes: DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES,
 };
 let lastOnlineChecksEnabled = true;
+let lastBackgroundChecksEnabled = false;
 
 function loadSettings() {
   chrome.storage.local.get(SETTINGS_KEY, (res) => {
@@ -32,16 +35,23 @@ function loadSettings() {
         ? data.visitCooldownMs
         : DEFAULT_VISIT_COOLDOWN_MS,
       onlineChecksEnabled: nextOnlineChecksEnabled,
+      backgroundOnlineChecksEnabled:
+        typeof data.backgroundOnlineChecksEnabled === "boolean"
+          ? data.backgroundOnlineChecksEnabled
+          : false,
       onlineCheckIntervalMinutes: Number.isFinite(data.onlineCheckIntervalMinutes)
         ? Math.max(3, data.onlineCheckIntervalMinutes)
         : DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES,
     };
     if (!settings.onlineChecksEnabled) {
       clearOnlineStatuses();
+      settings.backgroundOnlineChecksEnabled = false;
     } else if (!lastOnlineChecksEnabled && settings.onlineChecksEnabled) {
       refreshOnlineStatus();
     }
     lastOnlineChecksEnabled = settings.onlineChecksEnabled;
+
+    syncBackgroundOnlineChecks();
   });
 }
 
@@ -53,6 +63,57 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 loadSettings();
+
+function syncBackgroundOnlineChecks() {
+  if (!settings.onlineChecksEnabled || !settings.backgroundOnlineChecksEnabled) {
+    chrome.alarms.clear(BACKGROUND_ONLINE_CHECK_ALARM);
+    setBadgeCount(0);
+    lastBackgroundChecksEnabled = false;
+    return;
+  }
+
+  const interval = Math.max(3, settings.onlineCheckIntervalMinutes);
+  chrome.alarms.create(BACKGROUND_ONLINE_CHECK_ALARM, { periodInMinutes: interval });
+  if (!lastBackgroundChecksEnabled) {
+    refreshOnlineStatus();
+  }
+  lastBackgroundChecksEnabled = true;
+  updateBadgeFromStorage();
+}
+
+function countOnlineProfiles(profiles) {
+  return profiles.reduce((count, profile) => {
+    const platforms = profile?.platforms || [];
+    const hasOnline = platforms.some((platform) => Boolean(platform?.online));
+    return hasOnline ? count + 1 : count;
+  }, 0);
+}
+
+function setBadgeCount(count) {
+  const text = count > 0 ? (count > 99 ? "99+" : String(count)) : "";
+  if (chrome.action?.setBadgeText) {
+    chrome.action.setBadgeText({ text });
+    chrome.action.setBadgeBackgroundColor({ color: "#2ecc71" });
+    return;
+  }
+  if (chrome.browserAction?.setBadgeText) {
+    chrome.browserAction.setBadgeText({ text });
+    chrome.browserAction.setBadgeBackgroundColor({ color: "#2ecc71" });
+  }
+}
+
+function updateBadgeCount(count) {
+  if (!settings.onlineChecksEnabled || !settings.backgroundOnlineChecksEnabled) return;
+  setBadgeCount(count);
+}
+
+function updateBadgeFromStorage() {
+  if (!settings.onlineChecksEnabled || !settings.backgroundOnlineChecksEnabled) return;
+  chrome.storage.local.get(STORAGE_KEY, (res) => {
+    const profiles = Array.isArray(res[STORAGE_KEY]) ? res[STORAGE_KEY] : [];
+    updateBadgeCount(countOnlineProfiles(profiles));
+  });
+}
 
 function clearOnlineStatuses() {
   chrome.storage.local.get(STORAGE_KEY, (res) => {
@@ -69,6 +130,7 @@ function clearOnlineStatuses() {
     if (!changed) return;
     chrome.storage.local.set({ [STORAGE_KEY]: updated });
     console.log("[CamKeeper] Online status cleared", { changed });
+    updateBadgeCount(0);
   });
 }
 
@@ -250,6 +312,7 @@ async function refreshOnlineStatus() {
       stripchatChecks: stripchatUsers.length,
       chaturbateChecks: online ? online.size : 0,
     });
+    updateBadgeCount(countOnlineProfiles(updated));
   });
 }
 
@@ -288,6 +351,20 @@ chrome.commands.onCommand.addListener((command) => {
 chrome.runtime.onMessage.addListener((message) => {
   if (message?.type === "online-check") {
     refreshOnlineStatus();
+  }
+});
+
+chrome.alarms.onAlarm.addListener((alarm) => {
+  if (alarm?.name === BACKGROUND_ONLINE_CHECK_ALARM) {
+    refreshOnlineStatus();
+  }
+});
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "local") return;
+  if (!settings.backgroundOnlineChecksEnabled) return;
+  if (changes[STORAGE_KEY]) {
+    updateBadgeFromStorage();
   }
 });
 

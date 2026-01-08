@@ -3,6 +3,7 @@
 ## Next
 
 - Add extension metadata to settings page
+- Add background online check toggle and badge count
 
 ## v0.4.2
 
