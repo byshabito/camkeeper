@@ -1,5 +1,9 @@
 # Changelog
 
+## Next
+
+- Add extension metadata to settings page
+
 ## v0.4.2
 
 - Preserve pinned and online stats when editing bookmarks

@@ -130,6 +130,31 @@ textarea {
   font-size: 18px;
 }
 
+.meta-grid {
+  display: grid;
+  grid-template-columns: minmax(120px, 160px) 1fr;
+  gap: 10px 16px;
+  align-items: center;
+}
+
+.meta-item {
+  display: contents;
+}
+
+
+
+.meta-item a,
+.meta-item span {
+  color: var(--text);
+  font-size: 13px;
+  word-break: break-word;
+}
+
+.meta-label {
+  color: var(--muted);
+  font-size: 13px;
+}
+
 .search input {
   box-shadow: var(--shadow);
 }

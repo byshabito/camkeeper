@@ -3,6 +3,12 @@ import { loadProfiles, sanitizeProfile, saveProfiles } from "../../lib/storage.j
 const SETTINGS_KEY = "camkeeper_settings_v1";
 const DEFAULT_VISIT_DELAY_MS = 20 * 1000;
 const DEFAULT_VISIT_COOLDOWN_MS = 10 * 60 * 1000;
+const BUILD_COMMIT = "cc8f9b8";
+const RELEASE_TIMESTAMP = "2026-01-08T15:56:26+01:00";
+const DEVELOPER_NAME = "Shabito";
+const DEVELOPER_URL = "https://github.com/byshabito";
+const SOURCE_URL = "https://github.com/byshabito/camkeeper";
+const LICENSE_URL = "https://github.com/byshabito/camkeeper/blob/main/LICENSE";
 
 const exportButton = document.getElementById("export-button");
 const importInput = document.getElementById("import-input");
@@ -11,6 +17,12 @@ const visitCooldownInput = document.getElementById("visit-cooldown");
 const onlineCheckInput = document.getElementById("online-check");
 const onlineCheckIntervalInput = document.getElementById("online-check-interval");
 const visitSaveButton = document.getElementById("visit-save");
+const metaVersion = document.getElementById("meta-version");
+const metaBuild = document.getElementById("meta-build");
+const metaRelease = document.getElementById("meta-release");
+const metaDeveloper = document.getElementById("meta-developer");
+const metaSource = document.getElementById("meta-source");
+const metaLicense = document.getElementById("meta-license");
 
 function secondsFromMs(ms) {
   return Math.round(ms / 1000);
@@ -18,6 +30,22 @@ function secondsFromMs(ms) {
 
 function minutesFromMs(ms) {
   return Math.round(ms / 60000);
+}
+
+function formatReleaseTimestamp(timestamp) {
+  const date = new Date(timestamp);
+  if (Number.isNaN(date.getTime())) return timestamp;
+  const pad = (value) => String(value).padStart(2, "0");
+  const timeZoneName = new Intl.DateTimeFormat(undefined, {
+    timeZone: "UTC",
+    timeZoneName: "short",
+  })
+    .formatToParts(date)
+    .find((part) => part.type === "timeZoneName")?.value;
+  const suffix = timeZoneName ? ` ${timeZoneName}` : "";
+  return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(
+    date.getUTCDate()
+  )} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}${suffix}`;
 }
 
 function setDefaultInputs() {
@@ -72,6 +100,20 @@ async function saveSettings() {
   });
 }
 
+function loadMetadata() {
+  if (!metaVersion) return;
+  const manifest = chrome.runtime.getManifest();
+  metaVersion.textContent = manifest.version;
+  metaBuild.textContent = BUILD_COMMIT;
+  metaRelease.textContent = formatReleaseTimestamp(RELEASE_TIMESTAMP);
+  metaDeveloper.textContent = DEVELOPER_NAME;
+  metaDeveloper.href = DEVELOPER_URL;
+  metaSource.textContent = SOURCE_URL;
+  metaSource.href = SOURCE_URL;
+  metaLicense.textContent = "MIT License";
+  metaLicense.href = LICENSE_URL;
+}
+
 if (exportButton) {
   exportButton.addEventListener("click", async () => {
     const profiles = await loadProfiles();
@@ -117,4 +159,5 @@ if (visitSaveButton) {
 document.addEventListener("DOMContentLoaded", () => {
   setDefaultInputs();
   loadSettings();
+  loadMetadata();
 });

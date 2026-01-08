@@ -11,10 +11,8 @@
     <div>
       <div class="eyebrow">CamKeeper</div>
       <h1>Settings</h1>
-      <p>Configure visit tracking and manage bookmarks.</p>
     </div>
     <div class="donation">
-      <p>If you enjoy CamKeeper, consider supporting it 💛</p>
       <a href="https://www.buymeacoffee.com/shabito" target="_blank" rel="noopener noreferrer">
         <img
           src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
@@ -22,6 +20,7 @@
           class="donation-badge"
         />
       </a>
+      <p>If you enjoy CamKeeper, consider supporting it 💛</p>
     </div>
   </header>
 
@@ -80,6 +79,36 @@
           Import
           <input id="import-input" type="file" accept="application/json" />
         </label>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel meta-panel">
+    <header class="panel-header">
+      <h2>Extension info</h2>
+    </header>
+    <div class="meta-grid">
+      <div class="meta-item">
+        <span class="meta-label">Version (Build)</span>
+        <span>
+            <span id="meta-version"></span> (<span id="meta-build"></span>)
+        </span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Published at</span>
+        <span id="meta-release"></span>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Developer</span>
+        <a id="meta-developer" href="#" target="_blank" rel="noopener noreferrer"></a>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">Source code</span>
+        <a id="meta-source" href="#" target="_blank" rel="noopener noreferrer"></a>
+      </div>
+      <div class="meta-item">
+        <span class="meta-label">License</span>
+        <a id="meta-license" href="#" target="_blank" rel="noopener noreferrer"></a>
       </div>
     </div>
   </section>
