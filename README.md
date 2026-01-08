@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="/icons/icon-128.png" width="512px" height="512px" align="center"/>
+    <img src="/icons/icon-128.png" width="128px" height="128px" align="center"/>
     <h1>CamKeeper</h1>
     <strong>Cross-site bookmark manager for Chaturbate and Stripchat models (Chrome + Firefox)</strong>
 </div>
