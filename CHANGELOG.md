@@ -1,6 +1,6 @@
 # Changelog
 
-## v0.5.2
+## v0.6.0
 
 - Centralize storage access behind the unified API
 - Add shared online status API modules for Chaturbate and Stripchat
