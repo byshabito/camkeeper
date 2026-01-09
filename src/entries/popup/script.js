@@ -26,6 +26,7 @@ const searchSort = document.querySelector(".search-sort");
 const sortSelect = document.getElementById("sort-select");
 const emptyState = document.getElementById("empty-state");
 const folderView = document.getElementById("folder-view");
+const settingsView = document.getElementById("settings-view");
 const folderBackButton = document.getElementById("folder-back");
 const folderList = document.getElementById("folder-list");
 const folderEmpty = document.getElementById("folder-empty");
@@ -66,11 +67,19 @@ const bulkMerge = document.getElementById("bulk-merge");
 const bulkDelete = document.getElementById("bulk-delete");
 const bulkCancel = document.getElementById("bulk-cancel");
 const folderFilter = document.getElementById("folder-filter");
+const settingsToggle = document.getElementById("settings-toggle");
+const settingsIcon = settingsToggle?.querySelector(".settings-icon") || null;
+const overviewIcon = settingsToggle?.querySelector(".overview-icon") || null;
 const showConfirm = initConfirmModal();
+
+const urlParams = new URLSearchParams(window.location.search);
+const initialTab = urlParams.get("tab");
+const isEmbedded = urlParams.get("embed") === "1";
 
 let editingId = null;
 let currentProfile = null;
 let lastView = "list";
+let lastNonSettingsView = "list";
 let attachTargetId = null;
 let attachProfiles = [];
 let attachSeedCams = [];
@@ -118,10 +127,19 @@ function showListView() {
   formView.classList.add("hidden");
   detailView.classList.add("hidden");
   folderView.classList.add("hidden");
+  settingsView.classList.add("hidden");
+  if (settingsToggle && !isEmbedded) settingsToggle.classList.remove("hidden");
+  if (settingsIcon) settingsIcon.classList.remove("hidden");
+  if (overviewIcon) overviewIcon.classList.add("hidden");
+  if (settingsToggle) {
+    settingsToggle.setAttribute("aria-label", "Settings page");
+    settingsToggle.setAttribute("title", "Settings page");
+  }
   formError.classList.add("hidden");
   selection.setSelectMode(false);
   renderList();
   lastView = "list";
+  lastNonSettingsView = "list";
 }
 
 function showFormView(title) {
@@ -129,7 +147,10 @@ function showFormView(title) {
   listView.classList.add("hidden");
   detailView.classList.add("hidden");
   folderView.classList.add("hidden");
+  settingsView.classList.add("hidden");
   formView.classList.remove("hidden");
+  if (settingsToggle) settingsToggle.classList.add("hidden");
+  lastNonSettingsView = "form";
   deleteButton.classList.toggle("hidden", !editingId);
   if (editingId) {
     attachField.classList.add("hidden");
@@ -246,18 +267,70 @@ function showDetailView(profile) {
   listView.classList.add("hidden");
   formView.classList.add("hidden");
   folderView.classList.add("hidden");
+  settingsView.classList.add("hidden");
   detailView.classList.remove("hidden");
   lastView = "detail";
+  if (settingsToggle) settingsToggle.classList.add("hidden");
+  lastNonSettingsView = "detail";
 }
 
 function showFolderView() {
   listView.classList.add("hidden");
   formView.classList.add("hidden");
   detailView.classList.add("hidden");
+  settingsView.classList.add("hidden");
   folderView.classList.remove("hidden");
+  if (settingsToggle && !isEmbedded) settingsToggle.classList.remove("hidden");
+  if (settingsIcon) settingsIcon.classList.remove("hidden");
+  if (overviewIcon) overviewIcon.classList.add("hidden");
+  if (settingsToggle) {
+    settingsToggle.setAttribute("aria-label", "Settings page");
+    settingsToggle.setAttribute("title", "Settings page");
+  }
   selection.setSelectMode(false);
   renderFolderManager();
   lastView = "list";
+  lastNonSettingsView = "folder";
+}
+
+function showSettingsView() {
+  listView.classList.add("hidden");
+  formView.classList.add("hidden");
+  detailView.classList.add("hidden");
+  folderView.classList.add("hidden");
+  settingsView.classList.remove("hidden");
+  selection.setSelectMode(false);
+  lastView = "settings";
+  if (settingsToggle) settingsToggle.classList.toggle("hidden", isEmbedded);
+  if (settingsIcon) settingsIcon.classList.add("hidden");
+  if (overviewIcon) overviewIcon.classList.remove("hidden");
+  if (settingsToggle) {
+    settingsToggle.setAttribute("aria-label", "Overview");
+    settingsToggle.setAttribute("title", "Overview");
+  }
+  if (isEmbedded) document.body.classList.add("embedded");
+}
+
+function toggleSettingsView() {
+  if (!settingsView.classList.contains("hidden")) {
+    switch (lastNonSettingsView) {
+      case "folder":
+        showFolderView();
+        return;
+      case "detail":
+        if (currentProfile) showDetailView(currentProfile);
+        else showListView();
+        return;
+      case "form":
+        if (currentProfile || editingId) showFormView(formTitle.textContent || "Edit bookmark");
+        else showListView();
+        return;
+      default:
+        showListView();
+        return;
+    }
+  }
+  showSettingsView();
 }
 
 function buildSocialUrl(social) {
@@ -1032,6 +1105,9 @@ if (folderManagerButton) {
 if (folderBackButton) {
   folderBackButton.addEventListener("click", showListView);
 }
+if (settingsToggle) {
+  settingsToggle.addEventListener("click", toggleSettingsView);
+}
 cancelButton.addEventListener("click", () => {
   if (lastView === "detail" && currentProfile) {
     showDetailView(currentProfile);
@@ -1204,6 +1280,10 @@ async function showInitialView() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await Promise.all([loadSocialIcons(), loadPlatformIcons()]);
+  if (initialTab === "settings" || isEmbedded) {
+    showSettingsView();
+    return;
+  }
   chrome.runtime.sendMessage({ type: "online-check" });
   showInitialView();
 });

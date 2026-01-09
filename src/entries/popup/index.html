@@ -5,6 +5,7 @@
   <title>CamKeeper</title>
   <link rel="stylesheet" href="styles.css" />
   <script type="module" src="script.js" defer></script>
+  <script type="module" src="../options/script.js" defer></script>
 </head>
 <body>
   <div id="list-view" class="view">
@@ -29,6 +30,18 @@
       </div>
     </div>
     <div class="list-toolbar">
+        <div class="filter-row">
+          <button
+            id="folder-manager-button"
+            class="plain-button icon-button"
+            type="button"
+            aria-label="Manage folders"
+            title="Manage folders"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="lucide lucide-folder-icon lucide-folder"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+          </button>
+          <select id="folder-filter"></select>
+        </div>
       <div class="search-sort">
         <button class="plain-button icon-button search-toggle" type="button" aria-label="Search">
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
@@ -43,18 +56,7 @@
           </select>
         </div>
       </div>
-      <div class="filter-row">
-        <button
-          id="folder-manager-button"
-          class="plain-button icon-button"
-          type="button"
-          aria-label="Manage folders"
-          title="Manage folders"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="lucide lucide-folder-icon lucide-folder"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
-        </button>
-        <select id="folder-filter"></select>
-      </div>
+      
     </div>
     <ul id="profile-list" class="list"></ul>
     <div id="empty-state" class="empty hidden">No bookmarks yet.</div>
@@ -199,6 +201,122 @@
       </div>
     </form>
   </div>
+
+  <div id="settings-view" class="view hidden settings-view edge-to-edge">
+    <div class="settings-scope">
+      <header class="page-header">
+        <div>
+          <div class="eyebrow">CamKeeper</div>
+          <h1>Settings</h1>
+        </div>
+        <div class="donation">
+          <a href="https://www.buymeacoffee.com/shabito" target="_blank" rel="noopener noreferrer">
+            <img
+              src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png"
+              alt="Buy Me A Coffee"
+              class="donation-badge"
+            />
+          </a>
+          <p>If you enjoy CamKeeper, consider supporting it 💛</p>
+        </div>
+      </header>
+
+      <section class="panel settings-panel">
+        <header class="panel-header">
+          <h2>Extension settings</h2>
+          <button id="visit-save" class="primary">Save</button>
+        </header>
+        <div class="export no-divider">
+          <div>
+            <h3>Online status checks</h3>
+            <p>Enable live status checks in CamKeeper.</p>
+          </div>
+          <div class="actions">
+            <label class="toggle">
+              <input id="online-check" type="checkbox" />
+            </label>
+          </div>
+        </div>
+        <div class="export">
+          <div>
+            <h3>Online badge count</h3>
+            <p>Enable background online checks and show the online count in badge.</p>
+          </div>
+          <div class="actions">
+            <label class="toggle">
+              <input id="background-online-check" type="checkbox" />
+            </label>
+          </div>
+        </div>
+        <div class="export">
+          <div>
+            <h3>Background online check interval (minutes)</h3>
+            <p>Minimum 3 minutes between background checks.</p>
+          </div>
+          <div class="actions">
+            <input id="online-check-interval" type="number" min="3" step="1" />
+          </div>
+        </div>
+        <div class="export">
+          <div>
+            <h3>Debug logs</h3>
+            <p>Enable verbose background logs for troubleshooting.</p>
+          </div>
+          <div class="actions">
+            <label class="toggle">
+              <input id="debug-logs" type="checkbox" />
+            </label>
+          </div>
+        </div>
+        <div class="export">
+          <div>
+            <h3>Backup</h3>
+              <p>Export or import your bookmarks as JSON.</p>
+          </div>
+          <div class="actions">
+            <button id="export-button" class="ghost">Export</button>
+            <label class="file-button ghost">
+              Import
+              <input id="import-input" type="file" accept="application/json" />
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel meta-panel">
+        <header class="panel-header">
+          <h2>Extension info</h2>
+        </header>
+        <div class="meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">Version</span>
+            <span id="meta-version"></span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Build time</span>
+            <span id="meta-release"></span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Developer</span>
+            <a id="meta-developer" href="#" target="_blank" rel="noopener noreferrer"></a>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Source code</span>
+            <a id="meta-source" href="#" target="_blank" rel="noopener noreferrer"></a>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">License</span>
+            <a id="meta-license" href="#" target="_blank" rel="noopener noreferrer"></a>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <button id="settings-toggle" class="settings-toggle" type="button" aria-label="Settings page" title="Settings page">
+    <svg class="settings-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
+    <svg class="overview-icon hidden" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m12 8-4 4 4 4"/><path d="M16 12H8"/></svg>
+  </button>
 
   <div id="confirm-modal" class="modal hidden">
     <div class="modal-content">

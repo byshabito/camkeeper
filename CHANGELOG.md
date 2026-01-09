@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.7.0
+
+- Add settings view to the popup with options page embedding it
+
 ## v0.6.4
 
 - Rename platform references to cam
