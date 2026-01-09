@@ -1,9 +1,12 @@
-import { getProfiles, saveProfiles } from "../../lib/db.js";
+import { getProfiles, saveProfiles, getState, setState } from "../../lib/db.js";
+import { ACTIVE_VIEW_SESSION_STATE_KEY } from "../../config/background.js";
 
 export function initVisitTracking(state, logDebug) {
   let activeSession = null;
   let windowFocused = true;
   let focusedWindowId = null;
+  let sessionLoaded = false;
+  let sessionLoadPromise = null;
 
   function parseUrlSafe(url) {
     try {
@@ -29,6 +32,35 @@ export function initVisitTracking(state, logDebug) {
     } catch (error) {
       return null;
     }
+  }
+
+  function coerceSession(stored) {
+    if (!stored || typeof stored !== "object") return null;
+    if (!Number.isFinite(stored.startedAt)) return null;
+    if (!Number.isFinite(stored.tabId)) return null;
+    if (typeof stored.site !== "string" || typeof stored.username !== "string") return null;
+    return stored;
+  }
+
+  async function loadSessionFromStorage() {
+    if (sessionLoaded) return activeSession;
+    if (!sessionLoadPromise) {
+      sessionLoadPromise = getState(ACTIVE_VIEW_SESSION_STATE_KEY).then((stored) => {
+        activeSession = coerceSession(stored);
+        sessionLoaded = true;
+        return activeSession;
+      });
+    }
+    return sessionLoadPromise;
+  }
+
+  async function persistSession(session) {
+    if (!session) return;
+    await setState(ACTIVE_VIEW_SESSION_STATE_KEY, session);
+  }
+
+  async function clearSession() {
+    await setState(ACTIVE_VIEW_SESSION_STATE_KEY, null);
   }
 
   async function recordActiveTime(session, endedAt) {
@@ -61,12 +93,14 @@ export function initVisitTracking(state, logDebug) {
     });
   }
 
-  function endSession(reason) {
+  async function endSession(reason) {
+    await loadSessionFromStorage();
     if (!activeSession) return;
     const endedAt = Date.now();
     const session = activeSession;
     activeSession = null;
-    recordActiveTime(session, endedAt);
+    await clearSession();
+    await recordActiveTime(session, endedAt);
     logDebug("[CamKeeper] View session ended", {
       tabId: session.tabId,
       site: session.site,
@@ -75,17 +109,22 @@ export function initVisitTracking(state, logDebug) {
     });
   }
 
-  function startSession(tab) {
+  async function startSession(tab) {
     if (!tab || !tab.url) return;
+    await loadSessionFromStorage();
     const parsed = parseUrlSafe(tab.url);
     if (!parsed) return;
     if (activeSession && activeSession.tabId === tab.id) return;
+    if (activeSession && activeSession.tabId !== tab.id) {
+      await endSession("session_restart");
+    }
     activeSession = {
       tabId: tab.id,
       site: parsed.site,
       username: parsed.username,
       startedAt: Date.now(),
     };
+    await persistSession(activeSession);
     logDebug("[CamKeeper] View session started", {
       tabId: tab.id,
       site: parsed.site,
@@ -93,19 +132,21 @@ export function initVisitTracking(state, logDebug) {
     });
   }
 
-  function onTabActivated({ tabId, windowId }) {
+  async function onTabActivated({ tabId, windowId }) {
+    await loadSessionFromStorage();
     if (state.activeTabId && state.activeTabId !== tabId) {
-      endSession("tab_switch");
+      await endSession("tab_switch");
     }
     state.activeTabId = tabId;
     if (!windowFocused || (focusedWindowId && windowId !== focusedWindowId)) return;
     chrome.tabs.get(tabId, (tab) => startSession(tab));
   }
 
-  function onTabUpdated(tabId, changeInfo) {
+  async function onTabUpdated(tabId, changeInfo) {
+    await loadSessionFromStorage();
     if (changeInfo.status !== "complete") return;
     if (activeSession && activeSession.tabId === tabId) {
-      endSession("tab_update");
+      await endSession("tab_update");
     }
     chrome.tabs.get(tabId, (tab) => {
       if (!tab || !tab.url) return;
@@ -115,18 +156,18 @@ export function initVisitTracking(state, logDebug) {
     });
   }
 
-  function onTabRemoved(tabId) {
+  async function onTabRemoved(tabId) {
     if (activeSession && activeSession.tabId === tabId) {
-      endSession("tab_closed");
+      await endSession("tab_closed");
     }
     if (state.activeTabId === tabId) state.activeTabId = null;
   }
 
-  function onWindowFocusChanged(windowId) {
+  async function onWindowFocusChanged(windowId) {
     if (windowId === chrome.windows.WINDOW_ID_NONE) {
       windowFocused = false;
       focusedWindowId = null;
-      endSession("window_blur");
+      await endSession("window_blur");
       return;
     }
     windowFocused = true;

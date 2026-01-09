@@ -6,6 +6,7 @@ export const POPUP_ONLINE_CHECK_COOLDOWN_MINUTES = 1;
 export const ONLINE_CHECK_STATE_KEY = "camkeeper_online_check_state_v1";
 export const BACKGROUND_ONLINE_CHECK_STATE_KEY = "camkeeper_online_check_state_background_v1";
 export const BACKGROUND_ONLINE_CHECK_ALARM = "camkeeper-online-check";
+export const ACTIVE_VIEW_SESSION_STATE_KEY = "camkeeper_active_view_session_v1";
 
 export function getDefaultSettings() {
   return {
