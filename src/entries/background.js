@@ -10,6 +10,7 @@ import {
 import {
   BACKGROUND_ONLINE_CHECK_ALARM,
   BACKGROUND_ONLINE_CHECK_STATE_KEY,
+  DEFAULT_DEBUG_LOGS_ENABLED,
   DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES,
   DEFAULT_VISIT_COOLDOWN_MS,
   DEFAULT_VISIT_DELAY_MS,
@@ -44,6 +45,10 @@ async function loadSettings() {
       typeof data.backgroundOnlineChecksEnabled === "boolean"
         ? data.backgroundOnlineChecksEnabled
         : false,
+    debugLogsEnabled:
+      typeof data.debugLogsEnabled === "boolean"
+        ? data.debugLogsEnabled
+        : DEFAULT_DEBUG_LOGS_ENABLED,
     onlineCheckIntervalMinutes: Number.isFinite(data.onlineCheckIntervalMinutes)
       ? Math.max(3, data.onlineCheckIntervalMinutes)
       : DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES,
@@ -82,6 +87,15 @@ function syncBackgroundOnlineChecks() {
   }
   lastBackgroundChecksEnabled = true;
   updateBadgeFromStorage();
+}
+
+function logDebug(message, data) {
+  if (!settings.debugLogsEnabled) return;
+  console.log(message, data ?? {});
+}
+
+function logWarn(message, data) {
+  console.warn(message, data ?? {});
 }
 
 function countOnlineProfiles(profiles) {
@@ -161,7 +175,7 @@ async function clearOnlineStatuses() {
   });
   if (!changed) return;
   await saveProfiles(updated);
-  console.log("[CamKeeper] Online status cleared", { changed });
+  logDebug("[CamKeeper] Online status cleared", { changed });
   updateBadgeCount(0);
 }
 
@@ -186,7 +200,7 @@ async function refreshOnlineStatus(options = {}) {
   const now = Date.now();
   const lastCheckAt = await getLastOnlineCheckAt(stateKey);
   if (now - lastCheckAt < minMinutes * 60 * 1000) {
-    console.log("[CamKeeper] Online check skipped (cooldown)", {
+    logDebug("[CamKeeper] Online check skipped (cooldown)", {
       minutes: minMinutes,
     });
     return;
@@ -237,7 +251,7 @@ async function refreshOnlineStatus(options = {}) {
   });
 
   await saveProfiles(updated);
-  console.log("[CamKeeper] Online status updated", {
+  logDebug("[CamKeeper] Online status updated", {
     profiles: profiles.length,
     changed,
     chaturbateChecked: chaturbateUsers,
@@ -368,7 +382,7 @@ function scheduleVisitCheck(tabId) {
   if (pendingTimers.has(tabId)) return;
   const timeoutId = setTimeout(() => recordVisit(tabId), settings.visitDelayMs);
   pendingTimers.set(tabId, timeoutId);
-  console.log("[CamKeeper] Scheduled visit check", { tabId });
+  logDebug("[CamKeeper] Scheduled visit check", { tabId });
 }
 
 function clearVisitTimer(tabId) {
@@ -376,7 +390,7 @@ function clearVisitTimer(tabId) {
   if (timeoutId) {
     clearTimeout(timeoutId);
     pendingTimers.delete(tabId);
-    console.log("[CamKeeper] Cleared visit timer", { tabId });
+    logDebug("[CamKeeper] Cleared visit timer", { tabId });
   }
 }
 
@@ -413,7 +427,7 @@ function recordVisit(tabId) {
     const parsed = parseUrlSafe(tab.url);
     const loaded = lastLoaded.get(tabId);
     if (!parsed || !loaded) {
-      console.log("[CamKeeper] Visit skipped (missing parsed/loaded)", {
+      logDebug("[CamKeeper] Visit skipped (missing parsed/loaded)", {
         tabId,
         parsed,
         loaded,
@@ -421,14 +435,14 @@ function recordVisit(tabId) {
       return;
     }
     if (loaded.counted) {
-      console.log("[CamKeeper] Visit skipped (already counted)", {
+      logDebug("[CamKeeper] Visit skipped (already counted)", {
         tabId,
         parsed,
       });
       return;
     }
     if (parsed.site !== loaded.site || parsed.username !== loaded.username) {
-      console.log("[CamKeeper] Visit skipped (URL mismatch)", {
+      logDebug("[CamKeeper] Visit skipped (URL mismatch)", {
         tabId,
         parsed,
         loaded,
@@ -436,7 +450,7 @@ function recordVisit(tabId) {
       return;
     }
     loaded.counted = true;
-    console.log("[CamKeeper] Recording visit", { tabId, parsed });
+    logDebug("[CamKeeper] Recording visit", { tabId, parsed });
 
     const profiles = await getProfiles();
     let shouldCount = false;
@@ -447,7 +461,7 @@ function recordVisit(tabId) {
             ? platform.lastLeftAt
             : 0;
           if (Date.now() - lastLeftAt < settings.visitCooldownMs) {
-            console.log("[CamKeeper] Visit skipped (cooldown)", {
+            logDebug("[CamKeeper] Visit skipped (cooldown)", {
               tabId,
               site: parsed.site,
               username: parsed.username,
@@ -469,7 +483,7 @@ function recordVisit(tabId) {
     loaded.recorded = shouldCount;
     if (!shouldCount) return;
     await saveProfiles(updated);
-    console.log("[CamKeeper] Visit saved", {
+    logDebug("[CamKeeper] Visit saved", {
       tabId,
       site: parsed.site,
       username: parsed.username,
@@ -494,7 +508,7 @@ async function markLeft(tabId) {
     return { ...profile, platforms };
   });
   await saveProfiles(updated);
-  console.log("[CamKeeper] Left page", {
+  logDebug("[CamKeeper] Left page", {
     tabId,
     site: loaded.site,
     username: loaded.username,

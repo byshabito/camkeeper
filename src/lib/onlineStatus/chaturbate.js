@@ -8,7 +8,7 @@ async function fetchChaturbateOnlineSet() {
       headers: { Accept: "application/json" },
     });
     if (!response.ok) {
-      console.warn("[CamKeeper] Online check fetch failed", response.status);
+      console.warn("[CamKeeper] Online check fetch failed", { status: response.status });
       return null;
     }
     const data = await response.json();
@@ -54,7 +54,6 @@ async function fetchChaturbateOnlineSet() {
       console.warn("[CamKeeper] Online check response missing list");
       return null;
     }
-    console.log("[CamKeeper] Online check fetched", { count: online.size });
     return online;
   } catch (error) {
     console.warn("[CamKeeper] Online check failed", error);

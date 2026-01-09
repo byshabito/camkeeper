@@ -1,6 +1,7 @@
 import { getProfiles, getSettings, saveProfiles, saveSettings } from "../../lib/db.js";
 import {
   DEFAULT_BACKGROUND_ONLINE_CHECKS_ENABLED,
+  DEFAULT_DEBUG_LOGS_ENABLED,
   DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES,
   DEFAULT_VISIT_COOLDOWN_MS,
   DEFAULT_VISIT_DELAY_MS,
@@ -19,6 +20,7 @@ const visitCooldownInput = document.getElementById("visit-cooldown");
 const onlineCheckInput = document.getElementById("online-check");
 const backgroundOnlineCheckInput = document.getElementById("background-online-check");
 const onlineCheckIntervalInput = document.getElementById("online-check-interval");
+const debugLogsInput = document.getElementById("debug-logs");
 const visitSaveButton = document.getElementById("visit-save");
 const metaVersion = document.getElementById("meta-version");
 const metaRelease = document.getElementById("meta-release");
@@ -74,7 +76,8 @@ async function loadSettings() {
     !visitCooldownInput ||
     !onlineCheckInput ||
     !backgroundOnlineCheckInput ||
-    !onlineCheckIntervalInput
+    !onlineCheckIntervalInput ||
+    !debugLogsInput
   )
     return;
 
@@ -94,6 +97,10 @@ async function loadSettings() {
   const onlineCheckIntervalMinutes = Number.isFinite(settings.onlineCheckIntervalMinutes)
     ? settings.onlineCheckIntervalMinutes
     : DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES;
+  const debugLogsEnabled =
+    typeof settings.debugLogsEnabled === "boolean"
+      ? settings.debugLogsEnabled
+      : DEFAULT_DEBUG_LOGS_ENABLED;
 
   visitDelayInput.value = String(secondsFromMs(delayMs));
   visitCooldownInput.value = String(minutesFromMs(cooldownMs));
@@ -101,6 +108,7 @@ async function loadSettings() {
   backgroundOnlineCheckInput.checked = backgroundOnlineChecksEnabled;
   syncOnlineToggleState();
   onlineCheckIntervalInput.value = String(onlineCheckIntervalMinutes);
+  debugLogsInput.checked = debugLogsEnabled;
 }
 
 async function persistSettings() {
@@ -109,7 +117,8 @@ async function persistSettings() {
     !visitCooldownInput ||
     !onlineCheckInput ||
     !backgroundOnlineCheckInput ||
-    !onlineCheckIntervalInput
+    !onlineCheckIntervalInput ||
+    !debugLogsInput
   )
     return;
 
@@ -125,6 +134,7 @@ async function persistSettings() {
       DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES,
       Number(onlineCheckIntervalInput.value) || DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES
     ),
+    debugLogsEnabled: debugLogsInput.checked,
   };
   await saveSettings(settings);
 }

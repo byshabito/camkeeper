@@ -42,9 +42,5 @@ export async function fetchOnlineStatuses(usernames) {
   };
 
   await Promise.all(Array.from({ length: concurrency }, worker));
-  console.log("[CamKeeper] Stripchat status fetched", {
-    checked: unique.length,
-    results: results.size,
-  });
   return results;
 }
