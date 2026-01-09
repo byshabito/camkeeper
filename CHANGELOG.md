@@ -2,16 +2,15 @@
 
 ## v0.5.2
 
-- Add storage access behind unified API
+- Centralize storage access behind the unified API
 - Add shared online status API modules for Chaturbate and Stripchat
-- Add shared config for background defaults
-- Codebase maintenance and cleanup
+- Add shared background config defaults
 - Refactor background logic into modular services
 - Default folder selector to "No folder" for new or unfiled bookmarks
 - Track active view time instead of visit counts
 - Sort platform chips by most-viewed first
-- Add more socials
-- Improve layout
+- Expand socials support and auto-detect matching social profiles
+- Refresh popup layout and icon styling
 
 ## v0.5.1
 
