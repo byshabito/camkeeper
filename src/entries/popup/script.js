@@ -154,10 +154,12 @@ function showDetailView(profile) {
   }</span>`;
 
   detailPlatforms.innerHTML = "";
-  profile.platforms.forEach((platform) => {
-    const site = SITES[platform.site];
-    if (!site) return;
-    const link = document.createElement("a");
+  [...(profile.platforms || [])]
+    .sort((a, b) => (b.viewMs || 0) - (a.viewMs || 0))
+    .forEach((platform) => {
+      const site = SITES[platform.site];
+      if (!site) return;
+      const link = document.createElement("a");
     link.href = site.url(platform.username);
     link.target = "_blank";
     link.rel = "noopener noreferrer";
@@ -184,8 +186,8 @@ function showDetailView(profile) {
     chip.appendChild(icon);
     chip.appendChild(label);
     link.appendChild(chip);
-    detailPlatforms.appendChild(link);
-  });
+      detailPlatforms.appendChild(link);
+    });
 
   detailSocials.innerHTML = "";
   profile.socials.forEach((social) => {
@@ -755,7 +757,9 @@ async function renderList() {
 
     const platformChips = document.createElement("div");
     platformChips.classList.add("chips");
-    profile.platforms.forEach((platform) => {
+    [...(profile.platforms || [])]
+      .sort((a, b) => (b.viewMs || 0) - (a.viewMs || 0))
+      .forEach((platform) => {
       const site = SITES[platform.site];
       if (!site) return;
       const link = document.createElement("a");
@@ -790,8 +794,8 @@ async function renderList() {
       chip.appendChild(icon);
       chip.appendChild(label);
       link.appendChild(chip);
-      platformChips.appendChild(link);
-    });
+        platformChips.appendChild(link);
+      });
 
     const tagChips = document.createElement("div");
     tagChips.classList.add("chips", "title-tags");
