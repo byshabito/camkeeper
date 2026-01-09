@@ -3,6 +3,7 @@ import { getProfiles, saveProfiles } from "../../lib/db.js";
 export function initVisitTracking(state, logDebug) {
   let activeSession = null;
   let windowFocused = true;
+  let focusedWindowId = null;
 
   function parseUrlSafe(url) {
     try {
@@ -92,12 +93,12 @@ export function initVisitTracking(state, logDebug) {
     });
   }
 
-  function onTabActivated({ tabId }) {
+  function onTabActivated({ tabId, windowId }) {
     if (state.activeTabId && state.activeTabId !== tabId) {
       endSession("tab_switch");
     }
     state.activeTabId = tabId;
-    if (!windowFocused) return;
+    if (!windowFocused || (focusedWindowId && windowId !== focusedWindowId)) return;
     chrome.tabs.get(tabId, (tab) => startSession(tab));
   }
 
@@ -109,6 +110,7 @@ export function initVisitTracking(state, logDebug) {
     chrome.tabs.get(tabId, (tab) => {
       if (!tab || !tab.url) return;
       if (!tab.active || !windowFocused) return;
+      if (focusedWindowId && tab.windowId !== focusedWindowId) return;
       startSession(tab);
     });
   }
@@ -123,13 +125,16 @@ export function initVisitTracking(state, logDebug) {
   function onWindowFocusChanged(windowId) {
     if (windowId === chrome.windows.WINDOW_ID_NONE) {
       windowFocused = false;
+      focusedWindowId = null;
       endSession("window_blur");
       return;
     }
     windowFocused = true;
-    if (!state.activeTabId) return;
-    chrome.tabs.get(state.activeTabId, (tab) => {
-      if (!tab || !tab.active) return;
+    focusedWindowId = windowId;
+    chrome.tabs.query({ active: true, windowId }, (tabs) => {
+      const tab = tabs?.[0];
+      state.activeTabId = tab?.id ?? null;
+      if (!tab) return;
       startSession(tab);
     });
   }
