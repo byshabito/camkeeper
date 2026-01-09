@@ -175,7 +175,12 @@ function showDetailView(profile) {
     icon.classList.add("icon");
     icon.style.color = site.color;
     icon.style.borderColor = "transparent";
-    icon.textContent = site.abbr;
+    const platformIcon = getPlatformIconSvg(platform.site);
+    if (platformIcon) {
+      icon.innerHTML = platformIcon;
+    } else {
+      icon.textContent = site.abbr;
+    }
 
     const label = document.createElement("span");
     label.classList.add("username");
@@ -312,6 +317,26 @@ async function loadSocialIcons() {
   );
 }
 
+async function loadPlatformIcons() {
+  const entries = Object.entries(PLATFORM_ICON_PATHS);
+  await Promise.all(
+    entries.map(async ([key, path]) => {
+      try {
+        const response = await fetch(chrome.runtime.getURL(path));
+        if (!response.ok) return;
+        const text = await response.text();
+        PLATFORM_ICON_CACHE.set(key, text);
+      } catch (error) {
+        // Ignore icon loading errors and fall back to text.
+      }
+    }),
+  );
+}
+
+function getPlatformIconSvg(site) {
+  return PLATFORM_ICON_CACHE.get(site) || "";
+}
+
 const SOCIAL_ICON_CACHE = new Map();
 const SOCIAL_ICON_PATHS = {
   instagram: "src/assets/social-icons/instagram.svg",
@@ -326,6 +351,12 @@ const SOCIAL_ICON_PATHS = {
   website: "src/assets/social-icons/website.svg",
   other: "src/assets/social-icons/website.svg",
   link: "src/assets/social-icons/link.svg",
+};
+
+const PLATFORM_ICON_CACHE = new Map();
+const PLATFORM_ICON_PATHS = {
+  "chaturbate.com": "src/assets/platform-icons/chaturbate.svg",
+  "stripchat.com": "src/assets/platform-icons/stripchat.svg",
 };
 
 function clearRows(container) {
@@ -791,19 +822,20 @@ async function renderList() {
       const isOnline = Boolean(platform.online);
       chip.classList.add(isOnline ? "online" : "offline");
       chip.style.setProperty("--platform-color", site.color);
+      chip.title = `${site.abbr}: ${platform.username}`;
 
       const icon = document.createElement("span");
       icon.classList.add("icon");
       icon.style.color = site.color;
       icon.style.borderColor = "transparent";
-      icon.textContent = site.abbr;
-
-      const label = document.createElement("span");
-      label.classList.add("username");
-      label.textContent = `${platform.username}`;
+      const platformIcon = getPlatformIconSvg(platform.site);
+      if (platformIcon) {
+        icon.innerHTML = platformIcon;
+      } else {
+        icon.textContent = site.abbr;
+      }
 
       chip.appendChild(icon);
-      chip.appendChild(label);
       link.appendChild(chip);
         platformChips.appendChild(link);
       });
@@ -1171,7 +1203,7 @@ async function showInitialView() {
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
-  await loadSocialIcons();
+  await Promise.all([loadSocialIcons(), loadPlatformIcons()]);
   chrome.runtime.sendMessage({ type: "online-check" });
   showInitialView();
 });

@@ -241,6 +241,21 @@ textarea::placeholder {
   color: var(--platform-color, #ffffff);
 }
 
+.platform-chip .icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+  fill: currentColor;
+}
+
+.platform-chip .icon svg.stroke {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .platform-chip .username {
   font-family: "IBM Plex Mono", "JetBrains Mono", "Courier New", monospace;
   font-size: 11px;
@@ -428,9 +443,10 @@ textarea::placeholder {
 }
 .platform-chip.online {
   background: var(--platform-color, #1b1f24);
+  color: #ffffff;
 }
 
 .platform-chip.online .icon {
-  background: #ffffff;
-  color: var(--platform-color, #ffffff);
+  background: transparent;
+  color: #ffffff !important;
 }

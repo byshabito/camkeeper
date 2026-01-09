@@ -10,6 +10,7 @@
 - Default folder selector to "No folder" for new or unfiled bookmarks
 - Track active view time instead of visit counts
 - Sort platform chips by most-viewed first
+- Add more socials
 
 ## v0.5.1
 
