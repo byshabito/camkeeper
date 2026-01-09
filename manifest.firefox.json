@@ -37,14 +37,6 @@
     "page": "src/entries/options/index.html",
     "open_in_tab": true
   },
-  "commands": {
-    "open-library": {
-      "suggested_key": {
-        "default": "Alt+Shift+L"
-      },
-      "description": "Open CamKeeper Library"
-    }
-  },
   "browser_specific_settings": {
     "gecko": {
       "id": "camkeeper@shabito.net",
