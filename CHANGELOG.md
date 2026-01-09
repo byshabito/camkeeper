@@ -11,6 +11,7 @@
 - Track active view time instead of visit counts
 - Sort platform chips by most-viewed first
 - Add more socials
+- Improve layout
 
 ## v0.5.1
 

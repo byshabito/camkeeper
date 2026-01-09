@@ -217,6 +217,10 @@ textarea {
   gap: 4px;
 }
 
+.detail-meta .muted {
+  font-size: 11px;
+}
+
 .detail-folder {
   display: inline-flex;
   align-items: center;
