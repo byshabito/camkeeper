@@ -7,6 +7,7 @@
 - Add shared config for background defaults
 - Codebase maintenance and cleanup
 - Refactor background logic into modular services
+- Default folder selector to "No folder" for new or unfiled bookmarks
 
 ## v0.5.1
 

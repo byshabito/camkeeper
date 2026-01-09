@@ -1,4 +1,4 @@
-import SITES from "../config/sites.js";
+import SITES from "../../config/sites.js";
 
 function normalizeHost(hostname) {
   return hostname.replace(/^www\./, "").toLowerCase();

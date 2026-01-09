@@ -356,7 +356,8 @@ function renderFolderFilter(folders) {
 
 function renderFolderSelect(folders, currentFolder) {
   if (!folderSelect) return;
-  const current = currentFolder || folderSelect.value;
+  const hasCurrent = typeof currentFolder === "string";
+  const current = hasCurrent ? currentFolder : folderSelect.value;
   folderSelect.innerHTML = "";
 
   const noneOption = document.createElement("option");
@@ -1094,9 +1095,23 @@ profileForm.addEventListener("submit", async (event) => {
   showDetailView(savedProfile);
 });
 
+async function getActiveTab() {
+  if (!chrome.tabs?.query) return null;
+  return new Promise((resolve) => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      resolve(tabs?.[0] || null);
+    });
+  });
+}
+
 async function showInitialView() {
   const profiles = await getProfiles();
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  let tab = null;
+  try {
+    tab = await getActiveTab();
+  } catch (error) {
+    tab = null;
+  }
   const parsed = tab?.url ? parseUrl(tab.url) : null;
   if (parsed) {
     const match = findDuplicateProfile(

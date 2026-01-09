@@ -1,8 +1,5 @@
 import SITES from "../config/sites.js";
 
-export const STORAGE_KEY = "camkeeper_profiles_v1";
-const LEGACY_KEYS = ["profiles", "cams"];
-
 export const SOCIAL_OPTIONS = [
   { id: "instagram", label: "Instagram" },
   { id: "x", label: "X" },
@@ -12,8 +9,6 @@ export const SOCIAL_OPTIONS = [
   { id: "website", label: "Website" },
   { id: "other", label: "Other" },
 ];
-
-const storage = chrome.storage.local;
 
 function now() {
   return Date.now();
@@ -174,7 +169,7 @@ export function mergeProfiles(base, incoming) {
   return sanitizeProfile(merged);
 }
 
-function migrateLegacyCams(cams) {
+export function migrateLegacyCams(cams) {
   return (cams || []).map((cam) =>
     sanitizeProfile({
       name: cam.name,
@@ -186,37 +181,4 @@ function migrateLegacyCams(cams) {
       updatedAt: now(),
     }),
   );
-}
-
-export async function loadProfiles() {
-  const data = await new Promise((resolve) => {
-    storage.get([STORAGE_KEY, ...LEGACY_KEYS], (res) => resolve(res));
-  });
-
-  let profiles = Array.isArray(data[STORAGE_KEY]) ? data[STORAGE_KEY] : [];
-  let shouldPersist = false;
-
-  if (!profiles.length) {
-    if (Array.isArray(data.profiles) && data.profiles.length) {
-      profiles = data.profiles;
-      shouldPersist = true;
-    } else if (Array.isArray(data.cams) && data.cams.length) {
-      profiles = migrateLegacyCams(data.cams);
-      shouldPersist = true;
-    }
-  }
-
-  profiles = (profiles || []).map((profile) => sanitizeProfile(profile));
-
-  if (profiles.length && shouldPersist) {
-    await saveProfiles(profiles);
-  }
-
-  return profiles;
-}
-
-export async function saveProfiles(profiles) {
-  const cleaned = (profiles || []).map((profile) => sanitizeProfile(profile));
-  await new Promise((resolve) => storage.set({ [STORAGE_KEY]: cleaned }, resolve));
-  return cleaned;
 }
