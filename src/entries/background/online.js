@@ -24,8 +24,8 @@ function logDebug(message, data) {
 
 function countOnlineProfiles(profiles) {
   return profiles.reduce((count, profile) => {
-    const platforms = profile?.platforms || [];
-    const hasOnline = platforms.some((platform) => Boolean(platform?.online));
+    const cams = profile?.cams || [];
+    const hasOnline = cams.some((cam) => Boolean(cam?.online));
     return hasOnline ? count + 1 : count;
   }, 0);
 }
@@ -58,12 +58,12 @@ async function clearOnlineStatuses() {
   const profiles = await getProfiles();
   let changed = 0;
   const updated = profiles.map((profile) => {
-    const platforms = (profile.platforms || []).map((platform) => {
-      if (!platform.online) return platform;
+    const cams = (profile.cams || []).map((cam) => {
+      if (!cam.online) return cam;
       changed += 1;
-      return { ...platform, online: false };
+      return { ...cam, online: false };
     });
-    return { ...profile, platforms };
+    return { ...profile, cams };
   });
   if (!changed) return;
   await saveProfiles(updated);
@@ -73,32 +73,30 @@ async function clearOnlineStatuses() {
 
 function summarizeOnlineProfiles(profiles, chaturbateStatus, stripchatStatus) {
   return profiles.map((profile) => {
-    const platforms = profile?.platforms || [];
-    const platformResults = platforms
-      .filter((platform) =>
-        platform?.site === "chaturbate.com" || platform?.site === "stripchat.com"
-      )
-      .map((platform) => {
-        const username = (platform?.username || "").toLowerCase();
-        if (platform.site === "chaturbate.com") {
+    const cams = profile?.cams || [];
+    const camResults = cams
+      .filter((cam) => cam?.site === "chaturbate.com" || cam?.site === "stripchat.com")
+      .map((cam) => {
+        const username = (cam?.username || "").toLowerCase();
+        if (cam.site === "chaturbate.com") {
           const checked = Boolean(chaturbateStatus && chaturbateStatus.has(username));
           const result = checked ? chaturbateStatus.get(username) : null;
-          return { site: platform.site, username, checked, result };
+          return { site: cam.site, username, checked, result };
         }
-        if (platform.site === "stripchat.com") {
+        if (cam.site === "stripchat.com") {
           const checked = Boolean(stripchatStatus && stripchatStatus.has(username));
           const result = checked ? stripchatStatus.get(username) : null;
-          return { site: platform.site, username, checked, result };
+          return { site: cam.site, username, checked, result };
         }
         return null;
       })
       .filter(Boolean);
-    const online = platforms.some((platform) => Boolean(platform?.online));
+    const online = cams.some((cam) => Boolean(cam?.online));
     return {
       id: profile?.id || null,
       name: profile?.name || "",
       online,
-      platforms: platformResults,
+      cams: camResults,
     };
   });
 }
@@ -135,14 +133,14 @@ async function refreshOnlineStatus(options = {}) {
   const stripchatUsers = [];
   const chaturbateUsers = [];
   profiles.forEach((profile) => {
-    (profile.platforms || []).forEach((platform) => {
-      if (platform.site !== "stripchat.com") return;
-      const username = (platform.username || "").trim().toLowerCase();
+    (profile.cams || []).forEach((cam) => {
+      if (cam.site !== "stripchat.com") return;
+      const username = (cam.username || "").trim().toLowerCase();
       if (username) stripchatUsers.push(username);
     });
-    (profile.platforms || []).forEach((platform) => {
-      if (platform.site !== "chaturbate.com") return;
-      const username = (platform.username || "").trim().toLowerCase();
+    (profile.cams || []).forEach((cam) => {
+      if (cam.site !== "chaturbate.com") return;
+      const username = (cam.username || "").trim().toLowerCase();
       if (username) chaturbateUsers.push(username);
     });
   });
@@ -153,25 +151,25 @@ async function refreshOnlineStatus(options = {}) {
   ]);
   let changed = 0;
   const updated = profiles.map((profile) => {
-    const platforms = (profile.platforms || []).map((platform) => {
-      const username = (platform.username || "").toLowerCase();
-      if (platform.site === "chaturbate.com") {
-        if (!chaturbateStatus.has(username)) return platform;
+    const cams = (profile.cams || []).map((cam) => {
+      const username = (cam.username || "").toLowerCase();
+      if (cam.site === "chaturbate.com") {
+        if (!chaturbateStatus.has(username)) return cam;
         const isOnline = chaturbateStatus.get(username);
-        if (platform.online === isOnline) return platform;
+        if (cam.online === isOnline) return cam;
         changed += 1;
-        return { ...platform, online: isOnline };
+        return { ...cam, online: isOnline };
       }
-      if (platform.site === "stripchat.com") {
-        if (!stripchatStatus.has(username)) return platform;
+      if (cam.site === "stripchat.com") {
+        if (!stripchatStatus.has(username)) return cam;
         const isOnline = stripchatStatus.get(username);
-        if (platform.online === isOnline) return platform;
+        if (cam.online === isOnline) return cam;
         changed += 1;
-        return { ...platform, online: isOnline };
+        return { ...cam, online: isOnline };
       }
-      return platform;
+      return cam;
     });
-    return { ...profile, platforms };
+    return { ...profile, cams };
   });
 
   await saveProfiles(updated);

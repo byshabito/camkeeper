@@ -69,19 +69,19 @@ export function initVisitTracking(state, logDebug) {
     const profiles = await getProfiles();
     let updatedAny = false;
     const updated = profiles.map((profile) => {
-      const platforms = (profile.platforms || []).map((platform) => {
-        if (platform.site === session.site && platform.username === session.username) {
-          updatedAny = true;
-          const existing = Number.isFinite(platform.viewMs) ? platform.viewMs : 0;
-          return {
-            ...platform,
-            viewMs: existing + durationMs,
-            lastViewedAt: endedAt,
-          };
-        }
-        return platform;
-      });
-      return { ...profile, platforms };
+    const cams = (profile.cams || []).map((cam) => {
+      if (cam.site === session.site && cam.username === session.username) {
+        updatedAny = true;
+        const existing = Number.isFinite(cam.viewMs) ? cam.viewMs : 0;
+        return {
+          ...cam,
+          viewMs: existing + durationMs,
+          lastViewedAt: endedAt,
+        };
+      }
+      return cam;
+    });
+    return { ...profile, cams };
     });
     if (!updatedAny) return;
     await saveProfiles(updated);

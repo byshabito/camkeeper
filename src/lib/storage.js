@@ -45,38 +45,38 @@ function uniqBy(items, keyFn) {
   });
 }
 
-export function sanitizePlatforms(platforms) {
-  const cleaned = (platforms || [])
-    .map((platform) => ({
-      site: normalizeText(platform.site),
-      username: normalizeText(platform.username),
-      online: Boolean(platform.online),
-      viewMs: Number.isFinite(platform.viewMs)
-        ? platform.viewMs
-        : Number.isFinite(platform.activeMs)
-          ? platform.activeMs
+export function sanitizeCams(cams) {
+  const cleaned = (cams || [])
+    .map((cam) => ({
+      site: normalizeText(cam.site),
+      username: normalizeText(cam.username),
+      online: Boolean(cam.online),
+      viewMs: Number.isFinite(cam.viewMs)
+        ? cam.viewMs
+        : Number.isFinite(cam.activeMs)
+          ? cam.activeMs
           : 0,
-      lastViewedAt: Number.isFinite(platform.lastViewedAt)
-        ? platform.lastViewedAt
-        : Number.isFinite(platform.lastVisitedAt)
-          ? platform.lastVisitedAt
+      lastViewedAt: Number.isFinite(cam.lastViewedAt)
+        ? cam.lastViewedAt
+        : Number.isFinite(cam.lastVisitedAt)
+          ? cam.lastVisitedAt
           : null,
     }))
-    .filter((platform) => platform.site && platform.username && SITES[platform.site]);
+    .filter((cam) => cam.site && cam.username && SITES[cam.site]);
 
   const merged = new Map();
-  cleaned.forEach((platform) => {
-    const key = `${platform.site}:${platform.username}`;
+  cleaned.forEach((cam) => {
+    const key = `${cam.site}:${cam.username}`;
     const existing = merged.get(key);
     if (!existing) {
-      merged.set(key, { ...platform });
+      merged.set(key, { ...cam });
       return;
     }
     merged.set(key, {
       ...existing,
-      viewMs: (existing.viewMs || 0) + (platform.viewMs || 0),
-      lastViewedAt: Math.max(existing.lastViewedAt || 0, platform.lastViewedAt || 0) || null,
-      online: Boolean(existing.online || platform.online),
+      viewMs: (existing.viewMs || 0) + (cam.viewMs || 0),
+      lastViewedAt: Math.max(existing.lastViewedAt || 0, cam.lastViewedAt || 0) || null,
+      online: Boolean(existing.online || cam.online),
     });
   });
 
@@ -108,19 +108,19 @@ export function sanitizeSocials(socials) {
 }
 
 export function sanitizeProfile(raw) {
-  const platforms = sanitizePlatforms(raw.platforms || raw.sites || []);
+  const cams = sanitizeCams(raw.cams || raw.platforms || raw.sites || []);
   const socials = sanitizeSocials(raw.socials || []);
   const tags = Array.isArray(raw.tags)
     ? raw.tags.map((tag) => (tag || "").trim()).filter(Boolean)
     : [];
-  const name = (raw.name || "").trim() || (platforms[0] ? platforms[0].username : "");
+  const name = (raw.name || "").trim() || (cams[0] ? cams[0].username : "");
   const pinned = Boolean(raw.pinned);
   const folder = (raw.folder || "").trim();
 
   return {
     id: raw.id || createId(),
     name,
-    platforms,
+    cams,
     socials,
     tags: uniqBy(tags, (tag) => normalizeText(tag)),
     folder,
@@ -145,7 +145,7 @@ export function matchQuery(profile, query) {
     profile.folder,
     profile.notes,
     ...(profile.tags || []),
-    ...(profile.platforms || []).flatMap((platform) => [platform.site, platform.username]),
+    ...(profile.cams || []).flatMap((cam) => [cam.site, cam.username]),
     ...(profile.socials || []).flatMap((social) => [social.platform, social.handle]),
   ];
   return fields
@@ -154,14 +154,14 @@ export function matchQuery(profile, query) {
 }
 
 export function findDuplicateProfile(profiles, profile, ignoreId) {
-  const targets = sanitizePlatforms(profile.platforms || []);
+  const targets = sanitizeCams(profile.cams || []);
   return profiles.find((candidate) => {
     if (candidate.id === ignoreId) return false;
-    return (candidate.platforms || []).some((platform) =>
+    return (candidate.cams || []).some((cam) =>
       targets.some(
         (target) =>
-          normalizeText(target.site) === normalizeText(platform.site) &&
-          normalizeText(target.username) === normalizeText(platform.username),
+          normalizeText(target.site) === normalizeText(cam.site) &&
+          normalizeText(target.username) === normalizeText(cam.username),
       ),
     );
   });
@@ -182,7 +182,7 @@ export function mergeProfiles(base, incoming) {
     folder: incoming.folder || base.folder,
     notes: mergeNotes(base.notes, incoming.notes),
     tags: uniqBy([...(base.tags || []), ...(incoming.tags || [])], (tag) => normalizeText(tag)),
-    platforms: sanitizePlatforms([...(base.platforms || []), ...(incoming.platforms || [])]),
+    cams: sanitizeCams([...(base.cams || []), ...(incoming.cams || [])]),
     socials: sanitizeSocials([...(base.socials || []), ...(incoming.socials || [])]),
     pinned: Boolean(base.pinned || incoming.pinned),
     updatedAt: now(),
@@ -195,7 +195,7 @@ export function migrateLegacyCams(cams) {
   return (cams || []).map((cam) =>
     sanitizeProfile({
       name: cam.name,
-      platforms: (cam.site || []).map(([site, username]) => ({ site, username })),
+      cams: (cam.site || []).map(([site, username]) => ({ site, username })),
       tags: cam.tags,
       notes: "",
       socials: [],

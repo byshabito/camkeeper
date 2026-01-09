@@ -3,6 +3,7 @@
 ## v0.6.3
 
 - Persist active view sessions for MV3 background suspends
+- Rename platform references to cam
 
 ## v0.6.2
 

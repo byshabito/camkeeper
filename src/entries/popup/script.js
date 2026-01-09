@@ -7,7 +7,7 @@ import {
   matchQuery,
   mergeProfiles,
   normalizeText,
-  sanitizePlatforms,
+  sanitizeCams,
   sanitizeProfile,
   sanitizeSocials,
   splitTags,
@@ -48,14 +48,14 @@ const tagsInput = document.getElementById("tags-input");
 const folderSelect = document.getElementById("folder-select");
 const folderInput = document.getElementById("folder-input");
 const notesInput = document.getElementById("notes-input");
-const platformRows = document.getElementById("platform-rows");
+const camRows = document.getElementById("cam-rows");
 const socialRows = document.getElementById("social-rows");
-const addPlatformButton = document.getElementById("add-platform");
+const addCamButton = document.getElementById("add-cam");
 const addSocialButton = document.getElementById("add-social");
 const detailTitle = document.getElementById("detail-title");
 const detailName = document.getElementById("detail-name");
 const detailMeta = document.getElementById("detail-meta");
-const detailPlatforms = document.getElementById("detail-platforms");
+const detailCams = document.getElementById("detail-cams");
 const detailSocials = document.getElementById("detail-socials");
 const detailTags = document.getElementById("detail-tags");
 const detailFolder = document.getElementById("detail-folder");
@@ -73,7 +73,7 @@ let currentProfile = null;
 let lastView = "list";
 let attachTargetId = null;
 let attachProfiles = [];
-let attachSeedPlatforms = [];
+let attachSeedCams = [];
 const selection = createBulkSelection({
   bulkBar,
   bulkCount,
@@ -136,7 +136,7 @@ function showFormView(title) {
     attachSelect.innerHTML = "";
     attachTargetId = null;
   } else {
-    setAttachOptions(attachProfiles, attachSeedPlatforms);
+    setAttachOptions(attachProfiles, attachSeedCams);
   }
 }
 
@@ -153,21 +153,21 @@ function showDetailView(profile) {
     profile.pinned ? "Unpin" : "Pin"
   }</span>`;
 
-  detailPlatforms.innerHTML = "";
-  [...(profile.platforms || [])]
+  detailCams.innerHTML = "";
+  [...(profile.cams || [])]
     .sort((a, b) => (b.viewMs || 0) - (a.viewMs || 0))
-    .forEach((platform) => {
-      const site = SITES[platform.site];
+    .forEach((cam) => {
+      const site = SITES[cam.site];
       if (!site) return;
       const link = document.createElement("a");
-    link.href = site.url(platform.username);
+    link.href = site.url(cam.username);
     link.target = "_blank";
     link.rel = "noopener noreferrer";
     link.classList.add("platform-link");
 
     const chip = document.createElement("span");
     chip.classList.add("platform-chip");
-    const isOnline = Boolean(platform.online);
+    const isOnline = Boolean(cam.online);
     chip.classList.add(isOnline ? "online" : "offline");
     chip.style.setProperty("--platform-color", site.color);
 
@@ -175,7 +175,7 @@ function showDetailView(profile) {
     icon.classList.add("icon");
     icon.style.color = site.color;
     icon.style.borderColor = "transparent";
-    const platformIcon = getPlatformIconSvg(platform.site);
+    const platformIcon = getPlatformIconSvg(cam.site);
     if (platformIcon) {
       icon.innerHTML = platformIcon;
     } else {
@@ -184,14 +184,14 @@ function showDetailView(profile) {
 
     const label = document.createElement("span");
     label.classList.add("username");
-    const viewMs = Number.isFinite(platform.viewMs) ? platform.viewMs : 0;
-    label.textContent = platform.username;
+    const viewMs = Number.isFinite(cam.viewMs) ? cam.viewMs : 0;
+    label.textContent = cam.username;
     chip.title = `Total view time: ${formatDuration(viewMs)}`;
 
     chip.appendChild(icon);
     chip.appendChild(label);
     link.appendChild(chip);
-      detailPlatforms.appendChild(link);
+      detailCams.appendChild(link);
     });
 
   detailSocials.innerHTML = "";
@@ -551,7 +551,7 @@ function createRow({ type, values }) {
   row.classList.add("row");
 
   const select = document.createElement("select");
-  if (type === "platform") {
+  if (type === "cam") {
     SITE_KEYS.forEach((siteKey) => {
       const option = document.createElement("option");
       option.value = siteKey;
@@ -571,11 +571,11 @@ function createRow({ type, values }) {
 
   const input = document.createElement("input");
   input.type = "text";
-  input.placeholder = type === "platform" ? "Username" : "Handle or URL";
-  input.value = type === "platform" ? values.username || "" : values.handle || "";
-  if (type === "platform") {
+  input.placeholder = type === "cam" ? "Username" : "Handle or URL";
+  input.value = type === "cam" ? values.username || "" : values.handle || "";
+  if (type === "cam") {
     input.addEventListener("blur", () => {
-      const parsed = parsePlatformInput(input.value);
+      const parsed = parseCamInput(input.value);
       if (!parsed) return;
       if (parsed.site) select.value = parsed.site;
       input.value = parsed.username.toLowerCase();
@@ -644,7 +644,7 @@ function parseSocialInput(value) {
   return { platform: null, handle: raw.replace(/^@/, "").toLowerCase() };
 }
 
-function parsePlatformInput(value) {
+function parseCamInput(value) {
   const raw = (value || "").trim();
   if (!raw) return null;
 
@@ -681,20 +681,20 @@ function parsePlatformInput(value) {
   return { site: null, username: raw.replace(/^@/, "").toLowerCase() };
 }
 
-function populateForm(profile, seedPlatforms) {
+function populateForm(profile, seedCams) {
   nameInput.value = profile ? profile.name : "";
   tagsInput.value = profile ? (profile.tags || []).join(", ") : "";
   folderInput.value = profile ? profile.folder || "" : "";
   notesInput.value = profile ? profile.notes || "" : "";
 
-  clearRows(platformRows);
-  const platforms = profile?.platforms?.length
-    ? profile.platforms
-    : seedPlatforms?.length
-      ? seedPlatforms
+  clearRows(camRows);
+  const cams = profile?.cams?.length
+    ? profile.cams
+    : seedCams?.length
+      ? seedCams
       : [{ site: SITE_KEYS[0], username: "" }];
-  platforms.forEach((platform) => {
-    platformRows.appendChild(createRow({ type: "platform", values: platform }));
+  cams.forEach((cam) => {
+    camRows.appendChild(createRow({ type: "cam", values: cam }));
   });
 
   clearRows(socialRows);
@@ -704,11 +704,11 @@ function populateForm(profile, seedPlatforms) {
   });
 }
 
-function setAttachOptions(profiles, seedPlatforms) {
+function setAttachOptions(profiles, seedCams) {
   attachTargetId = null;
   attachSelect.innerHTML = "";
 
-  if (editingId || !seedPlatforms?.length || !profiles.length) {
+  if (editingId || !seedCams?.length || !profiles.length) {
     attachField.classList.add("hidden");
     return;
   }
@@ -731,24 +731,24 @@ function setAttachOptions(profiles, seedPlatforms) {
 function handleAttachChange() {
   const selectedId = attachSelect.value;
   if (!selectedId) {
-    populateForm(null, attachSeedPlatforms);
+    populateForm(null, attachSeedCams);
     return;
   }
 
   const target = attachProfiles.find((profile) => profile.id === selectedId);
   if (!target) return;
 
-  const mergedPlatforms = sanitizePlatforms([
-    ...(target.platforms || []),
-    ...(attachSeedPlatforms || []),
+  const mergedCams = sanitizeCams([
+    ...(target.cams || []),
+    ...(attachSeedCams || []),
   ]);
 
   populateForm(
     {
       ...target,
-      platforms: mergedPlatforms,
+      cams: mergedCams,
     },
-    mergedPlatforms,
+    mergedCams,
   );
 }
 
@@ -797,15 +797,15 @@ async function renderList() {
     });
     card.appendChild(pinButton);
 
-    const platformChips = document.createElement("div");
-    platformChips.classList.add("chips");
-    [...(profile.platforms || [])]
+    const camChips = document.createElement("div");
+    camChips.classList.add("chips");
+    [...(profile.cams || [])]
       .sort((a, b) => (b.viewMs || 0) - (a.viewMs || 0))
-      .forEach((platform) => {
-      const site = SITES[platform.site];
+      .forEach((cam) => {
+      const site = SITES[cam.site];
       if (!site) return;
       const link = document.createElement("a");
-      link.href = site.url(platform.username);
+      link.href = site.url(cam.username);
       link.target = "_blank";
       link.rel = "noopener noreferrer";
       link.classList.add("platform-link");
@@ -819,16 +819,16 @@ async function renderList() {
 
       const chip = document.createElement("span");
       chip.classList.add("platform-chip");
-      const isOnline = Boolean(platform.online);
+      const isOnline = Boolean(cam.online);
       chip.classList.add(isOnline ? "online" : "offline");
       chip.style.setProperty("--platform-color", site.color);
-      chip.title = `${site.abbr}: ${platform.username}`;
+      chip.title = `${site.abbr}: ${cam.username}`;
 
       const icon = document.createElement("span");
       icon.classList.add("icon");
       icon.style.color = site.color;
       icon.style.borderColor = "transparent";
-      const platformIcon = getPlatformIconSvg(platform.site);
+      const platformIcon = getPlatformIconSvg(cam.site);
       if (platformIcon) {
         icon.innerHTML = platformIcon;
       } else {
@@ -837,7 +837,7 @@ async function renderList() {
 
       chip.appendChild(icon);
       link.appendChild(chip);
-        platformChips.appendChild(link);
+        camChips.appendChild(link);
       });
 
     const tagChips = document.createElement("div");
@@ -857,7 +857,7 @@ async function renderList() {
     if (profile.tags?.length) title.appendChild(tagChips);
 
     main.appendChild(title);
-    main.appendChild(platformChips);
+    main.appendChild(camChips);
     if (profile.notes) main.appendChild(note);
 
     if (selection.isActive()) {
@@ -907,13 +907,13 @@ function getFolderIconSvg() {
   return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="lucide lucide-folder-icon lucide-folder"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>';
 }
 
-function openEditor(profile, seedPlatforms, source = "list", profiles = []) {
+function openEditor(profile, seedCams, source = "list", profiles = []) {
   editingId = profile ? profile.id : null;
   currentProfile = profile || null;
   lastView = source;
   attachProfiles = profiles || [];
-  attachSeedPlatforms = seedPlatforms || [];
-  populateForm(profile, seedPlatforms);
+  attachSeedCams = seedCams || [];
+  populateForm(profile, seedCams);
   const currentFolder = profile ? profile.folder : "";
   if (attachProfiles.length) {
     updateFolderOptions(attachProfiles, currentFolder);
@@ -926,23 +926,23 @@ function openEditor(profile, seedPlatforms, source = "list", profiles = []) {
 async function addFromCurrentTab() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
   const parsed = tab?.url ? parseUrl(tab.url) : null;
-  const seedPlatforms = parsed ? [{ site: parsed.site, username: parsed.username }] : [];
-  if (!seedPlatforms.length) {
+  const seedCams = parsed ? [{ site: parsed.site, username: parsed.username }] : [];
+  if (!seedCams.length) {
     openEditor(null, [], "list", await getProfiles());
     return;
   }
 
   const profiles = await getProfiles();
-  const duplicate = findDuplicateProfile(profiles, { platforms: seedPlatforms }, null);
+  const duplicate = findDuplicateProfile(profiles, { cams: seedCams }, null);
   if (duplicate) {
     openEditor(duplicate, null, "detail");
   } else {
-    openEditor(null, seedPlatforms, "list", profiles);
+    openEditor(null, seedCams, "list", profiles);
   }
 }
 
-function collectPlatforms() {
-  const rows = Array.from(platformRows.querySelectorAll(".row"));
+function collectCams() {
+  const rows = Array.from(camRows.querySelectorAll(".row"));
   return rows.map((row) => {
     const select = row.querySelector("select");
     const input = row.querySelector("input");
@@ -965,19 +965,19 @@ function collectSocials() {
   });
 }
 
-function mergePlatformStats(existingPlatforms, updatedPlatforms) {
+function mergeCamStats(existingCams, updatedCams) {
   const existingMap = new Map(
-    (existingPlatforms || []).map((platform) => [
-      `${normalizeText(platform.site)}:${normalizeText(platform.username)}`,
-      platform,
+    (existingCams || []).map((cam) => [
+      `${normalizeText(cam.site)}:${normalizeText(cam.username)}`,
+      cam,
     ]),
   );
-  return (updatedPlatforms || []).map((platform) => {
-    const key = `${normalizeText(platform.site)}:${normalizeText(platform.username)}`;
+  return (updatedCams || []).map((cam) => {
+    const key = `${normalizeText(cam.site)}:${normalizeText(cam.username)}`;
     const existing = existingMap.get(key);
-    if (!existing) return platform;
+    if (!existing) return cam;
     return {
-      ...platform,
+      ...cam,
       online: Boolean(existing.online),
       viewMs: Number.isFinite(existing.viewMs) ? existing.viewMs : 0,
       lastViewedAt: Number.isFinite(existing.lastViewedAt) ? existing.lastViewedAt : null,
@@ -1015,8 +1015,8 @@ if (folderSelect) {
   });
 }
 
-addPlatformButton.addEventListener("click", () => {
-  platformRows.appendChild(createRow({ type: "platform", values: {} }));
+addCamButton.addEventListener("click", () => {
+  camRows.appendChild(createRow({ type: "cam", values: {} }));
 });
 
 addSocialButton.addEventListener("click", () => {
@@ -1093,9 +1093,9 @@ profileForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   clearError();
 
-  const platforms = sanitizePlatforms(collectPlatforms());
-  if (!platforms.length) {
-    showError("Add at least one platform username.");
+  const cams = sanitizeCams(collectCams());
+  if (!cams.length) {
+    showError("Add at least one cam username.");
     return;
   }
 
@@ -1105,7 +1105,7 @@ profileForm.addEventListener("submit", async (event) => {
   const profile = sanitizeProfile({
     id: editingId || createId(),
     name: nameInput.value.trim(),
-    platforms,
+    cams,
     socials,
     tags: splitTags(tagsInput.value),
     folder,
@@ -1122,12 +1122,12 @@ profileForm.addEventListener("submit", async (event) => {
   if (editingId) {
     updated = updated.map((item) => {
       if (item.id !== editingId) return item;
-      const mergedPlatforms = mergePlatformStats(item.platforms || [], profile.platforms || []);
+      const mergedCams = mergeCamStats(item.cams || [], profile.cams || []);
       return sanitizeProfile({
         ...item,
         ...profile,
         id: item.id,
-        platforms: mergedPlatforms,
+        cams: mergedCams,
         pinned: item.pinned,
         createdAt: item.createdAt,
         updatedAt: Date.now(),
@@ -1177,7 +1177,7 @@ async function showInitialView() {
   if (parsed) {
     const match = findDuplicateProfile(
       profiles,
-      { platforms: [{ site: parsed.site, username: parsed.username }] },
+      { cams: [{ site: parsed.site, username: parsed.username }] },
       null,
     );
     if (match) {

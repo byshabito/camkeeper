@@ -28,15 +28,15 @@ export function sortBySelection(items, mode) {
 }
 
 export function totalViewTime(profile) {
-  return (profile.platforms || []).reduce(
-    (sum, platform) => sum + (platform.viewMs || 0),
+  return (profile.cams || []).reduce(
+    (sum, cam) => sum + (cam.viewMs || 0),
     0,
   );
 }
 
 export function lastViewed(profile) {
-  return (profile.platforms || []).reduce((max, platform) => {
-    const ts = platform.lastViewedAt || 0;
+  return (profile.cams || []).reduce((max, cam) => {
+    const ts = cam.lastViewedAt || 0;
     return ts > max ? ts : max;
   }, 0);
 }

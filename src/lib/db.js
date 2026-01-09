@@ -26,7 +26,8 @@ function coerceProfiles(raw) {
       const hasProfileShape = values.some(
         (value) =>
           value &&
-          (Array.isArray(value.platforms) ||
+          (Array.isArray(value.cams) ||
+            Array.isArray(value.platforms) ||
             Array.isArray(value.sites) ||
             typeof value.name === "string"),
       );
