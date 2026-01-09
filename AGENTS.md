@@ -34,7 +34,7 @@ There is no automated test runner configured.
 
 ## Commit & Pull Request Guidelines
 
-- Commit messages are short and imperative (e.g., `Refactor background logic`, `Add online badge toggle`).
+- Commit messages start with a type prefix (e.g., `feat: Add online badge toggle`, `fix: Refactor background logic`, `chore: Update dependencies`). Common types: `docs`, `refactor`, `style`, `test`, `perf`, `build`, `ci`, `revert`.
 - PRs should include a concise summary and manual verification steps.
 - For UI changes, include screenshots when practical.
 
