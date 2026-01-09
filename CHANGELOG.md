@@ -3,6 +3,7 @@
 ## v0.6.2
 
 - Remove background command listener when commands are unused
+- Rename settings metadata label to "Build time"
 
 ## v0.6.1
 
