@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.6.1
+
+- Add homepage url to manifest
+- Remove commands
+
 ## v0.6.0
 
 - Centralize storage access behind the unified API

@@ -26,11 +26,11 @@
 
 ## Manual Installation
 
-Download the latest release zip for your browser from GitHub Releases.
+Download the latest release file for your browser from GitHub Releases (`*.zip` for Chrome/Chromium, `*.xpi` for Firefox).
 
 ### Chrome / Chromium
 
-1. Extract the `camkeeper-*-chrome.zip`
+1. Extract the `camkeeper-{{version}}-chrome.zip`
 2. Open `chrome://extensions`
 3. Enable **Developer mode**
 4. Click **Load unpacked**
@@ -42,12 +42,13 @@ Download the latest release zip for your browser from GitHub Releases.
 2. Navigate to **Extensions**
 3. Click the **gear icon** on the top right
 4. Click on **Install Add-on From File...**
-5. Select `camkeeper-*-firefox.zip` file
+5. Select `camkeeper-{{version}}-firefox.xpi` file
 
 Note: Some Firefox builds require allowing unsigned add-ons and enabling MV3 in `about:config`:
-- `xpinstall.signatures.required` = false (Developer/Nightly only)
-- `extensions.manifestV3.enabled` = true
-- `extensions.backgroundServiceWorker.enabled` = true
+
+- `xpinstall.signatures.required = false`
+- `extensions.manifestV3.enabled = true`
+- `extensions.backgroundServiceWorker.enabled = true`
 
 ## Temporary Installation (Development)
 
