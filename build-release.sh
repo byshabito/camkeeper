@@ -3,11 +3,11 @@ set -euo pipefail
 
 VERSION="${1:-}"
 if [[ -z "$VERSION" ]]; then
-  echo "Usage: scripts/build.sh <version>"
+  echo "Usage: ./build-release.sh <version>"
   exit 1
 fi
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DIST_DIR="${ROOT_DIR}/dist"
 TMP_CHROME="${DIST_DIR}/tmp-chrome"
 TMP_FIREFOX="${DIST_DIR}/tmp-firefox"

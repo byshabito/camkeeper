@@ -7,7 +7,7 @@ import {
   DEFAULT_VISIT_DELAY_MS,
 } from "../../config/background.js";
 import { sanitizeProfile } from "../../lib/storage.js";
-const RELEASE_TIMESTAMP = "2026-01-08T15:56:26+01:00";
+const RELEASE_TIMESTAMP = "2026-01-09T01:42:03+01:00";
 const DEVELOPER_NAME = "Shabito";
 const DEVELOPER_URL = "https://github.com/byshabito";
 const SOURCE_URL = "https://github.com/byshabito/camkeeper";
