@@ -4,7 +4,7 @@ import {
   DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES,
   DEFAULT_VISIT_COOLDOWN_MS,
   DEFAULT_VISIT_DELAY_MS,
-} from "../../lib/config/background.js";
+} from "../../config/background.js";
 import { sanitizeProfile } from "../../lib/storage.js";
 const BUILD_COMMIT = "cc8f9b8";
 const RELEASE_TIMESTAMP = "2026-01-08T15:56:26+01:00";

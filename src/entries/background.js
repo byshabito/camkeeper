@@ -17,7 +17,7 @@ import {
   ONLINE_CHECK_STATE_KEY,
   POPUP_ONLINE_CHECK_COOLDOWN_MINUTES,
   getDefaultSettings,
-} from "../lib/config/background.js";
+} from "../config/background.js";
 import { fetchOnlineStatuses as fetchChaturbateStatuses } from "../lib/onlineStatus/chaturbate.js";
 import { fetchOnlineStatuses as fetchStripchatStatuses } from "../lib/onlineStatus/stripchat.js";
 
