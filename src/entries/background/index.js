@@ -74,11 +74,6 @@ chrome.contextMenus.onClicked.addListener((info) => {
   openLibrary();
 });
 
-chrome.commands.onCommand.addListener((command) => {
-  if (command === "open-library") {
-    openLibrary();
-  }
-});
 
 chrome.runtime.onMessage.addListener((message) => {
   online.onMessage(message);

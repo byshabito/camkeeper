@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.6.2
+
+- Remove background command listener when commands are unused
+
 ## v0.6.1
 
 - Add homepage url to manifest
