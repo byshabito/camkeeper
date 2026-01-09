@@ -344,7 +344,7 @@ const SOCIAL_ICON_PATHS = {
   onlyfans: "src/assets/social-icons/onlyfans.svg",
   tiktok: "src/assets/social-icons/tiktok.svg",
   reddit: "src/assets/social-icons/reddit.svg",
-  fansly: "src/assets/social-icons/link.svg",
+  fansly: "src/assets/social-icons/fansly.svg",
   telegram: "src/assets/social-icons/telegram.svg",
   threads: "src/assets/social-icons/threads.svg",
   youtube: "src/assets/social-icons/youtube.svg",
