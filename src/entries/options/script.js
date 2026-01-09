@@ -6,7 +6,6 @@ import {
   DEFAULT_VISIT_DELAY_MS,
 } from "../../config/background.js";
 import { sanitizeProfile } from "../../lib/storage.js";
-const BUILD_COMMIT = "cc8f9b8";
 const RELEASE_TIMESTAMP = "2026-01-08T15:56:26+01:00";
 const DEVELOPER_NAME = "Shabito";
 const DEVELOPER_URL = "https://github.com/byshabito";
@@ -22,7 +21,6 @@ const backgroundOnlineCheckInput = document.getElementById("background-online-ch
 const onlineCheckIntervalInput = document.getElementById("online-check-interval");
 const visitSaveButton = document.getElementById("visit-save");
 const metaVersion = document.getElementById("meta-version");
-const metaBuild = document.getElementById("meta-build");
 const metaRelease = document.getElementById("meta-release");
 const metaDeveloper = document.getElementById("meta-developer");
 const metaSource = document.getElementById("meta-source");
@@ -135,7 +133,6 @@ function loadMetadata() {
   if (!metaVersion) return;
   const manifest = chrome.runtime.getManifest();
   metaVersion.textContent = manifest.version;
-  metaBuild.textContent = BUILD_COMMIT;
   metaRelease.textContent = formatReleaseTimestamp(RELEASE_TIMESTAMP);
   metaDeveloper.textContent = DEVELOPER_NAME;
   metaDeveloper.href = DEVELOPER_URL;

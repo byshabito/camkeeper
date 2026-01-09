@@ -45,6 +45,33 @@ PY
 update_manifest_version "${ROOT_DIR}/manifest.json"
 update_manifest_version "${ROOT_DIR}/manifest.firefox.json"
 
+RELEASE_TIMESTAMP="$(date -Iseconds)"
+
+update_options_metadata() {
+  local options_path="$1"
+  python - "$options_path" "$RELEASE_TIMESTAMP" <<'PY'
+import re
+import sys
+
+path = sys.argv[1]
+timestamp = sys.argv[2]
+
+with open(path, "r", encoding="utf-8") as f:
+    contents = f.read()
+
+contents = re.sub(
+    r'const RELEASE_TIMESTAMP = ".*?";',
+    f'const RELEASE_TIMESTAMP = "{timestamp}";',
+    contents,
+)
+
+with open(path, "w", encoding="utf-8") as f:
+    f.write(contents)
+PY
+}
+
+update_options_metadata "${ROOT_DIR}/src/entries/options/script.js"
+
 mkdir -p "${DIST_DIR}"
 rm -rf "${TMP_CHROME}" "${TMP_FIREFOX}"
 mkdir -p "${TMP_CHROME}" "${TMP_FIREFOX}"
