@@ -1,7 +1,12 @@
 import SITES from "../config/sites.js";
+import { parseSocialUrl } from "./utils/ParseSiteUrls.js";
 
 export const SOCIAL_OPTIONS = [
+  { id: "fansly", label: "Fansly" },
   { id: "instagram", label: "Instagram" },
+  { id: "telegram", label: "Telegram" },
+  { id: "threads", label: "Threads" },
+  { id: "youtube", label: "YouTube" },
   { id: "x", label: "X" },
   { id: "onlyfans", label: "OnlyFans" },
   { id: "tiktok", label: "TikTok" },
@@ -86,7 +91,20 @@ export function sanitizeSocials(socials) {
     }))
     .filter((social) => social.platform && social.handle);
 
-  return uniqBy(cleaned, (social) => `${social.platform}:${normalizeText(social.handle)}`);
+  const normalized = cleaned.map((social) => {
+    const trimmed = (social.handle || "").trim();
+    if (!trimmed) return social;
+    if (/^https?:\/\//i.test(trimmed)) {
+      const parsed = parseSocialUrl(trimmed);
+      if (parsed && parsed.platform === social.platform) {
+        return { ...social, handle: normalizeText(parsed.handle) };
+      }
+    }
+    const handle = trimmed.replace(/^@/, "").replace(/\/+$/, "");
+    return { ...social, handle: normalizeText(handle) };
+  });
+
+  return uniqBy(normalized, (social) => `${social.platform}:${normalizeText(social.handle)}`);
 }
 
 export function sanitizeProfile(raw) {
