@@ -739,7 +739,7 @@ async function renderList() {
 
     const pinButton = document.createElement("button");
     pinButton.type = "button";
-    pinButton.classList.add("pin-toggle", "card-pin");
+    pinButton.classList.add("plain-button", "icon-button", "pin-toggle", "card-pin");
     if (profile.pinned) pinButton.classList.add("pinned");
     pinButton.title = profile.pinned ? "Unpin" : "Pin";
     pinButton.setAttribute("aria-label", pinButton.title);
