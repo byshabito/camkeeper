@@ -91,11 +91,9 @@ cp -R "${ROOT_DIR}/src" "${ROOT_DIR}/icons" "${ROOT_DIR}/README.md" \
 cp "${ROOT_DIR}/manifest.firefox.json" "${TMP_FIREFOX}/manifest.json"
 
 (cd "${TMP_CHROME}" && zip -r "../camkeeper-v${VERSION}-chrome.zip" manifest.json src icons README.md LICENSE CHANGELOG.md)
-(cd "${TMP_FIREFOX}" && zip -r "../camkeeper-v${VERSION}-firefox.zip" manifest.json src icons README.md LICENSE CHANGELOG.md)
 (cd "${TMP_FIREFOX}" && zip -r "../camkeeper-v${VERSION}-firefox.xpi" manifest.json src icons README.md LICENSE CHANGELOG.md)
 
 rm -rf "${TMP_CHROME}" "${TMP_FIREFOX}"
 echo "Built:"
 echo "  ${DIST_DIR}/camkeeper-v${VERSION}-chrome.zip"
-echo "  ${DIST_DIR}/camkeeper-v${VERSION}-firefox.zip"
 echo "  ${DIST_DIR}/camkeeper-v${VERSION}-firefox.xpi"
