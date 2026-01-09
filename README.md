@@ -12,9 +12,10 @@
 - Add current platform to an existing profile
 - Bulk select to merge or delete
 - Folder organization with filtering and manager
-- Sort by updated/name/visits
-- Visit tracking with configurable focus time + cooldown
-- Optional online status checks when opening the popup
+- Sort by updated/name/viewed time
+- Active view time tracking for model pages
+- Optional online status checks and badge count
+- Auto-detect social profile pages for quick detail view
 - Local-only storage with JSON export/import
 
 ## Usage
@@ -42,6 +43,11 @@ Download the latest release zip for your browser from GitHub Releases.
 3. Click the **gear icon** on the top right
 4. Click on **Install Add-on From File...**
 5. Select `camkeeper-*-firefox.zip` file
+
+Note: Some Firefox builds require allowing unsigned add-ons and enabling MV3 in `about:config`:
+- `xpinstall.signatures.required` = false (Developer/Nightly only)
+- `extensions.manifestV3.enabled` = true
+- `extensions.backgroundServiceWorker.enabled` = true
 
 ## Temporary Installation (Development)
 

@@ -11,6 +11,7 @@
 - Sort platform chips by most-viewed first
 - Expand socials support and auto-detect matching social profiles
 - Refresh popup layout and icon styling
+- Replace popup back labels with icon buttons
 
 ## v0.5.1
 
