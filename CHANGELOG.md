@@ -6,6 +6,7 @@
 - Add shared online status API modules for Chaturbate and Stripchat
 - Add shared config for background defaults
 - Codebase maintenance and cleanup
+- Refactor background logic into modular services
 
 ## v0.5.1
 
