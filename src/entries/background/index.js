@@ -15,16 +15,10 @@ function logDebug(message, data) {
 }
 
 const online = initOnlineStatus(state);
-const visits = initVisitTracking(state, settings, logDebug);
+const visits = initVisitTracking(state, logDebug);
 
 async function loadSettings() {
   const nextSettings = await getSettings();
-  settings.visitDelayMs = Number.isFinite(nextSettings.visitDelayMs)
-    ? nextSettings.visitDelayMs
-    : settings.visitDelayMs;
-  settings.visitCooldownMs = Number.isFinite(nextSettings.visitCooldownMs)
-    ? nextSettings.visitCooldownMs
-    : settings.visitCooldownMs;
   settings.onlineChecksEnabled =
     typeof nextSettings.onlineChecksEnabled === "boolean"
       ? nextSettings.onlineChecksEnabled

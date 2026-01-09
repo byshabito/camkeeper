@@ -177,8 +177,9 @@ function showDetailView(profile) {
 
     const label = document.createElement("span");
     label.classList.add("username");
-    const count = Number.isFinite(platform.visitCount) ? platform.visitCount : 0;
-    label.textContent = `${platform.username} · ${count}`;
+    const viewMs = Number.isFinite(platform.viewMs) ? platform.viewMs : 0;
+    label.textContent = platform.username;
+    chip.title = `Total view time: ${formatDuration(viewMs)}`;
 
     chip.appendChild(icon);
     chip.appendChild(label);
@@ -834,6 +835,20 @@ function truncate(text, length) {
   return `${clean.slice(0, length - 1)}...`;
 }
 
+function formatDuration(ms) {
+  const safeMs = Number.isFinite(ms) ? ms : 0;
+  const totalMinutes = Math.floor(safeMs / 60000);
+  if (totalMinutes < 60) return `${Math.max(totalMinutes, 0)}m`;
+  const hoursTotal = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  if (hoursTotal < 24) return minutes ? `${hoursTotal}h ${minutes}m` : `${hoursTotal}h`;
+  const days = Math.floor(hoursTotal / 24);
+  const hours = hoursTotal % 24;
+  if (hours && minutes) return `${days}d ${hours}h ${minutes}m`;
+  if (hours) return `${days}d ${hours}h`;
+  return `${days}d`;
+}
+
 function getPinIconSvg(pinned) {
   if (pinned) {
     return '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="lucide lucide-pin-off-icon lucide-pin-off"><path d="M12 17v5"/><path d="M15 9.34V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H7.89"/><path d="m2 2 20 20"/><path d="M9 9v1.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h11"/></svg>';
@@ -917,9 +932,8 @@ function mergePlatformStats(existingPlatforms, updatedPlatforms) {
     return {
       ...platform,
       online: Boolean(existing.online),
-      visitCount: Number.isFinite(existing.visitCount) ? existing.visitCount : 0,
-      lastVisitedAt: Number.isFinite(existing.lastVisitedAt) ? existing.lastVisitedAt : null,
-      lastLeftAt: Number.isFinite(existing.lastLeftAt) ? existing.lastLeftAt : null,
+      viewMs: Number.isFinite(existing.viewMs) ? existing.viewMs : 0,
+      lastViewedAt: Number.isFinite(existing.lastViewedAt) ? existing.lastViewedAt : null,
     };
   });
 }

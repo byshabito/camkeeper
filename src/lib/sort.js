@@ -8,7 +8,7 @@ export function sortBySelection(items, mode) {
       );
     case "most":
       return list.sort(
-        (a, b) => pinWeight(a) - pinWeight(b) || totalVisits(b) - totalVisits(a),
+        (a, b) => pinWeight(a) - pinWeight(b) || totalViewTime(b) - totalViewTime(a),
       );
     case "least":
       return list.sort(
@@ -16,7 +16,8 @@ export function sortBySelection(items, mode) {
       );
     case "recent":
       return list.sort(
-        (a, b) => pinWeight(a) - pinWeight(b) || (lastVisited(b) || 0) - (lastVisited(a) || 0),
+        (a, b) =>
+          pinWeight(a) - pinWeight(b) || (lastViewed(b) || 0) - (lastViewed(a) || 0),
       );
     case "updated":
     default:
@@ -26,16 +27,16 @@ export function sortBySelection(items, mode) {
   }
 }
 
-export function totalVisits(profile) {
+export function totalViewTime(profile) {
   return (profile.platforms || []).reduce(
-    (sum, platform) => sum + (platform.visitCount || 0),
+    (sum, platform) => sum + (platform.viewMs || 0),
     0,
   );
 }
 
-export function lastVisited(profile) {
+export function lastViewed(profile) {
   return (profile.platforms || []).reduce((max, platform) => {
-    const ts = platform.lastVisitedAt || 0;
+    const ts = platform.lastViewedAt || 0;
     return ts > max ? ts : max;
   }, 0);
 }

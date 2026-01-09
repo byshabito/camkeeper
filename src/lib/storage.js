@@ -46,11 +46,16 @@ export function sanitizePlatforms(platforms) {
       site: normalizeText(platform.site),
       username: normalizeText(platform.username),
       online: Boolean(platform.online),
-      visitCount: Number.isFinite(platform.visitCount) ? platform.visitCount : 0,
-      lastVisitedAt: Number.isFinite(platform.lastVisitedAt)
-        ? platform.lastVisitedAt
-        : null,
-      lastLeftAt: Number.isFinite(platform.lastLeftAt) ? platform.lastLeftAt : null,
+      viewMs: Number.isFinite(platform.viewMs)
+        ? platform.viewMs
+        : Number.isFinite(platform.activeMs)
+          ? platform.activeMs
+          : 0,
+      lastViewedAt: Number.isFinite(platform.lastViewedAt)
+        ? platform.lastViewedAt
+        : Number.isFinite(platform.lastVisitedAt)
+          ? platform.lastVisitedAt
+          : null,
     }))
     .filter((platform) => platform.site && platform.username && SITES[platform.site]);
 
@@ -64,9 +69,8 @@ export function sanitizePlatforms(platforms) {
     }
     merged.set(key, {
       ...existing,
-      visitCount: (existing.visitCount || 0) + (platform.visitCount || 0),
-      lastVisitedAt: Math.max(existing.lastVisitedAt || 0, platform.lastVisitedAt || 0) || null,
-      lastLeftAt: Math.max(existing.lastLeftAt || 0, platform.lastLeftAt || 0) || null,
+      viewMs: (existing.viewMs || 0) + (platform.viewMs || 0),
+      lastViewedAt: Math.max(existing.lastViewedAt || 0, platform.lastViewedAt || 0) || null,
       online: Boolean(existing.online || platform.online),
     });
   });
