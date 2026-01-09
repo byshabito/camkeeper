@@ -1,5 +1,5 @@
 import SITES, { SITE_KEYS } from "../../config/sites.js";
-import { parseUrl } from "../../utils/ParseSiteUrls.js";
+import { parseUrl } from "../../lib/utils/ParseSiteUrls.js";
 import {
   SOCIAL_OPTIONS,
   createId,
