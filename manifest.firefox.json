@@ -27,7 +27,9 @@
     "default_popup": "src/entries/popup/index.html"
   },
   "background": {
-    "service_worker": "src/entries/background/index.js",
+    "scripts": [
+      "src/entries/background/index.js"
+    ],
     "type": "module"
   },
   "options_ui": {
