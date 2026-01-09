@@ -3,6 +3,7 @@
   "author": "Shabito",
   "description": "Cross-site bookmark manager for Chaturbate and Stripchat models",
   "version": "0.6.0",
+  "homepage_url": "https://github.com/byshabito/camkeeper",
   "manifest_version": 3,
   "permissions": [
     "storage",
