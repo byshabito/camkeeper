@@ -18,11 +18,13 @@ const backgroundOnlineCheckInput = document.getElementById("background-online-ch
 const onlineCheckIntervalInput = document.getElementById("online-check-interval");
 const debugLogsInput = document.getElementById("debug-logs");
 const visitSaveButton = document.getElementById("visit-save");
+const settingsFeedback = document.getElementById("settings-feedback");
 const metaVersion = document.getElementById("meta-version");
 const metaRelease = document.getElementById("meta-release");
 const metaDeveloper = document.getElementById("meta-developer");
 const metaSource = document.getElementById("meta-source");
 const metaLicense = document.getElementById("meta-license");
+let settingsFeedbackTimeout = null;
 
 function formatReleaseTimestamp(timestamp) {
   const date = new Date(timestamp);
@@ -104,6 +106,21 @@ async function persistSettings() {
   await saveSettings(settings);
 }
 
+function showSettingsFeedback(message) {
+  if (!settingsFeedback) return;
+  if (settingsFeedbackTimeout) {
+    clearTimeout(settingsFeedbackTimeout);
+    settingsFeedbackTimeout = null;
+  }
+  settingsFeedback.textContent = message;
+  settingsFeedback.classList.add("visible");
+  settingsFeedbackTimeout = window.setTimeout(() => {
+    settingsFeedback.classList.remove("visible");
+    settingsFeedback.textContent = "";
+    settingsFeedbackTimeout = null;
+  }, 2400);
+}
+
 function loadMetadata() {
   if (!metaVersion) return;
   const manifest = chrome.runtime.getManifest();
@@ -156,6 +173,7 @@ if (visitSaveButton) {
   visitSaveButton.addEventListener("click", async () => {
     await persistSettings();
     await loadSettings();
+    showSettingsFeedback("Settings saved successfully.");
   });
 }
 

@@ -136,10 +136,44 @@ body:not(.embedded) .settings-scope .donation p {
   gap: 12px;
 }
 
+.settings-scope .settings-panel {
+  position: relative;
+}
+
 .settings-scope .panel-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.settings-scope .panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-scope .settings-feedback {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translate(-50%, -4px);
+  font-size: 12px;
+  color: #9ee7b0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: 999px;
+  padding: 4px 10px;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 1;
+}
+
+.settings-scope .settings-feedback.visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 .settings-scope .panel-header h2 {

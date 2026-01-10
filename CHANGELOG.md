@@ -3,6 +3,7 @@
 ## v0.8.3
 
 - Shorten folder filter label to "All"
+- Add floating success feedback when settings are saved
 
 ## v0.8.2
 
