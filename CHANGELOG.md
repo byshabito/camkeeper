@@ -5,6 +5,9 @@
 - Add most viewed (30 days) sort option
 - Track daily view history buckets for rolling view totals
 - Remember last selected sort in the popup
+- Add filter for currently online models
+- Remember last selected folder filter in the popup
+- Hide the online filter when online checks are disabled (live update)
 
 ## v0.7.0
 

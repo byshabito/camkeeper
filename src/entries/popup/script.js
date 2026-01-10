@@ -67,12 +67,14 @@ const bulkMerge = document.getElementById("bulk-merge");
 const bulkDelete = document.getElementById("bulk-delete");
 const bulkCancel = document.getElementById("bulk-cancel");
 const folderFilter = document.getElementById("folder-filter");
+const onlineFilter = document.getElementById("online-filter");
 const settingsToggle = document.getElementById("settings-toggle");
 const settingsIcon = settingsToggle?.querySelector(".settings-icon") || null;
 const overviewIcon = settingsToggle?.querySelector(".overview-icon") || null;
 const showConfirm = initConfirmModal();
 const DEFAULT_SORT = "month";
 const SORT_OPTIONS = new Set(["most", "month", "recent", "updated", "name"]);
+let preferredFolderFilter = "";
 
 const urlParams = new URLSearchParams(window.location.search);
 const initialTab = urlParams.get("tab");
@@ -124,15 +126,35 @@ const selection = createBulkSelection({
   onRender: () => renderList(),
 });
 
-async function loadSortPreference() {
-  if (!sortSelect) return;
+async function loadListPreferences() {
   const settings = await getSettings();
-  const preferred = settings?.lastSort;
-  if (SORT_OPTIONS.has(preferred)) {
-    sortSelect.value = preferred;
-  } else {
-    sortSelect.value = DEFAULT_SORT;
+  if (sortSelect) {
+    const preferred = settings?.lastSort;
+    if (SORT_OPTIONS.has(preferred)) {
+      sortSelect.value = preferred;
+    } else {
+      sortSelect.value = DEFAULT_SORT;
+    }
   }
+  if (onlineFilter) {
+    const onlineChecksEnabled =
+      typeof settings?.onlineChecksEnabled === "boolean" ? settings.onlineChecksEnabled : true;
+    const onlineToggle = onlineFilter.closest(".filter-toggle");
+    if (onlineToggle) {
+      onlineToggle.classList.toggle("hidden", !onlineChecksEnabled);
+    }
+    if (onlineChecksEnabled) {
+      onlineFilter.checked = Boolean(settings?.onlineOnly);
+    } else {
+      onlineFilter.checked = false;
+      if (settings?.onlineOnly) {
+        await saveOnlinePreference(false);
+      }
+    }
+  }
+  preferredFolderFilter = typeof settings?.lastFolderFilter === "string"
+    ? settings.lastFolderFilter
+    : "";
 }
 
 async function saveSortPreference(value) {
@@ -141,6 +163,22 @@ async function saveSortPreference(value) {
   await saveSettings({
     ...settings,
     lastSort: value,
+  });
+}
+
+async function saveOnlinePreference(value) {
+  const settings = await getSettings();
+  await saveSettings({
+    ...settings,
+    onlineOnly: Boolean(value),
+  });
+}
+
+async function saveFolderPreference(value) {
+  const settings = await getSettings();
+  await saveSettings({
+    ...settings,
+    lastFolderFilter: value || "",
   });
 }
 
@@ -486,9 +524,20 @@ function renderFolderFilter(folders) {
     folderFilter.appendChild(option);
   });
 
-  if (current) {
-    const match = folders.find((folder) => normalizeText(folder) === normalizeText(current));
-    folderFilter.value = match || "";
+  const selection = current || preferredFolderFilter;
+  if (selection) {
+    const match = folders.find(
+      (folder) => normalizeText(folder) === normalizeText(selection),
+    );
+    if (match) {
+      folderFilter.value = match;
+    } else {
+      folderFilter.value = "";
+      if (preferredFolderFilter) {
+        preferredFolderFilter = "";
+        saveFolderPreference("");
+      }
+    }
   } else {
     folderFilter.value = "";
   }
@@ -543,6 +592,11 @@ function updateFolderOptions(profiles, currentFolder) {
 function matchesFolder(profile, selectedFolder) {
   if (!selectedFolder) return true;
   return normalizeText(profile.folder) === selectedFolder;
+}
+
+function matchesOnline(profile, onlyOnline) {
+  if (!onlyOnline) return true;
+  return (profile.cams || []).some((cam) => cam.online);
 }
 
 async function renameFolder(folderName, nextName) {
@@ -852,8 +906,12 @@ async function renderList() {
   updateFolderOptions(profiles);
   const query = normalizeText(searchInput.value);
   const selectedFolder = normalizeText(folderFilter?.value || "");
+  const onlineOnly = Boolean(onlineFilter?.checked);
   const filtered = profiles.filter(
-    (profile) => matchQuery(profile, query) && matchesFolder(profile, selectedFolder),
+    (profile) =>
+      matchQuery(profile, query) &&
+      matchesFolder(profile, selectedFolder) &&
+      matchesOnline(profile, onlineOnly),
   );
   const sorted = sortBySelection(filtered, sortSelect.value);
 
@@ -1168,12 +1226,22 @@ deleteButton.addEventListener("click", async () => {
   showListView();
 });
 searchInput.addEventListener("input", renderList);
+if (onlineFilter) {
+  onlineFilter.addEventListener("change", async () => {
+    await saveOnlinePreference(onlineFilter.checked);
+    renderList();
+  });
+}
 sortSelect.addEventListener("change", async () => {
   await saveSortPreference(sortSelect.value);
   renderList();
 });
 if (folderFilter) {
-  folderFilter.addEventListener("change", renderList);
+  folderFilter.addEventListener("change", async () => {
+    preferredFolderFilter = folderFilter.value || "";
+    await saveFolderPreference(preferredFolderFilter);
+    renderList();
+  });
 }
 if (searchSort && searchInput) {
   const searchToggle = searchSort.querySelector(".search-toggle");
@@ -1306,7 +1374,7 @@ async function showInitialView() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await Promise.all([loadSocialIcons(), loadPlatformIcons()]);
-  await loadSortPreference();
+  await loadListPreferences();
   if (initialTab === "settings" || isEmbedded) {
     showSettingsView();
     return;
@@ -1317,3 +1385,23 @@ document.addEventListener("DOMContentLoaded", async () => {
 function normalizeHandle(value) {
   return (value || "").trim().replace(/^@/, "").replace(/\/+$/, "");
 }
+
+chrome.storage.onChanged.addListener((changes, area) => {
+  if (area !== "local") return;
+  const settings = changes?.camkeeper_settings_v1?.newValue;
+  if (!settings) return;
+  const onlineChecksEnabled =
+    typeof settings.onlineChecksEnabled === "boolean" ? settings.onlineChecksEnabled : true;
+  const onlineToggle = onlineFilter?.closest(".filter-toggle");
+  if (onlineToggle) {
+    onlineToggle.classList.toggle("hidden", !onlineChecksEnabled);
+  }
+  if (onlineFilter) {
+    if (onlineChecksEnabled) {
+      onlineFilter.checked = Boolean(settings.onlineOnly);
+    } else if (onlineFilter.checked) {
+      onlineFilter.checked = false;
+      renderList();
+    }
+  }
+});
