@@ -1,4 +1,3 @@
-export const MENU_ID = "camkeeper-open-library";
 export const DEFAULT_DEBUG_LOGS_ENABLED = false;
 export const ACTIVE_VIEW_SESSION_STATE_KEY = "camkeeper_active_view_session_v1";
 

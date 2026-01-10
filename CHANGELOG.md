@@ -3,6 +3,7 @@
 ## v0.9.0
 
 - Remove online status checks
+- Remove context menu library shortcut
 
 ## v0.8.4
 
