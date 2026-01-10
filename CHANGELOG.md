@@ -3,6 +3,7 @@
 ## v0.8.4
 
 - Rename bookmarks to profiles across the UI and backup file name
+- Normalize website socials and improve URL matching for social detail views
 
 ## v0.8.3
 

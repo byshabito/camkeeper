@@ -10,6 +10,33 @@ function normalizeHost(hostname) {
   return host;
 }
 
+function normalizeWebsiteHandleFromUrl(url) {
+  if (!url || !url.hostname) return "";
+  const host = normalizeHost(url.hostname);
+  const path = url.pathname.replace(/\/+$/, "");
+  if (path && path !== "/") return `${host}${path}`;
+  return host;
+}
+
+export function normalizeWebsiteHandle(value) {
+  if (!value) return "";
+  if (value instanceof URL) {
+    return normalizeWebsiteHandleFromUrl(value).toLowerCase();
+  }
+  try {
+    const url = new URL(value);
+    if (!/^https?:$/i.test(url.protocol)) return "";
+    return normalizeWebsiteHandleFromUrl(url).toLowerCase();
+  } catch (error) {
+    return value
+      .trim()
+      .replace(/^https?:\/\//i, "")
+      .replace(/^www\./i, "")
+      .replace(/\/+$/, "")
+      .toLowerCase();
+  }
+}
+
 export function parseUrl(u) {
   try {
     const url = new URL(u);
@@ -45,6 +72,7 @@ export function parseUrl(u) {
 export function parseSocialUrl(u) {
   try {
     const url = new URL(u);
+    if (!/^https?:$/i.test(url.protocol)) return null;
     const host = normalizeHost(url.hostname);
     const path = url.pathname
       .split("/")
@@ -139,7 +167,8 @@ export function parseSocialUrl(u) {
       }
     }
 
-    return null;
+    const websiteHandle = normalizeWebsiteHandleFromUrl(url);
+    return websiteHandle ? { platform: "website", handle: websiteHandle.toLowerCase() } : null;
   } catch (error) {
     return null;
   }

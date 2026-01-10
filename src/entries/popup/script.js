@@ -1,5 +1,5 @@
 import SITES, { SITE_KEYS } from "../../config/sites.js";
-import { parseSocialUrl, parseUrl } from "../../lib/utils/ParseSiteUrls.js";
+import { normalizeWebsiteHandle, parseSocialUrl, parseUrl } from "../../lib/utils/ParseSiteUrls.js";
 import {
   SOCIAL_OPTIONS,
   createId,
@@ -311,7 +311,7 @@ function showDetailView(profile) {
     icon.innerHTML = getSocialIconSvg(social.platform);
 
     const text = document.createElement("span");
-    text.textContent = social.handle;
+    text.textContent = formatSocialHandle(social);
 
     chip.appendChild(icon);
     chip.appendChild(text);
@@ -439,6 +439,17 @@ function buildSocialUrl(social) {
     default:
       return null;
   }
+}
+
+function formatSocialHandle(social) {
+  const handle = (social.handle || "").trim();
+  if (!handle) return "";
+
+  if (normalizeText(social.platform) === "website") {
+    return handle.replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+  }
+
+  return handle;
 }
 
 function getSocialIconSvg(platform) {
@@ -888,37 +899,9 @@ function parseSocialInput(value) {
   if (!raw) return null;
 
   if (/^https?:\/\//i.test(raw)) {
-    try {
-      const url = new URL(raw);
-      const host = url.hostname.replace(/^www\./, "").toLowerCase();
-      const pathParts = url.pathname.split("/").filter(Boolean);
-      const first = pathParts[0] || "";
-      if (!first) return null;
-
-      if (host === "instagram.com") {
-        return { platform: "instagram", handle: first.replace(/^@/, "").toLowerCase() };
-      }
-      if (host === "x.com" || host === "twitter.com") {
-        return { platform: "x", handle: first.replace(/^@/, "").toLowerCase() };
-      }
-      if (host === "onlyfans.com") {
-        return { platform: "onlyfans", handle: first.replace(/^@/, "").toLowerCase() };
-      }
-      if (host === "tiktok.com") {
-        const normalized = first.startsWith("@") ? first.slice(1) : first;
-        return { platform: "tiktok", handle: normalized.toLowerCase() };
-      }
-      if (host === "reddit.com") {
-        const userIdx = pathParts.indexOf("user");
-        if (userIdx !== -1 && pathParts[userIdx + 1]) {
-          return { platform: "reddit", handle: pathParts[userIdx + 1].toLowerCase() };
-        }
-        return { platform: "reddit", handle: first.replace(/^u\//, "").toLowerCase() };
-      }
-      return { platform: "website", handle: raw.toLowerCase() };
-    } catch (e) {
-      return null;
-    }
+    const parsed = parseSocialUrl(raw);
+    if (parsed) return parsed;
+    return { platform: "website", handle: raw.toLowerCase() };
   }
 
   return { platform: null, handle: raw.replace(/^@/, "").toLowerCase() };
@@ -1492,7 +1475,7 @@ async function showInitialView() {
       (profile.socials || []).some(
         (social) =>
           normalizeText(social.platform) === socialParsed.platform &&
-          normalizeText(normalizeHandle(social.handle)) === socialParsed.handle,
+          normalizeSocialHandle(social.platform, social.handle) === socialParsed.handle,
       ),
     );
     if (socialMatch) {
@@ -1515,6 +1498,13 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 function normalizeHandle(value) {
   return (value || "").trim().replace(/^@/, "").replace(/\/+$/, "");
+}
+
+function normalizeSocialHandle(platform, value) {
+  if (normalizeText(platform) === "website") {
+    return normalizeWebsiteHandle(value);
+  }
+  return normalizeText(normalizeHandle(value));
 }
 
 chrome.storage.onChanged.addListener((changes, area) => {
