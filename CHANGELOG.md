@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.8.3
+
+- Shorten folder filter label to "All"
+
 ## v0.8.2
 
 - Add manual drag-and-drop ordering for folders

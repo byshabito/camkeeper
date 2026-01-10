@@ -567,7 +567,7 @@ function renderFolderFilter(folders) {
 
   const allOption = document.createElement("option");
   allOption.value = "";
-  allOption.textContent = "All folders";
+  allOption.textContent = "All";
   folderFilter.appendChild(allOption);
 
   folders.forEach((folder) => {
