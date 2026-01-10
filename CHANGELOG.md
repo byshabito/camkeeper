@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.8.2
+
+- Add manual drag-and-drop ordering for folders
+- Persist custom folder order across folder list, filter, and editor
+- Add drag handle and tidy folder manager layout
+
 ## v0.8.1
 
 - Improve icons and CK logo size

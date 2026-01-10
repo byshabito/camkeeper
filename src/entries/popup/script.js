@@ -75,6 +75,7 @@ const showConfirm = initConfirmModal();
 const DEFAULT_SORT = "month";
 const SORT_OPTIONS = new Set(["most", "month", "recent", "updated", "name"]);
 let preferredFolderFilter = "";
+let preferredFolderOrder = [];
 
 const urlParams = new URLSearchParams(window.location.search);
 const initialTab = urlParams.get("tab");
@@ -155,6 +156,9 @@ async function loadListPreferences() {
   preferredFolderFilter = typeof settings?.lastFolderFilter === "string"
     ? settings.lastFolderFilter
     : "";
+  preferredFolderOrder = Array.isArray(settings?.lastFolderOrder)
+    ? settings.lastFolderOrder.filter((item) => typeof item === "string")
+    : [];
 }
 
 async function saveSortPreference(value) {
@@ -179,6 +183,14 @@ async function saveFolderPreference(value) {
   await saveSettings({
     ...settings,
     lastFolderFilter: value || "",
+  });
+}
+
+async function saveFolderOrderPreference(order) {
+  const settings = await getSettings();
+  await saveSettings({
+    ...settings,
+    lastFolderOrder: Array.isArray(order) ? order : [],
   });
 }
 
@@ -496,15 +508,56 @@ function clearRows(container) {
   while (container.firstChild) container.removeChild(container.firstChild);
 }
 
+function normalizeFolderKey(folderName) {
+  return normalizeText(folderName);
+}
+
+function orderFolderNames(names) {
+  const folderMap = new Map(
+    names.map((name) => [normalizeFolderKey(name), name]),
+  );
+  const ordered = [];
+  preferredFolderOrder.forEach((key) => {
+    const match = folderMap.get(key);
+    if (match) {
+      ordered.push(match);
+      folderMap.delete(key);
+    }
+  });
+  const remaining = Array.from(folderMap.values()).sort((a, b) => a.localeCompare(b));
+  return ordered.concat(remaining);
+}
+
 function getFolderOptions(profiles) {
   const map = new Map();
   profiles.forEach((profile) => {
     const folder = (profile.folder || "").trim();
     if (!folder) return;
-    const key = normalizeText(folder);
+    const key = normalizeFolderKey(folder);
     if (!map.has(key)) map.set(key, folder);
   });
-  return Array.from(map.values()).sort((a, b) => a.localeCompare(b));
+  return orderFolderNames(Array.from(map.values()));
+}
+
+function getFolderStats(profiles) {
+  const map = new Map();
+  profiles.forEach((profile) => {
+    const folder = (profile.folder || "").trim();
+    if (!folder) return;
+    const key = normalizeFolderKey(folder);
+    const existing = map.get(key);
+    if (existing) {
+      existing.count += 1;
+      return;
+    }
+    map.set(key, {
+      key,
+      name: folder,
+      count: 1,
+    });
+  });
+  const orderedNames = orderFolderNames(Array.from(map.values()).map((entry) => entry.name));
+  return orderedNames.map((name) => map.get(normalizeFolderKey(name))).filter(Boolean);
 }
 
 function renderFolderFilter(folders) {
@@ -616,6 +669,11 @@ async function renameFolder(folderName, nextName) {
     };
   });
   await saveProfiles(updated);
+  if (currentKey !== nextKey) {
+    const nextOrder = preferredFolderOrder.map((key) => (key === currentKey ? nextKey : key));
+    preferredFolderOrder = Array.from(new Set(nextOrder));
+    await saveFolderOrderPreference(preferredFolderOrder);
+  }
   updateFolderOptions(updated, trimmed);
   renderFolderManager(updated);
 }
@@ -633,39 +691,106 @@ async function deleteFolder(folderName) {
     };
   });
   await saveProfiles(updated);
+  const nextOrder = preferredFolderOrder.filter((key) => key !== currentKey);
+  if (nextOrder.length !== preferredFolderOrder.length) {
+    preferredFolderOrder = nextOrder;
+    await saveFolderOrderPreference(preferredFolderOrder);
+  }
   updateFolderOptions(updated);
   renderFolderManager(updated);
+}
+
+async function handleFolderReorder(sourceKey, targetKey) {
+  if (!sourceKey || !targetKey || sourceKey === targetKey) return;
+  const order = Array.from(folderList.querySelectorAll(".folder-row"))
+    .map((row) => row.dataset.folderKey)
+    .filter(Boolean);
+  const sourceIndex = order.indexOf(sourceKey);
+  const targetIndex = order.indexOf(targetKey);
+  if (sourceIndex === -1 || targetIndex === -1) return;
+  order.splice(sourceIndex, 1);
+  order.splice(targetIndex, 0, sourceKey);
+  preferredFolderOrder = order;
+  await saveFolderOrderPreference(preferredFolderOrder);
+  const profiles = await getProfiles();
+  updateFolderOptions(profiles);
+  renderFolderManager(profiles);
 }
 
 async function renderFolderManager(prefetchedProfiles = null) {
   if (!folderList) return;
   const profiles = prefetchedProfiles || (await getProfiles());
-  const folders = getFolderOptions(profiles);
+  const folders = getFolderStats(profiles);
   folderList.innerHTML = "";
   folderEmpty.classList.toggle("hidden", folders.length > 0);
 
   folders.forEach((folder) => {
     const row = document.createElement("div");
     row.classList.add("folder-row");
+    row.dataset.folderKey = folder.key;
+
+    const dragHandle = document.createElement("div");
+    dragHandle.classList.add("folder-drag-handle");
+    dragHandle.setAttribute("aria-hidden", "true");
+    dragHandle.draggable = true;
+    dragHandle.innerHTML =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-grip-vertical-icon lucide-grip-vertical"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>';
+
+    dragHandle.addEventListener("dragstart", (event) => {
+      row.classList.add("dragging");
+      event.dataTransfer.effectAllowed = "move";
+      event.dataTransfer.setData("text/plain", folder.key);
+      const rect = row.getBoundingClientRect();
+      event.dataTransfer.setDragImage(
+        row,
+        Math.max(0, event.clientX - rect.left),
+        Math.max(0, event.clientY - rect.top),
+      );
+    });
+    dragHandle.addEventListener("dragend", () => {
+      row.classList.remove("dragging");
+      const existing = folderList.querySelector(".folder-row.drag-over");
+      if (existing) existing.classList.remove("drag-over");
+    });
+    row.addEventListener("dragover", (event) => {
+      event.preventDefault();
+      if (row.classList.contains("dragging")) return;
+      const existing = folderList.querySelector(".folder-row.drag-over");
+      if (existing && existing !== row) existing.classList.remove("drag-over");
+      row.classList.add("drag-over");
+    });
+    row.addEventListener("dragleave", () => {
+      row.classList.remove("drag-over");
+    });
+    row.addEventListener("drop", async (event) => {
+      event.preventDefault();
+      row.classList.remove("drag-over");
+      const sourceKey = event.dataTransfer.getData("text/plain");
+      await handleFolderReorder(sourceKey, folder.key);
+    });
+
+    const meta = document.createElement("div");
+    meta.classList.add("folder-row-meta");
+    meta.textContent = `${folder.count} bookmark${folder.count === 1 ? "" : "s"}`;
 
     const actions = document.createElement("div");
     actions.classList.add("folder-row-actions");
 
     const input = document.createElement("input");
     input.type = "text";
-    input.value = folder;
-    input.setAttribute("aria-label", `Rename folder ${folder}`);
+    input.value = folder.name;
+    input.setAttribute("aria-label", `Rename folder ${folder.name}`);
     input.addEventListener("blur", () => {
       const nextValue = input.value.trim();
       if (!nextValue) {
-        input.value = folder;
+        input.value = folder.name;
         return;
       }
-      if (normalizeText(nextValue) === normalizeText(folder)) {
-        if (nextValue !== folder) renameFolder(folder, nextValue);
+      if (normalizeText(nextValue) === normalizeText(folder.name)) {
+        if (nextValue !== folder.name) renameFolder(folder.name, nextValue);
         return;
       }
-      renameFolder(folder, nextValue);
+      renameFolder(folder.name, nextValue);
     });
     input.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
@@ -681,16 +806,22 @@ async function renderFolderManager(prefetchedProfiles = null) {
     deleteButton.addEventListener("click", async () => {
       const confirmed = await showConfirm({
         titleText: "Delete folder",
-        messageText: `Delete folder "${folder}"? Bookmarks in this folder will move to "No folder".`,
+        messageText: `Delete folder "${folder.name}"? Bookmarks in this folder will move to "No folder".`,
       });
       if (!confirmed) return;
-      deleteFolder(folder);
+      deleteFolder(folder.name);
     });
 
     actions.appendChild(input);
     actions.appendChild(deleteButton);
 
-    row.appendChild(actions);
+    const body = document.createElement("div");
+    body.classList.add("folder-row-body");
+    body.appendChild(actions);
+    body.appendChild(meta);
+
+    row.appendChild(dragHandle);
+    row.appendChild(body);
     folderList.appendChild(row);
   });
 }

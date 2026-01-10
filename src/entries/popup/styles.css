@@ -400,9 +400,46 @@ textarea {
   padding: 10px;
   background: var(--panel);
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: flex-start;
   gap: 8px;
   box-shadow: var(--shadow);
+}
+
+.folder-drag-handle {
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: var(--muted);
+  flex-shrink: 0;
+  cursor: grab;
+}
+
+.folder-drag-handle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.folder-row-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.folder-row.dragging {
+  opacity: 0.6;
+}
+
+.folder-row.dragging .folder-drag-handle {
+  cursor: grabbing;
+}
+
+.folder-row.drag-over {
+  border-color: var(--text);
 }
 
 .folder-row-actions {
@@ -413,6 +450,11 @@ textarea {
 
 .folder-row-actions input {
   flex: 1;
+}
+
+.folder-row-meta {
+  font-size: 12px;
+  color: var(--muted);
 }
 
 .card {
