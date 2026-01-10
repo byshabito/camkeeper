@@ -15,6 +15,8 @@ export const SOCIAL_OPTIONS = [
   { id: "other", label: "Other" },
 ];
 
+const MAX_VIEW_HISTORY_DAYS = 200;
+
 function now() {
   return Date.now();
 }
@@ -45,6 +47,48 @@ function uniqBy(items, keyFn) {
   });
 }
 
+function sanitizeViewHistory(viewHistory) {
+  const cleaned = (viewHistory || [])
+    .filter((entry) => entry && typeof entry === "object")
+    .map((entry) => {
+      const dayStart = Number.isFinite(entry.dayStart)
+        ? entry.dayStart
+        : Number.isFinite(entry.endedAt)
+          ? (() => {
+              const day = new Date(entry.endedAt);
+              day.setHours(0, 0, 0, 0);
+              return day.getTime();
+            })()
+          : null;
+      const durationMs = Number.isFinite(entry.durationMs) ? entry.durationMs : null;
+      if (!Number.isFinite(dayStart) || !Number.isFinite(durationMs) || durationMs <= 0) {
+        return null;
+      }
+      return { dayStart, durationMs };
+    })
+    .filter(Boolean);
+
+  const grouped = new Map();
+  cleaned.forEach((entry) => {
+    const existing = grouped.get(entry.dayStart);
+    if (!existing) {
+      grouped.set(entry.dayStart, { ...entry });
+      return;
+    }
+    grouped.set(entry.dayStart, {
+      dayStart: entry.dayStart,
+      durationMs: existing.durationMs + entry.durationMs,
+    });
+  });
+
+  const normalized = Array.from(grouped.values()).sort((a, b) => a.dayStart - b.dayStart);
+  if (normalized.length > MAX_VIEW_HISTORY_DAYS) {
+    return normalized.slice(normalized.length - MAX_VIEW_HISTORY_DAYS);
+  }
+
+  return normalized;
+}
+
 export function sanitizeCams(cams) {
   const cleaned = (cams || [])
     .map((cam) => ({
@@ -61,6 +105,7 @@ export function sanitizeCams(cams) {
         : Number.isFinite(cam.lastVisitedAt)
           ? cam.lastVisitedAt
           : null,
+      viewHistory: sanitizeViewHistory(cam.viewHistory),
     }))
     .filter((cam) => cam.site && cam.username && SITES[cam.site]);
 
@@ -72,11 +117,16 @@ export function sanitizeCams(cams) {
       merged.set(key, { ...cam });
       return;
     }
+    const mergedHistory = sanitizeViewHistory(
+      [...(existing.viewHistory || []), ...(cam.viewHistory || [])],
+      nowTs,
+    );
     merged.set(key, {
       ...existing,
       viewMs: (existing.viewMs || 0) + (cam.viewMs || 0),
       lastViewedAt: Math.max(existing.lastViewedAt || 0, cam.lastViewedAt || 0) || null,
       online: Boolean(existing.online || cam.online),
+      viewHistory: mergedHistory,
     });
   });
 

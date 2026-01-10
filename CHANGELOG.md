@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.8.0
+
+- Add most viewed (30 days) sort option
+- Track daily view history buckets for rolling view totals
+
 ## v0.7.0
 
 - Add settings view to the popup with options page embedding it

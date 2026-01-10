@@ -1054,6 +1054,7 @@ function mergeCamStats(existingCams, updatedCams) {
       online: Boolean(existing.online),
       viewMs: Number.isFinite(existing.viewMs) ? existing.viewMs : 0,
       lastViewedAt: Number.isFinite(existing.lastViewedAt) ? existing.lastViewedAt : null,
+      viewHistory: Array.isArray(existing.viewHistory) ? existing.viewHistory : [],
     };
   });
 }

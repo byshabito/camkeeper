@@ -1,12 +1,20 @@
 import { getProfiles, saveProfiles, getState, setState } from "../../lib/db.js";
 import { ACTIVE_VIEW_SESSION_STATE_KEY } from "../../config/background.js";
 
+const MAX_VIEW_HISTORY_DAYS = 200;
+
 export function initVisitTracking(state, logDebug) {
   let activeSession = null;
   let windowFocused = true;
   let focusedWindowId = null;
   let sessionLoaded = false;
   let sessionLoadPromise = null;
+
+  function getDayStartMs(ts) {
+    const day = new Date(ts);
+    day.setHours(0, 0, 0, 0);
+    return day.getTime();
+  }
 
   function parseUrlSafe(url) {
     try {
@@ -69,19 +77,50 @@ export function initVisitTracking(state, logDebug) {
     const profiles = await getProfiles();
     let updatedAny = false;
     const updated = profiles.map((profile) => {
-    const cams = (profile.cams || []).map((cam) => {
-      if (cam.site === session.site && cam.username === session.username) {
-        updatedAny = true;
-        const existing = Number.isFinite(cam.viewMs) ? cam.viewMs : 0;
-        return {
-          ...cam,
-          viewMs: existing + durationMs,
-          lastViewedAt: endedAt,
-        };
-      }
-      return cam;
-    });
-    return { ...profile, cams };
+      const cams = (profile.cams || []).map((cam) => {
+        if (cam.site === session.site && cam.username === session.username) {
+          updatedAny = true;
+          const existing = Number.isFinite(cam.viewMs) ? cam.viewMs : 0;
+          const history = Array.isArray(cam.viewHistory) ? cam.viewHistory : [];
+          const dayStart = getDayStartMs(endedAt);
+          let dayFound = false;
+          const nextHistory = history
+            .map((entry) => {
+              if (!entry || typeof entry !== "object") return null;
+              const entryDayStart = Number.isFinite(entry.dayStart)
+                ? entry.dayStart
+                : Number.isFinite(entry.endedAt)
+                  ? getDayStartMs(entry.endedAt)
+                  : null;
+              const entryDuration = Number.isFinite(entry.durationMs) ? entry.durationMs : 0;
+              if (!Number.isFinite(entryDayStart) || entryDuration <= 0) return null;
+              if (entryDayStart === dayStart) {
+                dayFound = true;
+                return {
+                  dayStart: entryDayStart,
+                  durationMs: entryDuration + durationMs,
+                };
+              }
+              return { dayStart: entryDayStart, durationMs: entryDuration };
+            })
+            .filter(Boolean);
+          if (!dayFound) {
+            nextHistory.push({ dayStart, durationMs });
+          }
+          nextHistory.sort((a, b) => a.dayStart - b.dayStart);
+          if (nextHistory.length > MAX_VIEW_HISTORY_DAYS) {
+            nextHistory.splice(0, nextHistory.length - MAX_VIEW_HISTORY_DAYS);
+          }
+          return {
+            ...cam,
+            viewMs: existing + durationMs,
+            lastViewedAt: endedAt,
+            viewHistory: nextHistory,
+          };
+        }
+        return cam;
+      });
+      return { ...profile, cams };
     });
     if (!updatedAny) return;
     await saveProfiles(updated);
