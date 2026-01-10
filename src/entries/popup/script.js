@@ -12,7 +12,7 @@ import {
   sanitizeSocials,
   splitTags,
 } from "../../lib/storage.js";
-import { getProfiles, saveProfiles } from "../../lib/db.js";
+import { getProfiles, getSettings, saveProfiles, saveSettings } from "../../lib/db.js";
 import { createBulkSelection } from "../../lib/bulkSelection.js";
 import { initConfirmModal } from "../../lib/confirmModal.js";
 import { sortBySelection } from "../../lib/sort.js";
@@ -71,6 +71,8 @@ const settingsToggle = document.getElementById("settings-toggle");
 const settingsIcon = settingsToggle?.querySelector(".settings-icon") || null;
 const overviewIcon = settingsToggle?.querySelector(".overview-icon") || null;
 const showConfirm = initConfirmModal();
+const DEFAULT_SORT = "month";
+const SORT_OPTIONS = new Set(["most", "month", "recent", "updated", "name"]);
 
 const urlParams = new URLSearchParams(window.location.search);
 const initialTab = urlParams.get("tab");
@@ -121,6 +123,26 @@ const selection = createBulkSelection({
   },
   onRender: () => renderList(),
 });
+
+async function loadSortPreference() {
+  if (!sortSelect) return;
+  const settings = await getSettings();
+  const preferred = settings?.lastSort;
+  if (SORT_OPTIONS.has(preferred)) {
+    sortSelect.value = preferred;
+  } else {
+    sortSelect.value = DEFAULT_SORT;
+  }
+}
+
+async function saveSortPreference(value) {
+  if (!SORT_OPTIONS.has(value)) return;
+  const settings = await getSettings();
+  await saveSettings({
+    ...settings,
+    lastSort: value,
+  });
+}
 
 function showListView() {
   listView.classList.remove("hidden");
@@ -1146,7 +1168,10 @@ deleteButton.addEventListener("click", async () => {
   showListView();
 });
 searchInput.addEventListener("input", renderList);
-sortSelect.addEventListener("change", renderList);
+sortSelect.addEventListener("change", async () => {
+  await saveSortPreference(sortSelect.value);
+  renderList();
+});
 if (folderFilter) {
   folderFilter.addEventListener("change", renderList);
 }
@@ -1281,6 +1306,7 @@ async function showInitialView() {
 
 document.addEventListener("DOMContentLoaded", async () => {
   await Promise.all([loadSocialIcons(), loadPlatformIcons()]);
+  await loadSortPreference();
   if (initialTab === "settings" || isEmbedded) {
     showSettingsView();
     return;

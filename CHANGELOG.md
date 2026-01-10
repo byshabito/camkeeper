@@ -4,6 +4,7 @@
 
 - Add most viewed (30 days) sort option
 - Track daily view history buckets for rolling view totals
+- Remember last selected sort in the popup
 
 ## v0.7.0
 

@@ -89,7 +89,9 @@ async function persistSettings() {
   )
     return;
 
+  const existing = await getSettings();
   const settings = {
+    ...existing,
     onlineChecksEnabled: onlineCheckInput.checked,
     backgroundOnlineChecksEnabled:
       onlineCheckInput.checked && backgroundOnlineCheckInput.checked,
