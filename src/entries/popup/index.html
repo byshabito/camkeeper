@@ -226,6 +226,33 @@
         </div>
       </header>
 
+      <section class="panel">
+        <header class="panel-header">
+          <h2>Backup</h2>
+        </header>
+        <div class="export no-divider">
+          <div>
+            <h3>Export</h3>
+            <p>Download your bookmarks as JSON.</p>
+          </div>
+          <div class="actions">
+            <button id="export-button" class="ghost">Download</button>
+          </div>
+        </div>
+        <div class="export">
+          <div>
+            <h3>Import</h3>
+            <p>Upload a JSON backup to restore bookmarks.</p>
+          </div>
+          <div class="actions">
+            <label class="file-button ghost">
+              Import backup
+              <input id="import-input" type="file" accept="application/json" />
+            </label>
+          </div>
+        </div>
+      </section>
+
       <section class="panel settings-panel">
         <header class="panel-header">
           <h2>Extension settings</h2>
@@ -278,19 +305,6 @@
           <div class="actions">
             <label class="toggle">
               <input id="debug-logs" type="checkbox" />
-            </label>
-          </div>
-        </div>
-        <div class="export">
-          <div>
-            <h3>Backup</h3>
-              <p>Export or import your bookmarks as JSON.</p>
-          </div>
-          <div class="actions">
-            <button id="export-button" class="ghost">Export</button>
-            <label class="file-button ghost">
-              Import
-              <input id="import-input" type="file" accept="application/json" />
             </label>
           </div>
         </div>

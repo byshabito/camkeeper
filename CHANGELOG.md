@@ -3,6 +3,7 @@
 ## v0.8.3
 
 - Shorten folder filter label to "All"
+- Split backup tools into their own section with separate download/import rows
 - Add floating success feedback when settings are saved
 
 ## v0.8.2
