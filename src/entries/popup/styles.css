@@ -114,6 +114,20 @@ body:not(.embedded) .settings-scope .donation p {
   text-align: right;
 }
 
+.settings-scope .donation-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.settings-scope .donation-actions a {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+}
+
 .settings-scope .donation p {
   margin: 0;
   color: var(--muted);
@@ -123,6 +137,133 @@ body:not(.embedded) .settings-scope .donation p {
 .settings-scope .donation-badge {
   height: 36px;
   width: auto;
+  display: block;
+}
+
+.settings-scope .donation-bitcoin {
+  border: 1px solid var(--border);
+  background: #f7931a;
+  color: #ffffff;
+  border-radius: 8px;
+  width: auto;
+  height: 36px;
+  padding: 0 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.settings-scope .donation-bitcoin svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.settings-scope .donation-bitcoin:hover {
+  border-color: #f6b14c;
+  background: #f6a435;
+}
+
+.bitcoin-modal {
+  gap: 12px;
+  max-height: calc(100vh - 64px);
+  overflow: auto;
+}
+
+.bitcoin-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bitcoin-modal-header h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text);
+}
+
+.bitcoin-modal-header h3 svg {
+  width: 20px;
+  height: 20px;
+  display: block;
+}
+
+.bitcoin-modal-header h3 {
+  margin: 0;
+}
+
+.bitcoin-methods {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bitcoin-method {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 10px;
+  background: #14181c;
+}
+
+.bitcoin-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+}
+
+.bitcoin-value {
+  font-size: 12px;
+  color: var(--text);
+  word-break: break-all;
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 4px 0;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.bitcoin-value span {
+  flex: 1;
+  min-width: 0;
+  font-family: "IBM Plex Mono", "SFMono-Regular", "Consolas", "Liberation Mono", monospace;
+}
+
+.bitcoin-value:hover {
+  background: rgba(247, 147, 26, 0.12);
+  color: #ffffff;
+}
+
+.bitcoin-value:active {
+  background: rgba(247, 147, 26, 0.2);
+}
+
+.bitcoin-toast {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translate(-50%, 6px);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #9ee7b0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.bitcoin-toast.visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
 }
 
 .settings-scope .panel {

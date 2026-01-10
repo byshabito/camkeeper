@@ -19,12 +19,20 @@ const onlineCheckIntervalInput = document.getElementById("online-check-interval"
 const debugLogsInput = document.getElementById("debug-logs");
 const visitSaveButton = document.getElementById("visit-save");
 const settingsFeedback = document.getElementById("settings-feedback");
+const bitcoinDonateButton = document.getElementById("bitcoin-donate-button");
+const bitcoinModal = document.getElementById("bitcoin-modal");
+const bitcoinModalCloseBottom = document.getElementById("bitcoin-modal-close-bottom");
+const bitcoinToast = document.getElementById("bitcoin-toast");
+const bitcoinValues = bitcoinModal
+  ? Array.from(bitcoinModal.querySelectorAll("[data-copy-value]"))
+  : [];
 const metaVersion = document.getElementById("meta-version");
 const metaRelease = document.getElementById("meta-release");
 const metaDeveloper = document.getElementById("meta-developer");
 const metaSource = document.getElementById("meta-source");
 const metaLicense = document.getElementById("meta-license");
 let settingsFeedbackTimeout = null;
+let bitcoinToastTimeout = null;
 
 function formatReleaseTimestamp(timestamp) {
   const date = new Date(timestamp);
@@ -121,6 +129,38 @@ function showSettingsFeedback(message) {
   }, 2400);
 }
 
+function openBitcoinModal() {
+  if (!bitcoinModal) return;
+  bitcoinModal.classList.remove("hidden");
+}
+
+function closeBitcoinModal() {
+  if (!bitcoinModal) return;
+  bitcoinModal.classList.add("hidden");
+}
+
+function showBitcoinToast(message) {
+  if (!bitcoinToast) return;
+  if (bitcoinToastTimeout) {
+    clearTimeout(bitcoinToastTimeout);
+    bitcoinToastTimeout = null;
+  }
+  bitcoinToast.textContent = message;
+  bitcoinToast.classList.add("visible");
+  bitcoinToastTimeout = window.setTimeout(() => {
+    bitcoinToast.classList.remove("visible");
+    bitcoinToast.textContent = "";
+    bitcoinToastTimeout = null;
+  }, 1600);
+}
+
+async function copyBitcoinValue(target) {
+  const value = target.getAttribute("data-copy-value") || target.textContent || "";
+  if (!value) return;
+  await navigator.clipboard.writeText(value);
+  showBitcoinToast("Copied to clipboard");
+}
+
 function loadMetadata() {
   if (!metaVersion) return;
   const manifest = chrome.runtime.getManifest();
@@ -177,6 +217,36 @@ if (visitSaveButton) {
   });
 }
 
+if (bitcoinDonateButton) {
+  bitcoinDonateButton.addEventListener("click", () => {
+    openBitcoinModal();
+  });
+}
+
+if (bitcoinModalCloseBottom) {
+  bitcoinModalCloseBottom.addEventListener("click", () => {
+    closeBitcoinModal();
+  });
+}
+
+if (bitcoinModal) {
+  bitcoinModal.addEventListener("click", (event) => {
+    if (event.target === bitcoinModal) {
+      closeBitcoinModal();
+    }
+  });
+}
+
+bitcoinValues.forEach((value) => {
+  value.addEventListener("click", async () => {
+    try {
+      await copyBitcoinValue(value);
+    } catch (error) {
+      console.error("Copy failed:", error);
+    }
+  });
+});
+
 if (onlineCheckInput) {
   onlineCheckInput.addEventListener("change", () => {
     syncOnlineToggleState();
@@ -186,4 +256,10 @@ if (onlineCheckInput) {
 document.addEventListener("DOMContentLoaded", () => {
   loadSettings();
   loadMetadata();
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key !== "Escape") return;
+  if (!bitcoinModal || bitcoinModal.classList.contains("hidden")) return;
+  closeBitcoinModal();
 });

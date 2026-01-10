@@ -5,6 +5,7 @@
 - Shorten folder filter label to "All"
 - Split backup tools into their own section with separate download/import rows
 - Rename settings section headers to Configuration and About
+- Add Bitcoin donation button and modal with copyable Lightning/LNURL/on-chain details
 - Add floating success feedback when settings are saved
 
 ## v0.8.2
