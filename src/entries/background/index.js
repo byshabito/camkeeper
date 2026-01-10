@@ -1,11 +1,9 @@
 import { SETTINGS_KEY, getSettings } from "../../lib/db.js";
 import { MENU_ID, getDefaultSettings } from "../../config/background.js";
-import { initOnlineStatus } from "./online.js";
 import { initVisitTracking } from "./visits.js";
 
 const state = {
   activeTabId: null,
-  lastOnlineChecksEnabled: true,
 };
 const settings = getDefaultSettings();
 
@@ -14,28 +12,14 @@ function logDebug(message, data) {
   console.log(message, data ?? {});
 }
 
-const online = initOnlineStatus(state);
 const visits = initVisitTracking(state, logDebug);
 
 async function loadSettings() {
   const nextSettings = await getSettings();
-  settings.onlineChecksEnabled =
-    typeof nextSettings.onlineChecksEnabled === "boolean"
-      ? nextSettings.onlineChecksEnabled
-      : settings.onlineChecksEnabled;
-  settings.backgroundOnlineChecksEnabled =
-    typeof nextSettings.backgroundOnlineChecksEnabled === "boolean"
-      ? nextSettings.backgroundOnlineChecksEnabled
-      : settings.backgroundOnlineChecksEnabled;
   settings.debugLogsEnabled =
     typeof nextSettings.debugLogsEnabled === "boolean"
       ? nextSettings.debugLogsEnabled
       : settings.debugLogsEnabled;
-  settings.onlineCheckIntervalMinutes = Number.isFinite(nextSettings.onlineCheckIntervalMinutes)
-    ? Math.max(3, nextSettings.onlineCheckIntervalMinutes)
-    : settings.onlineCheckIntervalMinutes;
-
-  online.onSettingsUpdated(settings, state);
 }
 
 chrome.storage.onChanged.addListener((changes, area) => {
@@ -43,7 +27,6 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (changes[SETTINGS_KEY]) {
     loadSettings();
   }
-  online.onStorageChanged(changes);
 });
 
 loadSettings();
@@ -74,14 +57,6 @@ chrome.contextMenus.onClicked.addListener((info) => {
   openLibrary();
 });
 
-
-chrome.runtime.onMessage.addListener((message) => {
-  online.onMessage(message);
-});
-
-chrome.alarms.onAlarm.addListener((alarm) => {
-  online.onAlarm(alarm);
-});
 
 chrome.tabs.onActivated.addListener((info) => visits.onTabActivated(info));
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => visits.onTabUpdated(tabId, changeInfo));

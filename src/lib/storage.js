@@ -94,7 +94,6 @@ export function sanitizeCams(cams) {
     .map((cam) => ({
       site: normalizeText(cam.site),
       username: normalizeText(cam.username),
-      online: Boolean(cam.online),
       viewMs: Number.isFinite(cam.viewMs)
         ? cam.viewMs
         : Number.isFinite(cam.activeMs)
@@ -125,7 +124,6 @@ export function sanitizeCams(cams) {
       ...existing,
       viewMs: (existing.viewMs || 0) + (cam.viewMs || 0),
       lastViewedAt: Math.max(existing.lastViewedAt || 0, cam.lastViewedAt || 0) || null,
-      online: Boolean(existing.online || cam.online),
       viewHistory: mergedHistory,
     });
   });

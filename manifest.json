@@ -9,8 +9,7 @@
     "storage",
     "activeTab",
     "contextMenus",
-    "tabs",
-    "alarms"
+    "tabs"
   ],
   "host_permissions": [
     "https://chaturbate.com/*",

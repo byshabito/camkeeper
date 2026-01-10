@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.9.0
+
+- Remove online status checks
+
 ## v0.8.4
 
 - Rename bookmarks to profiles across the UI and backup file name

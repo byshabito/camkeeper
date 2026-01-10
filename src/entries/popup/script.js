@@ -67,7 +67,6 @@ const bulkMerge = document.getElementById("bulk-merge");
 const bulkDelete = document.getElementById("bulk-delete");
 const bulkCancel = document.getElementById("bulk-cancel");
 const folderFilter = document.getElementById("folder-filter");
-const onlineFilter = document.getElementById("online-filter");
 const settingsToggle = document.getElementById("settings-toggle");
 const settingsIcon = settingsToggle?.querySelector(".settings-icon") || null;
 const overviewIcon = settingsToggle?.querySelector(".overview-icon") || null;
@@ -137,22 +136,6 @@ async function loadListPreferences() {
       sortSelect.value = DEFAULT_SORT;
     }
   }
-  if (onlineFilter) {
-    const onlineChecksEnabled =
-      typeof settings?.onlineChecksEnabled === "boolean" ? settings.onlineChecksEnabled : true;
-    const onlineToggle = onlineFilter.closest(".filter-toggle");
-    if (onlineToggle) {
-      onlineToggle.classList.toggle("hidden", !onlineChecksEnabled);
-    }
-    if (onlineChecksEnabled) {
-      onlineFilter.checked = Boolean(settings?.onlineOnly);
-    } else {
-      onlineFilter.checked = false;
-      if (settings?.onlineOnly) {
-        await saveOnlinePreference(false);
-      }
-    }
-  }
   preferredFolderFilter = typeof settings?.lastFolderFilter === "string"
     ? settings.lastFolderFilter
     : "";
@@ -167,14 +150,6 @@ async function saveSortPreference(value) {
   await saveSettings({
     ...settings,
     lastSort: value,
-  });
-}
-
-async function saveOnlinePreference(value) {
-  const settings = await getSettings();
-  await saveSettings({
-    ...settings,
-    onlineOnly: Boolean(value),
   });
 }
 
@@ -260,8 +235,6 @@ function showDetailView(profile) {
 
     const chip = document.createElement("span");
     chip.classList.add("platform-chip");
-    const isOnline = Boolean(cam.online);
-    chip.classList.add(isOnline ? "online" : "offline");
     chip.style.setProperty("--platform-color", site.color);
 
     const icon = document.createElement("span");
@@ -658,11 +631,6 @@ function matchesFolder(profile, selectedFolder) {
   return normalizeText(profile.folder) === selectedFolder;
 }
 
-function matchesOnline(profile, onlyOnline) {
-  if (!onlyOnline) return true;
-  return (profile.cams || []).some((cam) => cam.online);
-}
-
 async function renameFolder(folderName, nextName) {
   const trimmed = (nextName || "").trim();
   if (!trimmed) return;
@@ -1020,12 +988,9 @@ async function renderList() {
   updateFolderOptions(profiles);
   const query = normalizeText(searchInput.value);
   const selectedFolder = normalizeText(folderFilter?.value || "");
-  const onlineOnly = Boolean(onlineFilter?.checked);
   const filtered = profiles.filter(
     (profile) =>
-      matchQuery(profile, query) &&
-      matchesFolder(profile, selectedFolder) &&
-      matchesOnline(profile, onlineOnly),
+      matchQuery(profile, query) && matchesFolder(profile, selectedFolder),
   );
   const sorted = sortBySelection(filtered, sortSelect.value);
 
@@ -1086,8 +1051,6 @@ async function renderList() {
 
       const chip = document.createElement("span");
       chip.classList.add("platform-chip");
-      const isOnline = Boolean(cam.online);
-      chip.classList.add(isOnline ? "online" : "offline");
       chip.style.setProperty("--platform-color", site.color);
       chip.title = `${site.abbr}: ${cam.username}`;
 
@@ -1245,7 +1208,6 @@ function mergeCamStats(existingCams, updatedCams) {
     if (!existing) return cam;
     return {
       ...cam,
-      online: Boolean(existing.online),
       viewMs: Number.isFinite(existing.viewMs) ? existing.viewMs : 0,
       lastViewedAt: Number.isFinite(existing.lastViewedAt) ? existing.lastViewedAt : null,
       viewHistory: Array.isArray(existing.viewHistory) ? existing.viewHistory : [],
@@ -1340,12 +1302,6 @@ deleteButton.addEventListener("click", async () => {
   showListView();
 });
 searchInput.addEventListener("input", renderList);
-if (onlineFilter) {
-  onlineFilter.addEventListener("change", async () => {
-    await saveOnlinePreference(onlineFilter.checked);
-    renderList();
-  });
-}
 sortSelect.addEventListener("change", async () => {
   await saveSortPreference(sortSelect.value);
   renderList();
@@ -1493,7 +1449,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     showSettingsView();
     return;
   }
-  chrome.runtime.sendMessage({ type: "online-check" });
   showInitialView();
 });
 function normalizeHandle(value) {
@@ -1506,23 +1461,3 @@ function normalizeSocialHandle(platform, value) {
   }
   return normalizeText(normalizeHandle(value));
 }
-
-chrome.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local") return;
-  const settings = changes?.camkeeper_settings_v1?.newValue;
-  if (!settings) return;
-  const onlineChecksEnabled =
-    typeof settings.onlineChecksEnabled === "boolean" ? settings.onlineChecksEnabled : true;
-  const onlineToggle = onlineFilter?.closest(".filter-toggle");
-  if (onlineToggle) {
-    onlineToggle.classList.toggle("hidden", !onlineChecksEnabled);
-  }
-  if (onlineFilter) {
-    if (onlineChecksEnabled) {
-      onlineFilter.checked = Boolean(settings.onlineOnly);
-    } else if (onlineFilter.checked) {
-      onlineFilter.checked = false;
-      renderList();
-    }
-  }
-});

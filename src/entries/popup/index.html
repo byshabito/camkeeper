@@ -45,10 +45,6 @@
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" class="lucide lucide-folder-icon lucide-folder"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
           </button>
           <select id="folder-filter"></select>
-          <label class="filter-toggle">
-            <input id="online-filter" type="checkbox" />
-            Online
-          </label>
         </div>
       <div class="search-sort">
         <button class="plain-button icon-button search-toggle" type="button" aria-label="Search">
@@ -283,37 +279,6 @@
           </div>
         </header>
         <div class="export no-divider">
-          <div>
-            <h3>Enable online status checks</h3>
-            <p>Show online/offline status for profiles in the list and detail views.</p>
-          </div>
-          <div class="actions">
-            <label class="toggle">
-              <input id="online-check" type="checkbox" />
-            </label>
-          </div>
-        </div>
-        <div class="export">
-          <div>
-            <h3>Enable background checks</h3>
-            <p>Update status in the background and show the number of online profiles in the badge.</p>
-          </div>
-          <div class="actions">
-            <label class="toggle">
-              <input id="background-online-check" type="checkbox" />
-            </label>
-          </div>
-        </div>
-        <div class="export">
-          <div>
-            <h3>Background check interval (min)</h3>
-            <p>How often CamKeeper refreshes online status in the background (min 3).</p>
-          </div>
-          <div class="actions">
-            <input id="online-check-interval" type="number" min="3" step="1" />
-          </div>
-        </div>
-        <div class="export">
           <div>
             <h3>Debug logs</h3>
             <p>Enable extra logs in the background service worker for troubleshooting.</p>

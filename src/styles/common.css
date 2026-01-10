@@ -442,12 +442,3 @@ textarea::placeholder {
   color: inherit;
   cursor: pointer;
 }
-.platform-chip.online {
-  background: var(--platform-color, #1b1f24);
-  color: #ffffff;
-}
-
-.platform-chip.online .icon {
-  background: transparent;
-  color: #ffffff !important;
-}

@@ -1,9 +1,5 @@
 import { getProfiles, getSettings, saveProfiles, saveSettings } from "../../lib/db.js";
-import {
-  DEFAULT_BACKGROUND_ONLINE_CHECKS_ENABLED,
-  DEFAULT_DEBUG_LOGS_ENABLED,
-  DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES,
-} from "../../config/background.js";
+import { DEFAULT_DEBUG_LOGS_ENABLED } from "../../config/background.js";
 import { sanitizeProfile } from "../../lib/storage.js";
 const RELEASE_TIMESTAMP = "2026-01-10T18:17:13+01:00";
 const DEVELOPER_NAME = "Shabito";
@@ -13,9 +9,6 @@ const LICENSE_URL = "https://github.com/byshabito/camkeeper/blob/main/LICENSE";
 
 const exportButton = document.getElementById("export-button");
 const importInput = document.getElementById("import-input");
-const onlineCheckInput = document.getElementById("online-check");
-const backgroundOnlineCheckInput = document.getElementById("background-online-check");
-const onlineCheckIntervalInput = document.getElementById("online-check-interval");
 const debugLogsInput = document.getElementById("debug-logs");
 const visitSaveButton = document.getElementById("visit-save");
 const settingsFeedback = document.getElementById("settings-feedback");
@@ -50,65 +43,24 @@ function formatReleaseTimestamp(timestamp) {
   )} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}${suffix}`;
 }
 
-function syncOnlineToggleState() {
-  if (!onlineCheckInput || !backgroundOnlineCheckInput) return;
-  const enabled = onlineCheckInput.checked;
-  backgroundOnlineCheckInput.disabled = !enabled;
-  if (!enabled) {
-    backgroundOnlineCheckInput.checked = false;
-  }
-}
-
 async function loadSettings() {
-  if (
-    !onlineCheckInput ||
-    !backgroundOnlineCheckInput ||
-    !onlineCheckIntervalInput ||
-    !debugLogsInput
-  )
-    return;
+  if (!debugLogsInput) return;
 
   const settings = await getSettings();
-  const onlineChecksEnabled =
-    typeof settings.onlineChecksEnabled === "boolean" ? settings.onlineChecksEnabled : true;
-  const backgroundOnlineChecksEnabled =
-    typeof settings.backgroundOnlineChecksEnabled === "boolean"
-      ? settings.backgroundOnlineChecksEnabled
-      : DEFAULT_BACKGROUND_ONLINE_CHECKS_ENABLED;
-  const onlineCheckIntervalMinutes = Number.isFinite(settings.onlineCheckIntervalMinutes)
-    ? settings.onlineCheckIntervalMinutes
-    : DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES;
   const debugLogsEnabled =
     typeof settings.debugLogsEnabled === "boolean"
       ? settings.debugLogsEnabled
       : DEFAULT_DEBUG_LOGS_ENABLED;
 
-  onlineCheckInput.checked = onlineChecksEnabled;
-  backgroundOnlineCheckInput.checked = backgroundOnlineChecksEnabled;
-  syncOnlineToggleState();
-  onlineCheckIntervalInput.value = String(onlineCheckIntervalMinutes);
   debugLogsInput.checked = debugLogsEnabled;
 }
 
 async function persistSettings() {
-  if (
-    !onlineCheckInput ||
-    !backgroundOnlineCheckInput ||
-    !onlineCheckIntervalInput ||
-    !debugLogsInput
-  )
-    return;
+  if (!debugLogsInput) return;
 
   const existing = await getSettings();
   const settings = {
     ...existing,
-    onlineChecksEnabled: onlineCheckInput.checked,
-    backgroundOnlineChecksEnabled:
-      onlineCheckInput.checked && backgroundOnlineCheckInput.checked,
-    onlineCheckIntervalMinutes: Math.max(
-      DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES,
-      Number(onlineCheckIntervalInput.value) || DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES
-    ),
     debugLogsEnabled: debugLogsInput.checked,
   };
   await saveSettings(settings);
@@ -246,12 +198,6 @@ bitcoinValues.forEach((value) => {
     }
   });
 });
-
-if (onlineCheckInput) {
-  onlineCheckInput.addEventListener("change", () => {
-    syncOnlineToggleState();
-  });
-}
 
 document.addEventListener("DOMContentLoaded", () => {
   loadSettings();
