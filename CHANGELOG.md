@@ -4,6 +4,8 @@
 
 - Rename bookmarks to profiles across the UI and backup file name
 - Normalize website socials and improve URL matching for social detail views
+- Default online status checks to off with a 5-minute refresh interval
+- Clarify backup and configuration setting labels
 
 ## v0.8.3
 

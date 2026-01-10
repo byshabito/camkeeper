@@ -244,8 +244,8 @@
         </header>
         <div class="export no-divider">
           <div>
-            <h3>Export</h3>
-            <p>Download your profiles as JSON.</p>
+            <h3>Download backup</h3>
+            <p>Export a JSON backup with profiles, folders, and history.</p>
           </div>
           <div class="actions">
             <button id="export-button" class="ghost">Download</button>
@@ -253,8 +253,8 @@
         </div>
         <div class="export">
           <div>
-            <h3>Import</h3>
-            <p>Upload a JSON backup to restore profiles.</p>
+            <h3>Import backup</h3>
+            <p>Restore profiles, folders, and history from a JSON backup.</p>
           </div>
           <div class="actions">
             <label class="file-button ghost">
@@ -280,8 +280,8 @@
         </header>
         <div class="export no-divider">
           <div>
-            <h3>Online status checks</h3>
-            <p>Enable live status checks in CamKeeper.</p>
+            <h3>Enable online status checks</h3>
+            <p>Show online/offline status for profiles in the list and detail views.</p>
           </div>
           <div class="actions">
             <label class="toggle">
@@ -291,8 +291,8 @@
         </div>
         <div class="export">
           <div>
-            <h3>Online badge count</h3>
-            <p>Enable background online checks and show the online count in badge.</p>
+            <h3>Enable background checks</h3>
+            <p>Update status in the background and show the number of online profiles in the badge.</p>
           </div>
           <div class="actions">
             <label class="toggle">
@@ -302,8 +302,8 @@
         </div>
         <div class="export">
           <div>
-            <h3>Background online check interval (minutes)</h3>
-            <p>Minimum 3 minutes between background checks.</p>
+            <h3>Background check interval (min)</h3>
+            <p>How often CamKeeper refreshes online status in the background (min 3).</p>
           </div>
           <div class="actions">
             <input id="online-check-interval" type="number" min="3" step="1" />
@@ -312,7 +312,7 @@
         <div class="export">
           <div>
             <h3>Debug logs</h3>
-            <p>Enable verbose background logs for troubleshooting.</p>
+            <p>Enable extra logs in the background service worker for troubleshooting.</p>
           </div>
           <div class="actions">
             <label class="toggle">
