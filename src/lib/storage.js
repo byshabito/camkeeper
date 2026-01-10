@@ -117,10 +117,10 @@ export function sanitizeCams(cams) {
       merged.set(key, { ...cam });
       return;
     }
-    const mergedHistory = sanitizeViewHistory(
-      [...(existing.viewHistory || []), ...(cam.viewHistory || [])],
-      nowTs,
-    );
+    const mergedHistory = sanitizeViewHistory([
+      ...(existing.viewHistory || []),
+      ...(cam.viewHistory || []),
+    ]);
     merged.set(key, {
       ...existing,
       viewMs: (existing.viewMs || 0) + (cam.viewMs || 0),

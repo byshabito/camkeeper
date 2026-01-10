@@ -7,6 +7,7 @@
 - Default online status checks to off with a 5-minute refresh interval
 - Clarify backup and configuration setting labels
 - Add multi-size favicons to the popup and options pages
+- Fix saving when attaching a new cam username to an existing profile
 
 ## v0.8.3
 
