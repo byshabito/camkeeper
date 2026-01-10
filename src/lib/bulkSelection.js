@@ -5,7 +5,7 @@ export function createBulkSelection({
   bulkDelete,
   bulkCancel,
   selectButton,
-  emptyLabel = "Select bookmarks",
+  emptyLabel = "Select profiles",
   onMerge,
   onDelete,
   onRender,

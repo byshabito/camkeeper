@@ -1,7 +1,7 @@
 <div align="center">
     <img src="/icons/icon-128.png" width="128px" height="128px" align="center"/>
     <h1>CamKeeper</h1>
-    <strong>Cross-site bookmark manager for Chaturbate and Stripchat models</strong>
+    <strong>Cross-site profile manager for Chaturbate and Stripchat models</strong>
 </div>
 
 ## Features
@@ -22,7 +22,7 @@
 
 1. Visit a model page and click the extension icon
 2. Add or attach the platform username to an existing profile
-3. Use **Select** to merge or delete multiple bookmarks
+3. Use **Select** to merge or delete multiple profiles
 
 ## Manual Installation
 

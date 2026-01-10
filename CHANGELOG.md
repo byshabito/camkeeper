@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.8.4
+
+- Rename bookmarks to profiles across the UI and backup file name
+
 ## v0.8.3
 
 - Shorten folder filter label to "All"
@@ -56,7 +60,7 @@
 - Add shared online status API modules for Chaturbate and Stripchat
 - Add shared background config defaults
 - Refactor background logic into modular services
-- Default folder selector to "No folder" for new or unfiled bookmarks
+- Default folder selector to "No folder" for new or unfiled profiles
 - Track active view time instead of visit counts
 - Sort platform chips by most-viewed first
 - Expand socials support and auto-detect matching social profiles
@@ -74,7 +78,7 @@
 
 ## v0.4.2
 
-- Preserve pinned and online stats when editing bookmarks
+- Preserve pinned and online stats when editing profiles
 - Add BMC sponsor link
 
 ## v0.4.1
@@ -98,7 +102,7 @@
 
 ## v0.2.2
 
-- Pin bookmarks and prioritize pinned items in sorting
+- Pin profiles and prioritize pinned items in sorting
 - Refined popup search/sort row with icon-triggered search
 - Settings page is now settings-only
 - Platform chips support online/offline styling

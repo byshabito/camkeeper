@@ -114,8 +114,8 @@ const selection = createBulkSelection({
       .filter((item) => ids.includes(item.id))
       .map((item) => item.name || "Unnamed");
     const confirmed = await showConfirm({
-      titleText: "Delete bookmarks",
-      messageText: `Delete ${names.length} bookmark${names.length === 1 ? "" : "s"}? This cannot be undone.`,
+      titleText: "Delete profiles",
+      messageText: `Delete ${names.length} profile${names.length === 1 ? "" : "s"}? This cannot be undone.`,
       items: names,
     });
     if (!confirmed) return;
@@ -235,7 +235,7 @@ function showFormView(title) {
 
 function showDetailView(profile) {
   currentProfile = profile;
-  detailTitle.textContent = "Bookmark";
+  detailTitle.textContent = "Profile";
   detailName.textContent = profile.name || "Unnamed";
   detailMeta.textContent = `Updated ${new Date(profile.updatedAt || Date.now()).toLocaleDateString()}`;
   detailPinButton.classList.add("pin-toggle", "detail-pin");
@@ -394,7 +394,7 @@ function toggleSettingsView() {
         else showListView();
         return;
       case "form":
-        if (currentProfile || editingId) showFormView(formTitle.textContent || "Edit bookmark");
+        if (currentProfile || editingId) showFormView(formTitle.textContent || "Edit profile");
         else showListView();
         return;
       default:
@@ -771,7 +771,7 @@ async function renderFolderManager(prefetchedProfiles = null) {
 
     const meta = document.createElement("div");
     meta.classList.add("folder-row-meta");
-    meta.textContent = `${folder.count} bookmark${folder.count === 1 ? "" : "s"}`;
+    meta.textContent = `${folder.count} profile${folder.count === 1 ? "" : "s"}`;
 
     const actions = document.createElement("div");
     actions.classList.add("folder-row-actions");
@@ -806,7 +806,7 @@ async function renderFolderManager(prefetchedProfiles = null) {
     deleteButton.addEventListener("click", async () => {
       const confirmed = await showConfirm({
         titleText: "Delete folder",
-        messageText: `Delete folder "${folder.name}"? Bookmarks in this folder will move to "No folder".`,
+        messageText: `Delete folder "${folder.name}"? Profiles in this folder will move to "No folder".`,
       });
       if (!confirmed) return;
       deleteFolder(folder.name);
@@ -995,7 +995,7 @@ function setAttachOptions(profiles, seedCams) {
 
   const placeholder = document.createElement("option");
   placeholder.value = "";
-  placeholder.textContent = "Create new bookmark";
+  placeholder.textContent = "Create new profile";
   attachSelect.appendChild(placeholder);
 
   profiles.forEach((profile) => {
@@ -1048,7 +1048,7 @@ async function renderList() {
 
   profileList.innerHTML = "";
   emptyState.classList.toggle("hidden", sorted.length > 0);
-  emptyState.textContent = query ? "No matches found." : "No bookmarks yet.";
+  emptyState.textContent = query ? "No matches found." : "No profiles yet.";
 
   sorted.forEach((profile) => {
     const card = document.createElement("li");
@@ -1204,7 +1204,7 @@ function openEditor(profile, seedCams, source = "list", profiles = []) {
   } else {
     getProfiles().then((profiles) => updateFolderOptions(profiles, currentFolder));
   }
-  showFormView(profile ? "Edit bookmark" : "New bookmark");
+  showFormView(profile ? "Edit profile" : "New profile");
 }
 
 async function addFromCurrentTab() {
@@ -1344,9 +1344,9 @@ detailEditButton.addEventListener("click", () => {
 });
 deleteButton.addEventListener("click", async () => {
   if (!editingId) return;
-  const name = (currentProfile && currentProfile.name) || "this bookmark";
+  const name = (currentProfile && currentProfile.name) || "this profile";
   const confirmed = await showConfirm({
-    titleText: "Delete bookmark",
+    titleText: "Delete profile",
     messageText: `Delete ${name}? This cannot be undone.`,
   });
   if (!confirmed) return;
