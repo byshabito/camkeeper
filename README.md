@@ -1,79 +1,104 @@
 <div align="center">
-    <img src="/icons/icon-128.png" width="128px" height="128px" align="center"/>
-    <h1>CamKeeper</h1>
-    <strong>Cross-site profile manager for Chaturbate and Stripchat models</strong>
+  <img src="/icons/icon-128.png" width="128" height="128" />
+  <h1>CamKeeper</h1>
+  <strong>Cross-site bookmark manager for Chaturbate and Stripchat models</strong>
+  <br />
+  <sub>Unify profiles, notes, and socials. Locally, privately, and without accounts.</sub>
 </div>
+
+## What it is
+
+CamKeeper is a browser extension for users who follow many webcam models across multiple platforms.
+
+It lets you create **one profile** for a model across multiple sites and social media platforms, and gives you tools to organize, annotate, and revisit them efficiently.
+
+No accounts. No cloud. Everything stays in your browser.
 
 ## Features
 
-- Multi-platform profiles with notes, tags, and socials
-- Smart URL parsing for platform/social inputs
-- Auto detail view on saved model pages
-- Add current platform to an existing profile
-- Bulk select to merge or delete
-- Folder organization with filtering and manager
-- Sort by updated/name/viewed time
-- Active view time tracking for model pages
-- Optional online status checks and badge count
-- Auto-detect social profile pages for quick detail view
-- Local-only storage with JSON export/import
+### Unified profiles
+
+- One profile per model, spanning **Chaturbate**, **Stripchat**, and socials
+- Attach multiple platform usernames to the same profile
+- Notes, tags, and social links per model
+
+### Smart detection
+
+- Auto-detect supported model pages
+- Show the profile detail view automatically when visiting a saved model
+
+### Organization & management
+
+- Folder system with filtering
+- Sort by name, last viewed, or last updated
+- Bulk select to merge or delete profiles
+
+### Activity & status (optional)
+
+- Locally track time spent on saved model pages
+- Optional online-status checks with badge count
+- All activity data is stored only in your browser
+
+### Privacy-first by design
+
+- Local-only storage (no cloud, no sync)
+- No user tracking, analytics, or data collection
+- No remote servers or third-party services
+- JSON export/import for backup or migration
 
 ## Usage
 
-1. Visit a model page and click the extension icon
-2. Add or attach the platform username to an existing profile
-3. Use **Select** to merge or delete multiple profiles
+1. Visit a model page
+2. Click the CamKeeper icon to save or attach it to a profile
+3. Use folders, tags, and notes to organize
+4. Instantly see saved details when you revisit the model
 
 ## Manual Installation
 
-Download the latest release file for your browser from GitHub Releases (`*.zip` for Chrome/Chromium, `*.xpi` for Firefox).
-
 ### Chrome / Chromium
 
-1. Extract the `camkeeper-{{version}}-chrome.zip`
-2. Open `chrome://extensions`
-3. Enable **Developer mode**
-4. Click **Load unpacked**
-5. Select the unzipped folder that contains `manifest.json`
+1. Download `camkeeper-{{version}}-chrome.zip` from **Releases**
+2. Extract the archive
+3. Open `chrome://extensions`
+4. Enable **Developer mode**
+5. Click **Load unpacked** and select the extracted folder
 
 ### Firefox
 
-1. Open `about:addons`
-2. Navigate to **Extensions**
-3. Click the **gear icon** on the top right
-4. Click on **Install Add-on From File...**
-5. Select `camkeeper-{{version}}-firefox.xpi` file
+1. Download `camkeeper-{{version}}-firefox.xpi`
+2. Open `about:addons`
+3. Go to **Extensions**
+4. Click the gear icon → **Install Add-on From File…**
+5. Select the `.xpi` file
 
-Note: Some Firefox builds require allowing unsigned add-ons and enabling MV3 in `about:config`:
+> **Note (Firefox – advanced):**
+> Some Firefox builds (e.g. Developer Edition, Nightly, or unsigned add-on setups)
+> may require the following `about:config` settings for Manifest V3 extensions:
+>
+> - `xpinstall.signatures.required = false`
+> - `extensions.manifestV3.enabled = true`
+> - `extensions.backgroundServiceWorker.enabled = true`
+>
+> These changes are not required on standard Firefox release builds
+> when installing a signed add-on.
 
-- `xpinstall.signatures.required = false`
-- `extensions.manifestV3.enabled = true`
-- `extensions.backgroundServiceWorker.enabled = true`
+## Data & privacy
 
-## Temporary Installation (Development)
-
-1. Clone this repo
-
-### Chrome / Chromium
-
-2. Open `chrome://extensions`
-3. Enable **Developer mode**
-4. Click **Load unpacked**
-5. Select this project folder
-
-### Firefox
-
-2. Open `about:debugging#/runtime/this-firefox`
-3. Click **Load Temporary Add-on**
-4. Select `manifest.firefox.json` from this project
+- All data is stored locally in your browser
+- Nothing is synced or transmitted
+- You can export and import your data at any time
 
 ## Support
 
-If you like CamKeeper, consider supporting its development.
+If CamKeeper saves you time or replaces a messy workflow, support its development:
 
-<a href="https://www.buymeacoffee.com/shabito" target="_blank">
-  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" style="height: 60px !important;width: 217px !important;" >
-</a>
+[Buy Me a Coffee](https://www.buymeacoffee.com/shabito)
+
+Bitcoin Lightning address:
+
+```txt
+shabito@walletofsatoshi.com
+```
 
 ## License
 
