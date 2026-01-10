@@ -6,6 +6,7 @@
 - Normalize website socials and improve URL matching for social detail views
 - Default online status checks to off with a 5-minute refresh interval
 - Clarify backup and configuration setting labels
+- Add multi-size favicons to the popup and options pages
 
 ## v0.8.3
 

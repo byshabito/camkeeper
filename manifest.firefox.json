@@ -1,7 +1,7 @@
 {
   "name": "CamKeeper",
   "description": "Cross-site profile manager for Chaturbate and Stripchat models",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "developer": {
     "name": "Shabito",
     "url": "https://github.com/byshabito/camkeeper"
