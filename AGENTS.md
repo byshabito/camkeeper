@@ -3,8 +3,8 @@
 ## Project Structure & Module Organization
 
 - `src/` contains extension code.
-- `src/entries/` holds entry points: `background/` (service worker), `popup/`, and `options/`.
-- `src/lib/` provides shared utilities such as storage (`db.js`) and online status APIs (`onlineStatus/`).
+- `src/entries/` holds entry points: `background/`, `popup/`, and `options/`.
+- `src/lib/` provides shared utilities like storage (`db.js`).
 - `src/config/` centralizes defaults (e.g., background settings).
 - `icons/` stores extension icons.
 - `manifest.json` and `manifest.firefox.json` define Chrome/Firefox builds.
@@ -24,7 +24,7 @@ There is no automated test runner configured.
 
 - Indentation: 2 spaces in JS/CSS.
 - Naming: lowerCamelCase for variables/functions; SCREAMING_SNAKE_CASE for constants.
-- Keep modules focused: config in `src/config/`, storage behind `src/lib/db.js`, platform APIs under `src/lib/onlineStatus/`.
+- Keep modules focused: config in `src/config/`, storage behind `src/lib/db.js`.
 - Avoid noisy logging unless guarded by the Debug Logs setting.
 
 ## Testing Guidelines
