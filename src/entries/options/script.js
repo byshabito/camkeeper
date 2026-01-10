@@ -5,7 +5,7 @@ import {
   DEFAULT_ONLINE_CHECK_INTERVAL_MINUTES,
 } from "../../config/background.js";
 import { sanitizeProfile } from "../../lib/storage.js";
-const RELEASE_TIMESTAMP = "2026-01-10T11:32:27+01:00";
+const RELEASE_TIMESTAMP = "2026-01-10T11:43:31+01:00";
 const DEVELOPER_NAME = "Shabito";
 const DEVELOPER_URL = "https://github.com/byshabito";
 const SOURCE_URL = "https://github.com/byshabito/camkeeper";
