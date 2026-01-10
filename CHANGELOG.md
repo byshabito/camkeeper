@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.8.1
+
+- Improve icons and CK logo size
+
 ## v0.8.0
 
 - Add most viewed (30 days) sort option
