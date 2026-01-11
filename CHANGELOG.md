@@ -7,6 +7,7 @@
 - Refactor code
 - Add privacy policy
 - Remove Reddit from supported socials
+- Remove settings view in popup
 
 ## v0.8.4
 

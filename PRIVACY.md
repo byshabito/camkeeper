@@ -1,31 +1,50 @@
 # Privacy Policy
 
-CamKeeper is a browser extension that stores your profiles, folders, and settings locally in your browser. It does not send your data to any external server.
+Last updated: 2026-01-11
 
-## What data is stored
+## Overview
+This extension does not collect, store, or sell personal data.
 
-- Profiles you save (names, usernames, tags, notes, socials, folders).
-- View history used for local sorting and stats.
-- Extension settings (such as sort preferences and debug logs).
+All functionality runs locally in the user's browser unless explicitly stated otherwise.
 
-## How data is used
+## Data Access
+The extension accesses the following data solely to provide its core functionality:
 
-- Data is used only inside the extension to display, sort, and manage your saved profiles.
-- View history is used only for local statistics and sorting.
+- Current tab URL (to detect model pages when adding profiles and tracking view sessions)
+- Browser extension storage (to store profiles, folders, view history, and settings)
 
-## Data sharing
+This data is:
+- accessed only by the extension when it is running
+- not transmitted to external servers
+- not shared with third parties
 
-- No data is collected, sold, or shared with third parties.
-- No analytics or tracking services are used.
+## Permissions
+The extension requests the following permissions:
 
-## Data storage
+- **storage**  
+  Used to: save profiles, folders, view history, and settings locally in the browser
+- **activeTab**  
+  Used to: read the active tab URL when the user adds a profile from the current page
+- **tabs**  
+  Used to: observe tab activity for view session tracking on supported sites
 
-- All data is stored locally using the browser's extension storage.
+Only the minimum permissions required for the extension to function are requested.
+
+## Data Storage
+- Profile data, view history, and settings are stored persistently in the browser’s extension storage.
+- All stored data remains local and can be removed by clearing extension data or uninstalling the extension.
+
+## Third-Party Services
+This extension does not use third-party analytics, tracking, or advertising services.
+
+## Age Restriction
+This extension is intended for use with adult (18+) websites and is not directed at minors.
 
 ## Changes
-
-If this policy changes, it will be updated in this file and noted in the changelog.
+This privacy policy may be updated if the extension's functionality changes.  
+The latest version will always be available at this URL.
 
 ## Contact
+For questions or concerns about this privacy policy, contact:
 
-If you have questions about this policy, contact Shabito via the project repository.
+Email: contact@shabito.net

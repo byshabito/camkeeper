@@ -57,6 +57,7 @@ import {
 } from "./effects.js";
 import { createPopupState } from "./state.js";
 import { createViewStateMachine } from "./viewState.js";
+import { initSettingsPanel } from "./settingsPanel.js";
 
 export function initPopupController({ elements }) {
   const {
@@ -111,6 +112,20 @@ export function initPopupController({ elements }) {
     bulkCancel,
     folderFilter,
     settingsToggle,
+    exportButton,
+    importInput,
+    debugLogsInput,
+    visitSaveButton,
+    settingsFeedback,
+    bitcoinDonateButton,
+    bitcoinModal,
+    bitcoinModalCloseBottom,
+    bitcoinToast,
+    metaVersion,
+    metaRelease,
+    metaDeveloper,
+    metaSource,
+    metaLicense,
   } = elements;
 
   const settingsIcon = settingsToggle?.querySelector(".settings-icon") || null;
@@ -123,6 +138,36 @@ export function initPopupController({ elements }) {
   const urlParams = new URLSearchParams(window.location.search);
   const initialTab = urlParams.get("tab");
   const isEmbedded = urlParams.get("embed") === "1";
+  const openOptionsPage = () => {
+    if (chrome.runtime?.openOptionsPage) {
+      chrome.runtime.openOptionsPage();
+    }
+  };
+
+  initSettingsPanel({
+    elements: {
+      exportButton,
+      importInput,
+      debugLogsInput,
+      visitSaveButton,
+      settingsFeedback,
+      bitcoinDonateButton,
+      bitcoinModal,
+      bitcoinModalCloseBottom,
+      bitcoinToast,
+      metaVersion,
+      metaRelease,
+      metaDeveloper,
+      metaSource,
+      metaLicense,
+    },
+    allowFileImport: isEmbedded,
+    onProfilesChanged: async () => {
+      if (viewState) {
+        await renderList();
+      }
+    },
+  });
 
   let viewState;
 
@@ -611,7 +656,13 @@ export function initPopupController({ elements }) {
     {
       element: settingsToggle,
       event: "click",
-      handler: () => viewState.toggleSettings(),
+      handler: () => {
+        if (isEmbedded) {
+          viewState.toggleSettings();
+          return;
+        }
+        openOptionsPage();
+      },
     },
     {
       element: cancelButton,
