@@ -2,7 +2,7 @@ import { getProfiles, saveProfiles } from "../repo/profiles.js";
 import { getSettings, updateSettings } from "../repo/settings.js";
 import { sanitizeProfile } from "../domain/sanitizers.js";
 
-const RELEASE_TIMESTAMP = "2026-01-11T12:22:11+01:00";
+const RELEASE_TIMESTAMP = "2026-01-11T12:27:00+01:00";
 const DEVELOPER_NAME = "Shabito";
 const DEVELOPER_URL = "https://github.com/byshabito";
 const SOURCE_URL = "https://github.com/byshabito/camkeeper";
@@ -124,15 +124,24 @@ export function initSettingsPanel({ elements, onProfilesChanged, allowFileImport
     metaLicense.href = LICENSE_URL;
   }
 
+  const formatBackupTimestamp = (date) => {
+    const pad = (value) => String(value).padStart(2, "0");
+    return `${date.getUTCFullYear()}${pad(date.getUTCMonth() + 1)}${pad(
+      date.getUTCDate(),
+    )}-${pad(date.getUTCHours())}${pad(date.getUTCMinutes())}${pad(
+      date.getUTCSeconds(),
+    )}`;
+  };
+
   if (exportButton) {
     exportButton.addEventListener("click", async () => {
       const profiles = await getProfiles();
-      const data = JSON.stringify(profiles, null, 2);
-      const blob = new Blob([data], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = "camkeeper-profiles.json";
+    const data = JSON.stringify(profiles, null, 2);
+    const blob = new Blob([data], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `camkeeper-profiles_${formatBackupTimestamp(new Date())}.json`;
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();

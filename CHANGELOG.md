@@ -7,7 +7,10 @@
 - Refactor code
 - Add privacy policy
 - Remove Reddit from supported socials
-- Remove settings view in popup
+- Move settings to options page and keep popup settings button as a shortcut
+- Fix backup import flow and add import confirmation toast
+- Include timestamps in backup export filenames
+- Update About label and license text in settings
 
 ## v0.8.4
 
