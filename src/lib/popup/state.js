@@ -8,6 +8,9 @@ export function createPopupState(initial = {}) {
     attachSeedCams: [],
     preferredFolderFilter: "",
     preferredFolderOrder: [],
+    listQuery: "",
+    listSortKey: "",
+    listFolderFilter: "",
     ...initial,
   };
 

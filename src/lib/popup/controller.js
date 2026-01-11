@@ -1,29 +1,29 @@
-import SITES, { SITE_KEYS } from "../../lib/domain/sites.js";
+import SITES, { SITE_KEYS } from "../domain/sites.js";
 import {
   parseCamInput,
   parseSocialInput,
   parseSocialUrl,
   parseUrl,
   buildSocialUrl,
-} from "../../lib/domain/urls.js";
-import { SOCIAL_OPTIONS } from "../../lib/domain/socialOptions.js";
-import { createBulkSelection } from "../../lib/bulkSelection.js";
-import { initConfirmModal } from "../../lib/confirmModal.js";
+} from "../domain/urls.js";
+import { SOCIAL_OPTIONS } from "../domain/socialOptions.js";
+import { createBulkSelection } from "../bulkSelection.js";
+import { createPopupDialogs } from "./dialogs.js";
 import {
   formatDuration,
   formatSocialHandle,
   normalizeSocialHandle,
   selectDetailViewModel,
   selectFolderManagerViewModel,
+  selectListControlsViewModel,
   selectProfileListViewModel,
   selectFormViewModel,
   selectAttachFormViewModel,
   selectFolderOptionsViewModel,
-  truncateText,
 } from "./selectors.js";
-import { findDuplicateProfile } from "../../lib/domain/profiles.js";
-import { normalizeText } from "../../lib/domain/text.js";
-import { SETTINGS_DEFAULTS } from "../../lib/domain/settings.js";
+import { findDuplicateProfile } from "../domain/profiles.js";
+import { normalizeText } from "../domain/text.js";
+import { SETTINGS_DEFAULTS } from "../domain/settings.js";
 import {
   deleteProfileById,
   deleteProfilesByIds,
@@ -41,6 +41,9 @@ import {
   clearFormError,
   applyFormViewModel,
   createFormRow,
+  createFolderSelectHandlers,
+  createListControlHandlers,
+  createSearchHoverHandlers,
   renderFolderManager,
   renderFolderFilter,
   renderFolderSelect,
@@ -53,6 +56,7 @@ import {
   showFormError,
 } from "./effects.js";
 import { createPopupState } from "./state.js";
+import { createViewStateMachine } from "./viewState.js";
 
 export function initPopupController({ elements }) {
   const {
@@ -111,7 +115,7 @@ export function initPopupController({ elements }) {
 
   const settingsIcon = settingsToggle?.querySelector(".settings-icon") || null;
   const overviewIcon = settingsToggle?.querySelector(".overview-icon") || null;
-  const showConfirm = initConfirmModal();
+  const dialogs = createPopupDialogs();
   const DEFAULT_SORT = SETTINGS_DEFAULTS.lastSort;
   const SORT_OPTIONS = new Set(["most", "month", "recent", "updated", "name"]);
   const state = createPopupState();
@@ -119,6 +123,8 @@ export function initPopupController({ elements }) {
   const urlParams = new URLSearchParams(window.location.search);
   const initialTab = urlParams.get("tab");
   const isEmbedded = urlParams.get("embed") === "1";
+
+  let viewState;
 
   const selection = createBulkSelection({
     bulkBar,
@@ -132,7 +138,7 @@ export function initPopupController({ elements }) {
       const { merged } = await mergeProfilesByIds(ids);
       if (!merged) return;
       selection.setSelectMode(false);
-      showDetailView(merged);
+      viewState.go("detail", merged);
     },
     onDelete: async (ids) => {
       if (!ids.length) return;
@@ -140,11 +146,7 @@ export function initPopupController({ elements }) {
       const names = profiles
         .filter((item) => ids.includes(item.id))
         .map((item) => item.name || "Unnamed");
-      const confirmed = await showConfirm({
-        titleText: "Delete profiles",
-        messageText: `Delete ${names.length} profile${names.length === 1 ? "" : "s"}? This cannot be undone.`,
-        items: names,
-      });
+      const confirmed = await dialogs.confirmDeleteProfiles(names);
       if (!confirmed) return;
       await deleteProfilesByIds(ids);
       selection.setSelectMode(false);
@@ -164,135 +166,64 @@ export function initPopupController({ elements }) {
     state.set({
       preferredFolderFilter: folderFilter,
       preferredFolderOrder: folderOrder,
+      listSortKey: sortKey,
+      listFolderFilter: folderFilter,
     });
   }
 
-  function showListView() {
-    setViewVisibility(
-      { listView, formView, detailView, folderView, settingsView },
-      "list",
-    );
-    setSettingsToggleState(
-      { settingsToggle, settingsIcon, overviewIcon, isEmbedded },
-      "settings",
-    );
-    clearFormError(formError);
-    selection.setSelectMode(false);
-    renderList();
-    state.set({
-      lastView: "list",
-      lastNonSettingsView: "list",
-    });
-  }
-
-  function showFormView(title) {
-    formTitle.textContent = title;
-    setViewVisibility(
-      { listView, formView, detailView, folderView, settingsView },
-      "form",
-    );
-    setSettingsToggleState(
-      { settingsToggle, settingsIcon, overviewIcon, isEmbedded },
-      "hidden",
-    );
-    state.setValue("lastNonSettingsView", "form");
-    deleteButton.classList.toggle("hidden", !state.getValue("editingId"));
-  }
-
-  function showDetailView(profile) {
-    state.setValue("currentProfile", profile);
-    const viewModel = selectDetailViewModel(profile, {
-      formatDuration,
-      formatSocialHandle,
-      buildSocialUrl,
-    });
-    renderProfileDetail({
-      viewModel,
-      elements: {
-        detailTitle,
-        detailName,
-        detailMeta,
-        detailPinButton,
-        detailCams,
-        detailSocials,
-        detailTags,
-        detailFolder,
-        detailNotes,
+  viewState = createViewStateMachine({
+    views: { listView, formView, detailView, folderView, settingsView },
+    settingsUi: { settingsToggle, settingsIcon, overviewIcon, isEmbedded },
+    state,
+    selection,
+    setViewVisibility,
+    setSettingsToggleState,
+    onView: {
+      list: () => {
+        clearFormError(formError);
+        renderList();
       },
-      sites: SITES,
-      getPlatformIconSvg,
-      getSocialIconSvg,
-      getPinIconSvg,
-      getFolderIconSvg,
-    });
-
-    setViewVisibility(
-      { listView, formView, detailView, folderView, settingsView },
-      "detail",
-    );
-    state.setValue("lastView", "detail");
-    setSettingsToggleState(
-      { settingsToggle, settingsIcon, overviewIcon, isEmbedded },
-      "hidden",
-    );
-    state.setValue("lastNonSettingsView", "detail");
-  }
-
-  function showFolderView() {
-    setViewVisibility(
-      { listView, formView, detailView, folderView, settingsView },
-      "folder",
-    );
-    setSettingsToggleState(
-      { settingsToggle, settingsIcon, overviewIcon, isEmbedded },
-      "settings",
-    );
-    selection.setSelectMode(false);
-    renderFolderManagerView();
-    state.set({
-      lastView: "list",
-      lastNonSettingsView: "folder",
-    });
-  }
-
-  function showSettingsView() {
-    setViewVisibility(
-      { listView, formView, detailView, folderView, settingsView },
-      "settings",
-    );
-    selection.setSelectMode(false);
-    state.setValue("lastView", "settings");
-    setSettingsToggleState(
-      { settingsToggle, settingsIcon, overviewIcon, isEmbedded },
-      "overview",
-    );
-    if (isEmbedded) document.body.classList.add("embedded");
-  }
-
-  function toggleSettingsView() {
-    if (!settingsView.classList.contains("hidden")) {
-      const lastNonSettingsView = state.getValue("lastNonSettingsView");
-      const currentProfile = state.getValue("currentProfile");
-      const editingId = state.getValue("editingId");
-      switch (lastNonSettingsView) {
-        case "folder":
-          showFolderView();
-          return;
-        case "detail":
-          if (currentProfile) showDetailView(currentProfile);
-          else showListView();
-          return;
-        case "form":
-          if (currentProfile || editingId) showFormView(formTitle.textContent || "Edit profile");
-          else showListView();
-          return;
-        default:
-          showListView();
-          return;
-      }
-    }
-    showSettingsView();
-  }
+      form: (title) => {
+        formTitle.textContent = title;
+        deleteButton.classList.toggle("hidden", !state.getValue("editingId"));
+      },
+      detail: (profile) => {
+        if (!profile) return;
+        state.setValue("currentProfile", profile);
+        const viewModel = selectDetailViewModel(profile, {
+          formatDuration,
+          formatSocialHandle,
+          buildSocialUrl,
+          sites: SITES,
+          getPlatformIconSvg,
+          getSocialIconSvg,
+        });
+        renderProfileDetail({
+          viewModel,
+          elements: {
+            detailTitle,
+            detailName,
+            detailMeta,
+            detailPinButton,
+            detailCams,
+            detailSocials,
+            detailTags,
+            detailFolder,
+            detailNotes,
+          },
+          getPinIconSvg,
+          getFolderIconSvg,
+        });
+      },
+      folder: () => {
+        renderFolderManagerView();
+      },
+      settings: () => {
+        if (isEmbedded) document.body.classList.add("embedded");
+      },
+      getFormTitle: () => formTitle.textContent || "Edit profile",
+    },
+  });
 
   async function loadSocialIcons() {
     const entries = Object.entries(SOCIAL_ICON_PATHS);
@@ -360,10 +291,11 @@ export function initPopupController({ elements }) {
   function updateFolderOptions(profiles, currentFolder) {
     const preferredFolderOrder = state.getValue("preferredFolderOrder");
     const preferredFolderFilter = state.getValue("preferredFolderFilter");
+    const listFolderFilter = state.getValue("listFolderFilter");
     const viewModel = selectFolderOptionsViewModel({
       profiles,
       preferredOrder: preferredFolderOrder,
-      selectedFilter: folderFilter?.value || "",
+      selectedFilter: listFolderFilter,
       preferredFilter: preferredFolderFilter,
       currentFolder,
     });
@@ -379,6 +311,7 @@ export function initPopupController({ elements }) {
       showNewFolderInput: viewModel.showNewFolderInput,
       newFolderValue: viewModel.newFolderValue,
     });
+    state.setValue("listFolderFilter", viewModel.filterValue);
     if (viewModel.shouldResetFilter) {
       state.setValue("preferredFolderFilter", "");
       handleFolderFilterChange("");
@@ -471,10 +404,7 @@ export function initPopupController({ elements }) {
         renameFolder(folder.name, nextValue);
       },
       onDelete: async (folder) => {
-        const confirmed = await showConfirm({
-          titleText: "Delete folder",
-          messageText: `Delete folder "${folder.name}"? Profiles in this folder will move to "No folder".`,
-        });
+      const confirmed = await dialogs.confirmDeleteFolder(folder.name);
         if (!confirmed) return;
         deleteFolder(folder.name);
       },
@@ -559,7 +489,7 @@ export function initPopupController({ elements }) {
     } else {
       fetchProfiles().then((profiles) => updateFolderOptions(profiles, currentFolder));
     }
-    showFormView(profile ? "Edit profile" : "New profile");
+    viewState.go("form", profile ? "Edit profile" : "New profile");
   }
 
   async function addFromCurrentTab() {
@@ -582,26 +512,33 @@ export function initPopupController({ elements }) {
 
   async function renderList() {
     const profiles = await fetchProfiles();
+    const profilesById = new Map(profiles.map((profile) => [profile.id, profile]));
     updateFolderOptions(profiles);
-    const selectedFolder = normalizeText(folderFilter?.value || "");
+    const listControls = selectListControlsViewModel({
+      query: state.getValue("listQuery"),
+      sortKey: state.getValue("listSortKey"),
+      folderFilter: state.getValue("listFolderFilter"),
+    });
     const viewModel = selectProfileListViewModel(profiles, {
-      query: searchInput.value,
-      folderKey: selectedFolder,
-      sortKey: sortSelect.value,
+      query: listControls.query,
+      folderKey: listControls.folderKey,
+      sortKey: listControls.sortKey,
+      sites: SITES,
+      getPlatformIconSvg,
     });
     renderProfileList({
       profiles: viewModel.profiles,
       elements: { profileList, emptyState },
       selection,
-      sites: SITES,
-      getPlatformIconSvg,
       getPinIconSvg,
-      truncateText,
       onPinToggle: async (profileId) => {
         await toggleProfilePin(profileId);
         renderList();
       },
-      onOpenDetail: showDetailView,
+      onOpenDetail: (profileId) => {
+        const profile = profilesById.get(profileId);
+        if (profile) viewState.go("detail", profile);
+      },
       emptyMessage: viewModel.emptyMessage,
     });
   }
@@ -636,19 +573,7 @@ export function initPopupController({ elements }) {
     });
 
   bindEvents([
-    {
-      element: folderSelect,
-      event: "change",
-      handler: () => {
-        if (folderSelect.value === "__new__") {
-          folderInput.classList.remove("hidden");
-          folderInput.focus();
-        } else {
-          folderInput.classList.add("hidden");
-          folderInput.value = "";
-        }
-      },
-    },
+    ...createFolderSelectHandlers({ folderSelect, folderInput }),
     {
       element: addCamButton,
       event: "click",
@@ -672,22 +597,22 @@ export function initPopupController({ elements }) {
     {
       element: backButton,
       event: "click",
-      handler: showListView,
+      handler: () => viewState.go("list"),
     },
     {
       element: folderManagerButton,
       event: "click",
-      handler: showFolderView,
+      handler: () => viewState.go("folder"),
     },
     {
       element: folderBackButton,
       event: "click",
-      handler: showListView,
+      handler: () => viewState.go("list"),
     },
     {
       element: settingsToggle,
       event: "click",
-      handler: toggleSettingsView,
+      handler: () => viewState.toggleSettings(),
     },
     {
       element: cancelButton,
@@ -696,16 +621,16 @@ export function initPopupController({ elements }) {
         const lastView = state.getValue("lastView");
         const currentProfile = state.getValue("currentProfile");
         if (lastView === "detail" && currentProfile) {
-          showDetailView(currentProfile);
+          viewState.go("detail", currentProfile);
         } else {
-          showListView();
+          viewState.go("list");
         }
       },
     },
     {
       element: detailBackButton,
       event: "click",
-      handler: showListView,
+      handler: () => viewState.go("list"),
     },
     {
       element: detailPinButton,
@@ -714,7 +639,7 @@ export function initPopupController({ elements }) {
         const currentProfile = state.getValue("currentProfile");
         if (!currentProfile) return;
         const { updatedProfile } = await toggleProfilePin(currentProfile.id);
-        if (updatedProfile) showDetailView(updatedProfile);
+        if (updatedProfile) viewState.go("detail", updatedProfile);
       },
     },
     {
@@ -734,73 +659,34 @@ export function initPopupController({ elements }) {
         const currentProfile = state.getValue("currentProfile");
         if (!editingId) return;
         const name = (currentProfile && currentProfile.name) || "this profile";
-        const confirmed = await showConfirm({
-          titleText: "Delete profile",
-          messageText: `Delete ${name}? This cannot be undone.`,
-        });
+        const confirmed = await dialogs.confirmDeleteProfile(name);
         if (!confirmed) return;
         await deleteProfileById(editingId);
         state.set({ editingId: null, currentProfile: null });
-        showListView();
+        viewState.go("list");
       },
     },
-    {
-      element: searchInput,
-      event: "input",
-      handler: renderList,
-    },
-    {
-      element: sortSelect,
-      event: "change",
-      handler: async () => {
-        await saveSortPreference(sortSelect.value, SORT_OPTIONS);
+    ...createListControlHandlers({
+      elements: { searchInput, sortSelect, folderFilter },
+      onQueryChange: (value) => {
+        state.setValue("listQuery", value || "");
         renderList();
       },
-    },
-    {
-      element: folderFilter,
-      event: "change",
-      handler: async () => {
-        const nextValue = await handleFolderFilterChange(folderFilter.value);
-        state.setValue("preferredFolderFilter", nextValue);
+      onSortChange: async (value) => {
+        await saveSortPreference(value, SORT_OPTIONS);
+        state.setValue("listSortKey", value);
         renderList();
       },
-    },
-    ...(searchSort && searchInput
-      ? [
-          {
-            element: searchSort.querySelector(".search-toggle"),
-            event: "mouseenter",
-            handler: () => searchSort.classList.add("search-active"),
-          },
-          {
-            element: searchInput,
-            event: "mouseenter",
-            handler: () => searchSort.classList.add("search-active"),
-          },
-          {
-            element: searchInput,
-            event: "focus",
-            handler: () => searchSort.classList.add("search-active"),
-          },
-          {
-            element: searchInput,
-            event: "blur",
-            handler: () => {
-              if (document.activeElement === searchInput) return;
-              searchSort.classList.remove("search-active");
-            },
-          },
-          {
-            element: searchSort,
-            event: "mouseleave",
-            handler: () => {
-              if (document.activeElement === searchInput) return;
-              searchSort.classList.remove("search-active");
-            },
-          },
-        ]
-      : []),
+      onFolderFilterChange: async (value) => {
+        const nextValue = await handleFolderFilterChange(value);
+        state.set({
+          preferredFolderFilter: nextValue,
+          listFolderFilter: nextValue,
+        });
+        renderList();
+      },
+    }),
+    ...createSearchHoverHandlers({ searchSort, searchInput }),
     {
       element: profileForm,
       event: "submit",
@@ -829,7 +715,7 @@ export function initPopupController({ elements }) {
           showFormError(formError, result.error);
           return;
         }
-        showDetailView(result.savedProfile);
+        viewState.go("detail", result.savedProfile);
       },
     },
   ]);
@@ -859,7 +745,7 @@ export function initPopupController({ elements }) {
         null,
       );
       if (match) {
-        showDetailView(match);
+        viewState.go("detail", match);
         return;
       }
     }
@@ -873,18 +759,18 @@ export function initPopupController({ elements }) {
         ),
       );
       if (socialMatch) {
-        showDetailView(socialMatch);
+        viewState.go("detail", socialMatch);
         return;
       }
     }
-    showListView();
+    viewState.go("list");
   }
 
   const start = async () => {
     await Promise.all([loadSocialIcons(), loadPlatformIcons()]);
     await applyListPreferences();
     if (initialTab === "settings" || isEmbedded) {
-      showSettingsView();
+      viewState.go("settings");
       return;
     }
     showInitialView();

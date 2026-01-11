@@ -1,8 +1,8 @@
 import { getProfiles, getSettings, saveProfiles, updateSettings } from "./store.js";
-import { findDuplicateProfile, mergeProfiles } from "../../lib/domain/profiles.js";
-import { normalizeText, splitTags } from "../../lib/domain/text.js";
-import { createId } from "../../lib/domain/ids.js";
-import { sanitizeCams, sanitizeProfile, sanitizeSocials } from "../../lib/domain/sanitizers.js";
+import { findDuplicateProfile, mergeProfiles } from "../domain/profiles.js";
+import { normalizeText, splitTags } from "../domain/text.js";
+import { createId } from "../domain/ids.js";
+import { sanitizeCams, sanitizeProfile, sanitizeSocials } from "../domain/sanitizers.js";
 
 export async function fetchProfiles() {
   return getProfiles();

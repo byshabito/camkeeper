@@ -1,8 +1,8 @@
-import { sortBySelection } from "../../lib/sort.js";
-import { matchQuery } from "../../lib/domain/profiles.js";
-import { sanitizeCams } from "../../lib/domain/sanitizers.js";
-import { normalizeWebsiteHandle } from "../../lib/domain/urls.js";
-import { normalizeText } from "../../lib/domain/text.js";
+import { sortBySelection } from "../sort.js";
+import { matchQuery } from "../domain/profiles.js";
+import { sanitizeCams } from "../domain/sanitizers.js";
+import { normalizeWebsiteHandle } from "../domain/urls.js";
+import { normalizeText } from "../domain/text.js";
 
 export function normalizeFolderKey(folderName) {
   return normalizeText(folderName);
@@ -72,12 +72,55 @@ export function selectProfiles(profiles, { query, folderKey, sortKey }) {
   return sortBySelection(filtered, sortKey);
 }
 
-export function selectProfileListViewModel(profiles, { query, folderKey, sortKey }) {
+export function selectProfileListViewModel(
+  profiles,
+  { query, folderKey, sortKey, sites, getPlatformIconSvg },
+) {
   const trimmedQuery = (query || "").trim();
-  const sorted = selectProfiles(profiles, { query: trimmedQuery, folderKey, sortKey });
+  const sorted = selectProfiles(profiles, { query: trimmedQuery, folderKey, sortKey }).map(
+    (profile) => {
+      const cams = [...(profile.cams || [])]
+        .sort((a, b) => (b.viewMs || 0) - (a.viewMs || 0))
+        .map((cam) => {
+          const site = sites?.[cam.site];
+          if (!site) return null;
+          const iconSvg = getPlatformIconSvg?.(cam.site) || "";
+          return {
+            href: site.url(cam.username),
+            color: site.color,
+            title: `${site.abbr}: ${cam.username}`,
+            username: cam.username,
+            iconSvg,
+            iconText: iconSvg ? "" : site.abbr,
+          };
+        })
+        .filter(Boolean);
+
+      return {
+        id: profile.id,
+        name: profile.name || "Unnamed",
+        pinned: Boolean(profile.pinned),
+        tags: profile.tags || [],
+        notes: profile.notes || "",
+        notePreview: profile.notes ? truncateText(profile.notes, 70) : "",
+        cams,
+      };
+    },
+  );
   return {
     profiles: sorted,
     emptyMessage: trimmedQuery ? "No matches found." : "No profiles yet.",
+  };
+}
+
+export function selectListControlsViewModel({ query, sortKey, folderFilter }) {
+  const trimmedQuery = (query || "").trim();
+  const folderKey = normalizeText(folderFilter || "");
+  return {
+    query: trimmedQuery,
+    sortKey,
+    folderFilter: folderFilter || "",
+    folderKey,
   };
 }
 
@@ -87,20 +130,42 @@ export function selectFolderManagerViewModel(profiles, preferredOrder) {
   };
 }
 
-export function selectDetailViewModel(profile, { formatDuration, formatSocialHandle, buildSocialUrl }) {
+export function selectDetailViewModel(profile, {
+  formatDuration,
+  formatSocialHandle,
+  buildSocialUrl,
+  sites,
+  getPlatformIconSvg,
+  getSocialIconSvg,
+}) {
   if (!profile) return null;
   const cams = [...(profile.cams || [])]
     .sort((a, b) => (b.viewMs || 0) - (a.viewMs || 0))
-    .map((cam) => ({
-      ...cam,
-      viewLabel: formatDuration(Number.isFinite(cam.viewMs) ? cam.viewMs : 0),
-    }));
+    .map((cam) => {
+      const site = sites?.[cam.site];
+      if (!site) return null;
+      const iconSvg = getPlatformIconSvg?.(cam.site) || "";
+      return {
+        ...cam,
+        url: site.url(cam.username),
+        color: site.color,
+        abbr: site.abbr,
+        iconSvg,
+        iconText: iconSvg ? "" : site.abbr,
+        viewLabel: formatDuration(Number.isFinite(cam.viewMs) ? cam.viewMs : 0),
+      };
+    })
+    .filter(Boolean);
 
-  const socials = (profile.socials || []).map((social) => ({
-    ...social,
-    url: buildSocialUrl(social),
-    display: formatSocialHandle(social),
-  }));
+  const socials = (profile.socials || []).map((social) => {
+    const iconSvg = getSocialIconSvg?.(social.platform) || "";
+    return {
+      ...social,
+      url: buildSocialUrl(social),
+      display: formatSocialHandle(social),
+      iconSvg,
+    };
+  });
 
   return {
     title: "Profile",

@@ -1,4 +1,4 @@
-import { initPopupController } from "./controller.js";
+import { initPopupController } from "../../lib/popup/controller.js";
 
 const elements = {
   listView: document.getElementById("list-view"),

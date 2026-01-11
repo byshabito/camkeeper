@@ -1,7 +1,7 @@
-import { getState, setState } from "../../lib/repo/state.js";
-import { ACTIVE_VIEW_SESSION_STATE_KEY } from "../../lib/domain/stateKeys.js";
-import { parseUrl } from "../../lib/domain/urls.js";
-import { recordProfileView } from "../../lib/repo/profiles.js";
+import { getState, setState } from "../repo/state.js";
+import { ACTIVE_VIEW_SESSION_STATE_KEY } from "../domain/stateKeys.js";
+import { parseUrl } from "../domain/urls.js";
+import { recordProfileView } from "../repo/profiles.js";
 
 export function initVisitTracking(state, logDebug) {
   let activeSession = null;

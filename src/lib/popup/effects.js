@@ -39,12 +39,90 @@ export function clearContainer(container) {
   while (container.firstChild) container.removeChild(container.firstChild);
 }
 
+export function createSearchHoverHandlers({ searchSort, searchInput }) {
+  if (!searchSort || !searchInput) return [];
+  const activate = () => searchSort.classList.add("search-active");
+  const deactivate = () => {
+    if (document.activeElement === searchInput) return;
+    searchSort.classList.remove("search-active");
+  };
+  return [
+    {
+      element: searchSort.querySelector(".search-toggle"),
+      event: "mouseenter",
+      handler: activate,
+    },
+    {
+      element: searchInput,
+      event: "mouseenter",
+      handler: activate,
+    },
+    {
+      element: searchInput,
+      event: "focus",
+      handler: activate,
+    },
+    {
+      element: searchInput,
+      event: "blur",
+      handler: deactivate,
+    },
+    {
+      element: searchSort,
+      event: "mouseleave",
+      handler: deactivate,
+    },
+  ].filter((entry) => entry.element);
+}
+
+export function createFolderSelectHandlers({ folderSelect, folderInput }) {
+  if (!folderSelect || !folderInput) return [];
+  return [
+    {
+      element: folderSelect,
+      event: "change",
+      handler: () => {
+        if (folderSelect.value === "__new__") {
+          folderInput.classList.remove("hidden");
+          folderInput.focus();
+        } else {
+          folderInput.classList.add("hidden");
+          folderInput.value = "";
+        }
+      },
+    },
+  ];
+}
+
+export function createListControlHandlers({
+  elements,
+  onQueryChange,
+  onSortChange,
+  onFolderFilterChange,
+}) {
+  const { searchInput, sortSelect, folderFilter } = elements;
+  return [
+    {
+      element: searchInput,
+      event: "input",
+      handler: (event) => onQueryChange?.(event.target.value),
+    },
+    {
+      element: sortSelect,
+      event: "change",
+      handler: (event) => onSortChange?.(event.target.value),
+    },
+    {
+      element: folderFilter,
+      event: "change",
+      handler: (event) => onFolderFilterChange?.(event.target.value),
+    },
+  ].filter((entry) => entry.element);
+}
+
 export function renderProfileDetail({
   viewModel,
   elements,
-  sites,
-  getPlatformIconSvg,
-  getSocialIconSvg,
   getPinIconSvg,
   getFolderIconSvg,
 }) {
@@ -74,27 +152,24 @@ export function renderProfileDetail({
 
   clearContainer(detailCams);
   viewModel.cams.forEach((cam) => {
-      const site = sites[cam.site];
-      if (!site) return;
       const link = document.createElement("a");
-      link.href = site.url(cam.username);
+      link.href = cam.url;
       link.target = "_blank";
       link.rel = "noopener noreferrer";
       link.classList.add("platform-link");
 
       const chip = document.createElement("span");
       chip.classList.add("platform-chip");
-      chip.style.setProperty("--platform-color", site.color);
+      chip.style.setProperty("--platform-color", cam.color);
 
       const icon = document.createElement("span");
       icon.classList.add("icon");
-      icon.style.color = site.color;
+      icon.style.color = cam.color;
       icon.style.borderColor = "transparent";
-      const platformIcon = getPlatformIconSvg(cam.site);
-      if (platformIcon) {
-        icon.innerHTML = platformIcon;
+      if (cam.iconSvg) {
+        icon.innerHTML = cam.iconSvg;
       } else {
-        icon.textContent = site.abbr;
+        icon.textContent = cam.iconText;
       }
 
       const label = document.createElement("span");
@@ -126,7 +201,7 @@ export function renderProfileDetail({
 
     const icon = document.createElement("span");
     icon.classList.add("icon");
-    icon.innerHTML = getSocialIconSvg(social.platform);
+    icon.innerHTML = social.iconSvg;
 
     const text = document.createElement("span");
     text.textContent = social.display;
@@ -159,10 +234,7 @@ export function renderProfileList({
   profiles,
   elements,
   selection,
-  sites,
-  getPlatformIconSvg,
   getPinIconSvg,
-  truncateText,
   onPinToggle,
   onOpenDetail,
   emptyMessage,
@@ -200,13 +272,9 @@ export function renderProfileList({
 
     const camChips = document.createElement("div");
     camChips.classList.add("chips");
-    [...(profile.cams || [])]
-      .sort((a, b) => (b.viewMs || 0) - (a.viewMs || 0))
-      .forEach((cam) => {
-        const site = sites[cam.site];
-        if (!site) return;
+    (profile.cams || []).forEach((cam) => {
         const link = document.createElement("a");
-        link.href = site.url(cam.username);
+        link.href = cam.href;
         link.target = "_blank";
         link.rel = "noopener noreferrer";
         link.classList.add("platform-link");
@@ -220,18 +288,17 @@ export function renderProfileList({
 
         const chip = document.createElement("span");
         chip.classList.add("platform-chip");
-        chip.style.setProperty("--platform-color", site.color);
-        chip.title = `${site.abbr}: ${cam.username}`;
+        chip.style.setProperty("--platform-color", cam.color);
+        chip.title = cam.title;
 
         const icon = document.createElement("span");
         icon.classList.add("icon");
-        icon.style.color = site.color;
+        icon.style.color = cam.color;
         icon.style.borderColor = "transparent";
-        const platformIcon = getPlatformIconSvg(cam.site);
-        if (platformIcon) {
-          icon.innerHTML = platformIcon;
+        if (cam.iconSvg) {
+          icon.innerHTML = cam.iconSvg;
         } else {
-          icon.textContent = site.abbr;
+          icon.textContent = cam.iconText;
         }
 
         chip.appendChild(icon);
@@ -250,14 +317,14 @@ export function renderProfileList({
 
     const note = document.createElement("div");
     note.classList.add("note");
-    note.textContent = profile.notes ? truncateText(profile.notes, 70) : "";
+    note.textContent = profile.notePreview || "";
 
     title.appendChild(name);
     if (profile.tags?.length) title.appendChild(tagChips);
 
     main.appendChild(title);
     main.appendChild(camChips);
-    if (profile.notes) main.appendChild(note);
+    if (profile.notePreview) main.appendChild(note);
 
     if (selection.isActive()) {
       if (selection.isSelected(profile.id)) {
@@ -267,7 +334,7 @@ export function renderProfileList({
         selection.toggleSelection(profile.id);
       });
     } else {
-      card.addEventListener("click", () => onOpenDetail(profile));
+      card.addEventListener("click", () => onOpenDetail(profile.id));
     }
 
     card.appendChild(main);
