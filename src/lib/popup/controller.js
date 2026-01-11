@@ -28,6 +28,7 @@ import {
   deleteProfileById,
   deleteProfilesByIds,
   fetchProfiles,
+  fetchLiveViewDeltas,
   loadListPreferences,
   mergeProfilesByIds,
   handleFolderFilterChange,
@@ -114,8 +115,7 @@ export function initPopupController({ elements }) {
     settingsToggle,
     exportButton,
     importInput,
-    debugLogsInput,
-    visitSaveButton,
+    viewMetricSelect,
     settingsFeedback,
     bitcoinDonateButton,
     bitcoinModal,
@@ -148,8 +148,7 @@ export function initPopupController({ elements }) {
     elements: {
       exportButton,
       importInput,
-      debugLogsInput,
-      visitSaveButton,
+      viewMetricSelect,
       settingsFeedback,
       bitcoinDonateButton,
       bitcoinModal,
@@ -232,10 +231,12 @@ export function initPopupController({ elements }) {
         formTitle.textContent = title;
         deleteButton.classList.toggle("hidden", !state.getValue("editingId"));
       },
-      detail: (profile) => {
+      detail: async (profile) => {
         if (!profile) return;
-        state.setValue("currentProfile", profile);
-        const viewModel = selectDetailViewModel(profile, {
+        const liveDeltas = await fetchLiveViewDeltas();
+        const [adjustedProfile] = applyLiveViewDeltas([profile], liveDeltas);
+        state.setValue("currentProfile", adjustedProfile);
+        const viewModel = selectDetailViewModel(adjustedProfile, {
           formatDuration,
           formatSocialHandle,
           buildSocialUrl,
@@ -552,6 +553,20 @@ export function initPopupController({ elements }) {
     } else {
       openEditor(null, seedCams, "list", profiles);
     }
+  }
+
+  function applyLiveViewDeltas(profiles, deltas) {
+    if (!deltas || !deltas.size) return profiles;
+    return profiles.map((profile) => {
+      const cams = (profile.cams || []).map((cam) => {
+        const key = `${cam.site}:${cam.username}`;
+        const delta = deltas.get(key);
+        if (!delta) return cam;
+        const base = Number.isFinite(cam.viewMs) ? cam.viewMs : 0;
+        return { ...cam, viewMs: base + delta };
+      });
+      return { ...profile, cams };
+    });
   }
 
   async function renderList() {

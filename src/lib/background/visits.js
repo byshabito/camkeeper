@@ -1,14 +1,16 @@
 import { getState, setState } from "../repo/state.js";
-import { ACTIVE_VIEW_SESSION_STATE_KEY } from "../domain/stateKeys.js";
+import { ACTIVE_VIEW_SESSIONS_STATE_KEY } from "../domain/stateKeys.js";
 import { parseUrl } from "../domain/urls.js";
 import { recordProfileView } from "../repo/profiles.js";
 
 export function initVisitTracking(state, logDebug) {
-  let activeSession = null;
+  let mode = "focus";
+  let activeSessions = new Map();
   let windowFocused = true;
   let focusedWindowId = null;
-  let sessionLoaded = false;
-  let sessionLoadPromise = null;
+  let sessionsLoaded = false;
+  let sessionsLoadPromise = null;
+  const LEGACY_ACTIVE_VIEW_SESSION_STATE_KEY = "camkeeper_active_view_session_v1";
 
   function coerceSession(stored) {
     if (!stored || typeof stored !== "object") return null;
@@ -18,25 +20,41 @@ export function initVisitTracking(state, logDebug) {
     return stored;
   }
 
-  async function loadSessionFromStorage() {
-    if (sessionLoaded) return activeSession;
-    if (!sessionLoadPromise) {
-      sessionLoadPromise = getState(ACTIVE_VIEW_SESSION_STATE_KEY).then((stored) => {
-        activeSession = coerceSession(stored);
-        sessionLoaded = true;
-        return activeSession;
-      });
+  function coerceSessionList(stored) {
+    if (!Array.isArray(stored)) return [];
+    return stored.map((item) => coerceSession(item)).filter(Boolean);
+  }
+
+  async function loadSessionsFromStorage() {
+    if (sessionsLoaded) return activeSessions;
+    if (!sessionsLoadPromise) {
+      sessionsLoadPromise = (async () => {
+        const stored = await getState(ACTIVE_VIEW_SESSIONS_STATE_KEY);
+        activeSessions = new Map(
+          coerceSessionList(stored).map((session) => [session.tabId, session]),
+        );
+        if (!activeSessions.size) {
+          const legacy = await getState(LEGACY_ACTIVE_VIEW_SESSION_STATE_KEY);
+          const legacySession = coerceSession(legacy);
+          if (legacySession) {
+            activeSessions.set(legacySession.tabId, legacySession);
+            await persistSessions();
+            await setState(LEGACY_ACTIVE_VIEW_SESSION_STATE_KEY, null);
+          }
+        }
+        sessionsLoaded = true;
+        return activeSessions;
+      })();
     }
-    return sessionLoadPromise;
+    return sessionsLoadPromise;
   }
 
-  async function persistSession(session) {
-    if (!session) return;
-    await setState(ACTIVE_VIEW_SESSION_STATE_KEY, session);
+  async function persistSessions() {
+    await setState(ACTIVE_VIEW_SESSIONS_STATE_KEY, Array.from(activeSessions.values()));
   }
 
-  async function clearSession() {
-    await setState(ACTIVE_VIEW_SESSION_STATE_KEY, null);
+  async function clearSessions() {
+    await setState(ACTIVE_VIEW_SESSIONS_STATE_KEY, []);
   }
 
   async function recordActiveTime(session, endedAt) {
@@ -57,14 +75,18 @@ export function initVisitTracking(state, logDebug) {
     });
   }
 
-  async function endSession(reason) {
-    await loadSessionFromStorage();
-    if (!activeSession) return;
-    const endedAt = Date.now();
-    const session = activeSession;
-    activeSession = null;
-    await clearSession();
+  async function recordActiveTimeForTab(session, endedAt) {
     await recordActiveTime(session, endedAt);
+  }
+
+  async function endSessionForTab(tabId, reason) {
+    await loadSessionsFromStorage();
+    const session = activeSessions.get(tabId);
+    if (!session) return;
+    const endedAt = Date.now();
+    activeSessions.delete(tabId);
+    await persistSessions();
+    await recordActiveTimeForTab(session, endedAt);
     logDebug("[CamKeeper] View session ended", {
       tabId: session.tabId,
       site: session.site,
@@ -73,31 +95,86 @@ export function initVisitTracking(state, logDebug) {
     });
   }
 
+  async function endAllSessions(reason) {
+    await loadSessionsFromStorage();
+    const sessions = Array.from(activeSessions.values());
+    if (!sessions.length) return;
+    activeSessions.clear();
+    await persistSessions();
+    for (const session of sessions) {
+      await recordActiveTimeForTab(session, Date.now());
+      logDebug("[CamKeeper] View session ended", {
+        tabId: session.tabId,
+        site: session.site,
+        username: session.username,
+        reason,
+      });
+    }
+  }
+
+  async function endSession(reason) {
+    await loadSessionsFromStorage();
+    if (!state.activeTabId) return;
+    await endSessionForTab(state.activeTabId, reason);
+  }
+
   async function startSession(tab) {
     if (!tab || !tab.url) return;
-    await loadSessionFromStorage();
+    await loadSessionsFromStorage();
     const parsed = parseUrl(tab.url);
     if (!parsed) return;
-    if (activeSession && activeSession.tabId === tab.id) return;
-    if (activeSession && activeSession.tabId !== tab.id) {
-      await endSession("session_restart");
+    if (mode === "focus" && activeSessions.size && !activeSessions.has(tab.id)) {
+      await endAllSessions("session_restart");
     }
-    activeSession = {
+    const existing = activeSessions.get(tab.id);
+    if (existing && existing.site === parsed.site && existing.username === parsed.username) return;
+    if (existing) {
+      await endSessionForTab(tab.id, "session_restart");
+    }
+    const session = {
       tabId: tab.id,
       site: parsed.site,
       username: parsed.username,
       startedAt: Date.now(),
     };
-    await persistSession(activeSession);
+    activeSessions.set(tab.id, session);
+    await persistSessions();
     logDebug("[CamKeeper] View session started", {
       tabId: tab.id,
       site: parsed.site,
       username: parsed.username,
+      mode: "focus",
+    });
+  }
+
+  async function startSessionForTab(tab) {
+    if (!tab || !tab.url) return;
+    await loadSessionsFromStorage();
+    const parsed = parseUrl(tab.url);
+    if (!parsed) return;
+    const existing = activeSessions.get(tab.id);
+    if (existing && existing.site === parsed.site && existing.username === parsed.username) return;
+    if (existing) {
+      await endSessionForTab(tab.id, "tab_navigate");
+    }
+    const session = {
+      tabId: tab.id,
+      site: parsed.site,
+      username: parsed.username,
+      startedAt: Date.now(),
+    };
+    activeSessions.set(tab.id, session);
+    await persistSessions();
+    logDebug("[CamKeeper] View session started", {
+      tabId: tab.id,
+      site: session.site,
+      username: session.username,
+      mode: "open",
     });
   }
 
   async function onTabActivated({ tabId, windowId }) {
-    await loadSessionFromStorage();
+    if (mode === "open") return;
     if (state.activeTabId && state.activeTabId !== tabId) {
       await endSession("tab_switch");
     }
@@ -106,12 +183,25 @@ export function initVisitTracking(state, logDebug) {
     chrome.tabs.get(tabId, (tab) => startSession(tab));
   }
 
-  async function onTabUpdated(tabId, changeInfo) {
-    await loadSessionFromStorage();
-    if (changeInfo.status !== "complete") return;
-    if (activeSession && activeSession.tabId === tabId) {
-      await endSession("tab_update");
+  async function onTabUpdated(tabId, changeInfo, tab) {
+    if (mode === "open") {
+      await loadSessionsFromStorage();
+      if (changeInfo.url && activeSessions.has(tabId)) {
+        const parsed = parseUrl(changeInfo.url);
+        const current = activeSessions.get(tabId);
+        if (!parsed || parsed.site !== current.site || parsed.username !== current.username) {
+          await endSessionForTab(tabId, "tab_navigate");
+        }
+      }
+      if (changeInfo.status === "complete") {
+        const targetTab = tab || (await new Promise((resolve) => chrome.tabs.get(tabId, resolve)));
+        await startSessionForTab(targetTab);
+      }
+      return;
     }
+
+    if (changeInfo.status !== "complete") return;
+    await endSessionForTab(tabId, "tab_update");
     chrome.tabs.get(tabId, (tab) => {
       if (!tab || !tab.url) return;
       if (!tab.active || !windowFocused) return;
@@ -121,13 +211,16 @@ export function initVisitTracking(state, logDebug) {
   }
 
   async function onTabRemoved(tabId) {
-    if (activeSession && activeSession.tabId === tabId) {
-      await endSession("tab_closed");
+    if (mode === "open") {
+      await endSessionForTab(tabId, "tab_closed");
+      return;
     }
+    await endSessionForTab(tabId, "tab_closed");
     if (state.activeTabId === tabId) state.activeTabId = null;
   }
 
   async function onWindowFocusChanged(windowId) {
+    if (mode === "open") return;
     if (windowId === chrome.windows.WINDOW_ID_NONE) {
       windowFocused = false;
       focusedWindowId = null;
@@ -144,10 +237,42 @@ export function initVisitTracking(state, logDebug) {
     });
   }
 
+  async function syncPageSessions() {
+    if (mode !== "open") return;
+    await loadSessionsFromStorage();
+    chrome.tabs.query({}, async (tabs) => {
+      const activeIds = new Set();
+      tabs.forEach((tab) => {
+        activeIds.add(tab.id);
+        if (!tab.url) return;
+        const parsed = parseUrl(tab.url);
+        if (!parsed) return;
+        startSessionForTab(tab);
+      });
+      const orphaned = Array.from(activeSessions.keys()).filter((id) => !activeIds.has(id));
+      for (const id of orphaned) {
+        await endSessionForTab(id, "tab_closed");
+      }
+    });
+  }
+
+  async function setMode(nextMode) {
+    const normalized = nextMode === "open" ? "open" : "focus";
+    if (mode === normalized) return;
+    mode = normalized;
+    await endAllSessions("mode_switch");
+    await clearSessions();
+    activeSessions = new Map();
+    if (mode === "open") {
+      await syncPageSessions();
+    }
+  }
+
   return {
     onTabActivated,
     onTabUpdated,
     onTabRemoved,
     onWindowFocusChanged,
+    setMode,
   };
 }

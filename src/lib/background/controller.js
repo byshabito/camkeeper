@@ -9,16 +9,12 @@ export function initBackground() {
   };
   const settings = { ...SETTINGS_DEFAULTS };
 
-  function logDebug(message, data) {
-    if (!settings.debugLogsEnabled) return;
-    console.log(message, data ?? {});
-  }
-
-  const visits = initVisitTracking(state, logDebug);
+  const visits = initVisitTracking(state, () => {});
 
   async function loadSettings() {
     const nextSettings = await getSettings();
-    settings.debugLogsEnabled = nextSettings.debugLogsEnabled;
+    settings.viewMetric = nextSettings.viewMetric;
+    await visits.setMode(settings.viewMetric);
   }
 
   chrome.storage.onChanged.addListener((changes, area) => {

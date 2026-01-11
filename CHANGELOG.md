@@ -11,6 +11,9 @@
 - Fix backup import flow and add import confirmation toast
 - Include timestamps in backup export filenames
 - Update About label and license text in settings
+- Add a view time metric setting (focus vs page sessions)
+- Remove the debug logs setting
+- Remove Save button and save automatically when value changes
 
 ## v0.8.4
 

@@ -4,8 +4,7 @@ export function initOptionsController() {
   const elements = {
     exportButton: document.getElementById("export-button"),
     importInput: document.getElementById("import-input"),
-    debugLogsInput: document.getElementById("debug-logs"),
-    visitSaveButton: document.getElementById("visit-save"),
+    viewMetricSelect: document.getElementById("view-metric"),
     settingsFeedback: document.getElementById("settings-feedback"),
     backupFeedback: document.getElementById("backup-feedback"),
     bitcoinDonateButton: document.getElementById("bitcoin-donate-button"),

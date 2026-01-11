@@ -3,6 +3,8 @@ import { findDuplicateProfile, mergeProfiles } from "../domain/profiles.js";
 import { normalizeText, splitTags } from "../domain/text.js";
 import { createId } from "../domain/ids.js";
 import { sanitizeCams, sanitizeProfile, sanitizeSocials } from "../domain/sanitizers.js";
+import { getState } from "../repo/state.js";
+import { ACTIVE_VIEW_SESSIONS_STATE_KEY } from "../domain/stateKeys.js";
 
 export async function fetchProfiles() {
   return getProfiles();
@@ -142,6 +144,29 @@ export async function saveProfileForm({ editingId, attachSelectedId, formData })
   const savedProfile = updated.find((item) => item.id === targetId) || profile;
 
   return { profiles: updated, savedProfile, targetId };
+}
+
+function coerceSession(stored) {
+  if (!stored || typeof stored !== "object") return null;
+  if (!Number.isFinite(stored.startedAt)) return null;
+  if (typeof stored.site !== "string" || typeof stored.username !== "string") return null;
+  return stored;
+}
+
+export async function fetchLiveViewDeltas() {
+  const now = Date.now();
+  const deltas = new Map();
+  const stored = await getState(ACTIVE_VIEW_SESSIONS_STATE_KEY);
+  if (Array.isArray(stored)) {
+    stored.forEach((session) => {
+      const normalized = coerceSession(session);
+      if (!normalized) return;
+      const delta = now - normalized.startedAt;
+      if (delta <= 0) return;
+      deltas.set(`${normalized.site}:${normalized.username}`, delta);
+    });
+  }
+  return deltas;
 }
 
 function mergeCamStats(existingCams, updatedCams) {

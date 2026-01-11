@@ -1,5 +1,5 @@
 export const SETTINGS_DEFAULTS = Object.freeze({
-  debugLogsEnabled: false,
+  viewMetric: "focus",
   lastSort: "month",
   lastFolderFilter: "",
   lastFolderOrder: [],
@@ -9,10 +9,11 @@ export function normalizeSettings(raw) {
   const source = raw && typeof raw === "object" ? raw : {};
   return {
     ...SETTINGS_DEFAULTS,
-    debugLogsEnabled:
-      typeof source.debugLogsEnabled === "boolean"
-        ? source.debugLogsEnabled
-        : SETTINGS_DEFAULTS.debugLogsEnabled,
+    viewMetric: (() => {
+      if (source.viewMetric === "page") return "open";
+      if (source.viewMetric === "open" || source.viewMetric === "focus") return source.viewMetric;
+      return SETTINGS_DEFAULTS.viewMetric;
+    })(),
     lastSort: typeof source.lastSort === "string" ? source.lastSort : SETTINGS_DEFAULTS.lastSort,
     lastFolderFilter:
       typeof source.lastFolderFilter === "string"

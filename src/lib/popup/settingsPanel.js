@@ -12,8 +12,7 @@ export function initSettingsPanel({ elements, onProfilesChanged, allowFileImport
   const {
     exportButton,
     importInput,
-    debugLogsInput,
-    visitSaveButton,
+    viewMetricSelect,
     settingsFeedback,
     backupFeedback,
     bitcoinDonateButton,
@@ -69,14 +68,16 @@ export function initSettingsPanel({ elements, onProfilesChanged, allowFileImport
   }
 
   async function loadSettings() {
-    if (!debugLogsInput) return;
     const settings = await getSettings();
-    debugLogsInput.checked = Boolean(settings.debugLogsEnabled);
+    if (viewMetricSelect) {
+      viewMetricSelect.value = settings.viewMetric || "focus";
+    }
   }
 
   async function persistSettings() {
-    if (!debugLogsInput) return;
-    await updateSettings({ debugLogsEnabled: debugLogsInput.checked });
+    await updateSettings({
+      viewMetric: viewMetricSelect ? viewMetricSelect.value : undefined,
+    });
   }
 
   function openBitcoinModal() {
@@ -211,8 +212,8 @@ export function initSettingsPanel({ elements, onProfilesChanged, allowFileImport
     });
   }
 
-  if (visitSaveButton) {
-    visitSaveButton.addEventListener("click", async () => {
+  if (viewMetricSelect) {
+    viewMetricSelect.addEventListener("change", async () => {
       await persistSettings();
       await loadSettings();
       showSettingsFeedback("Settings saved successfully.");

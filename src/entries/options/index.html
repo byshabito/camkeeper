@@ -88,18 +88,18 @@
               role="status"
               aria-live="polite"
             ></span>
-            <button id="visit-save" class="primary">Save</button>
           </div>
         </header>
         <div class="export no-divider">
           <div>
-            <h3>Debug logs</h3>
-            <p>Enable extra logs in the background service worker for troubleshooting.</p>
+            <h3>View time counting</h3>
+            <p>Choose whether view time is tracked while a cam is focused or simply while a cam page is open.</p>
           </div>
           <div class="actions">
-            <label class="toggle">
-              <input id="debug-logs" type="checkbox" />
-            </label>
+            <select id="view-metric">
+              <option value="focus">Cam in focus</option>
+              <option value="open">Cam open</option>
+            </select>
           </div>
         </div>
       </section>
