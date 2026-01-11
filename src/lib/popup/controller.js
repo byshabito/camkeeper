@@ -272,7 +272,6 @@ export function initPopupController({ elements }) {
     x: "src/assets/social-icons/x.svg",
     onlyfans: "src/assets/social-icons/onlyfans.svg",
     tiktok: "src/assets/social-icons/tiktok.svg",
-    reddit: "src/assets/social-icons/reddit.svg",
     fansly: "src/assets/social-icons/fansly.svg",
     telegram: "src/assets/social-icons/telegram.svg",
     threads: "src/assets/social-icons/threads.svg",

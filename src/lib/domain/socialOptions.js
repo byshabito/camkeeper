@@ -7,7 +7,6 @@ export const SOCIAL_OPTIONS = [
   { id: "x", label: "X" },
   { id: "onlyfans", label: "OnlyFans" },
   { id: "tiktok", label: "TikTok" },
-  { id: "reddit", label: "Reddit" },
   { id: "website", label: "Website" },
   { id: "other", label: "Other" },
 ];

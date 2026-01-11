@@ -160,14 +160,6 @@ export function parseSocialUrl(u) {
       return handle ? { platform: "tiktok", handle: handle.toLowerCase() } : null;
     }
 
-    if (host === "reddit.com") {
-      const prefix = path[0] || "";
-      const handle = path[1] || "";
-      if ((prefix === "user" || prefix === "u") && handle) {
-        return { platform: "reddit", handle: handle.toLowerCase() };
-      }
-    }
-
     const websiteHandle = normalizeWebsiteHandleFromUrl(url);
     return websiteHandle ? { platform: "website", handle: websiteHandle.toLowerCase() } : null;
   } catch (error) {
@@ -201,8 +193,6 @@ export function buildSocialUrl(social) {
       return `https://onlyfans.com/${normalized}`;
     case "tiktok":
       return `https://www.tiktok.com/@${normalized}`;
-    case "reddit":
-      return `https://www.reddit.com/user/${normalized}`;
     case "website":
     case "other":
       return `https://${handle}`;

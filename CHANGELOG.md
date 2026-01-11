@@ -6,6 +6,7 @@
 - Remove context menu library shortcut
 - Refactor code
 - Add privacy policy
+- Remove Reddit from supported socials
 
 ## v0.8.4
 
