@@ -21,7 +21,6 @@ CamKeeper is a browser extension that stores your profiles, folders, and setting
 ## Data storage
 
 - All data is stored locally using the browser's extension storage.
-- You can export or delete your data at any time from the extension settings.
 
 ## Changes
 
