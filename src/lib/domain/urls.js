@@ -60,10 +60,13 @@ export function parseUrl(u) {
   try {
     const url = new URL(u);
     const host = normalizeHost(url.hostname);
-    if (!Object.keys(SITES).includes(host)) return null;
+    const siteKey = Object.keys(SITES).find(
+      (key) => host === key || host.endsWith(`.${key}`),
+    );
+    if (!siteKey) return null;
 
     let username = "";
-    if (host === "chaturbate.com") {
+    if (siteKey === "chaturbate.com") {
       if (url.pathname.startsWith("/in/")) {
         username = url.searchParams.get("room") || "";
       }
@@ -80,7 +83,7 @@ export function parseUrl(u) {
     if (!username) return null;
 
     return {
-      site: host,
+      site: siteKey,
       username,
     };
   } catch (e) {
