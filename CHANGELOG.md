@@ -4,6 +4,8 @@
 
 - Remove online status checks
 - Remove context menu library shortcut
+- Refactor code
+- Add privacy policy
 
 ## v0.8.4
 

@@ -75,23 +75,23 @@ with open(path, "w", encoding="utf-8") as f:
 PY
 }
 
-update_options_metadata "${ROOT_DIR}/src/entries/options/script.js"
+update_options_metadata "${ROOT_DIR}/src/lib/options/controller.js"
 
 mkdir -p "${DIST_DIR}"
 rm -rf "${TMP_CHROME}" "${TMP_FIREFOX}"
 mkdir -p "${TMP_CHROME}" "${TMP_FIREFOX}"
 
 cp -R "${ROOT_DIR}/src" "${ROOT_DIR}/icons" "${ROOT_DIR}/README.md" \
-  "${ROOT_DIR}/LICENSE" "${ROOT_DIR}/CHANGELOG.md" "${ROOT_DIR}/manifest.json" \
-  "${TMP_CHROME}/"
+  "${ROOT_DIR}/LICENSE" "${ROOT_DIR}/CHANGELOG.md" "${ROOT_DIR}/PRIVACY.md" \
+  "${ROOT_DIR}/manifest.json" "${TMP_CHROME}/"
 
 cp -R "${ROOT_DIR}/src" "${ROOT_DIR}/icons" "${ROOT_DIR}/README.md" \
-  "${ROOT_DIR}/LICENSE" "${ROOT_DIR}/CHANGELOG.md" \
+  "${ROOT_DIR}/LICENSE" "${ROOT_DIR}/CHANGELOG.md" "${ROOT_DIR}/PRIVACY.md" \
   "${TMP_FIREFOX}/"
 cp "${ROOT_DIR}/manifest.firefox.json" "${TMP_FIREFOX}/manifest.json"
 
-(cd "${TMP_CHROME}" && zip -r "../camkeeper-v${VERSION}-chrome.zip" manifest.json src icons README.md LICENSE CHANGELOG.md)
-(cd "${TMP_FIREFOX}" && zip -r "../camkeeper-v${VERSION}-firefox.xpi" manifest.json src icons README.md LICENSE CHANGELOG.md)
+(cd "${TMP_CHROME}" && zip -r "../camkeeper-v${VERSION}-chrome.zip" manifest.json src icons README.md LICENSE CHANGELOG.md PRIVACY.md)
+(cd "${TMP_FIREFOX}" && zip -r "../camkeeper-v${VERSION}-firefox.xpi" manifest.json src icons README.md LICENSE CHANGELOG.md PRIVACY.md)
 
 rm -rf "${TMP_CHROME}" "${TMP_FIREFOX}"
 echo "Built:"

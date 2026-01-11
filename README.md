@@ -88,15 +88,6 @@ No accounts. No cloud. Everything stays in your browser.
 - Nothing is synced or transmitted
 - You can export and import your data at any time
 
-## Development notes
-
-- Use `src/lib/repo/settings.js` for reading/updating settings so defaults stay normalized.
-- Use `src/lib/repo/profiles.js` for profile reads/writes and view-history updates.
-- Use `src/lib/repo/state.js` for background state storage.
-- Domain helpers now live under `src/lib/domain/` (sanitizers, ids, urls, text, settings).
-- Storage shims were removed; import domain helpers directly.
-- Site definitions now live in `src/lib/domain/sites.js` (config re-exports it).
-
 ## Support
 
 If CamKeeper saves you time or replaces a messy workflow, support its development:
@@ -112,3 +103,7 @@ shabito@walletofsatoshi.com
 ## License
 
 [GPL-3.0](/LICENSE)
+
+## Privacy
+
+CamKeeper stores data locally in your browser. See [PRIVACY](/PRIVACY.md).
