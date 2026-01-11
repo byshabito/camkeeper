@@ -8,7 +8,7 @@
   <img src="docs/screenshots/overview.png" width="320" />
   <img src="docs/screenshots/details.png" width="320" />
 </div>
-
+<br/>
 
 CamKeeper is a browser extension that helps you organize and manage model profiles you save across multiple websites.
 
