@@ -13,6 +13,7 @@
 - Update About label and license text in settings
 - Add a view time metric setting (focus vs page sessions)
 - Remove the debug logs setting
+- Default view time metric to Cam open
 - Remove Save button and save automatically when value changes
 
 ## v0.8.4

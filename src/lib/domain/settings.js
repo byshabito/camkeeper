@@ -17,7 +17,7 @@
  */
 
 export const SETTINGS_DEFAULTS = Object.freeze({
-  viewMetric: "focus",
+  viewMetric: "open",
   lastSort: "month",
   lastFolderFilter: "",
   lastFolderOrder: [],
