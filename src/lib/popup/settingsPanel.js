@@ -2,7 +2,7 @@ import { getProfiles, saveProfiles } from "../repo/profiles.js";
 import { getSettings, updateSettings } from "../repo/settings.js";
 import { sanitizeProfile } from "../domain/sanitizers.js";
 
-const RELEASE_TIMESTAMP = "2026-01-11T12:18:36+01:00";
+const RELEASE_TIMESTAMP = "2026-01-11T12:22:11+01:00";
 const DEVELOPER_NAME = "Shabito";
 const DEVELOPER_URL = "https://github.com/byshabito";
 const SOURCE_URL = "https://github.com/byshabito/camkeeper";
@@ -120,7 +120,7 @@ export function initSettingsPanel({ elements, onProfilesChanged, allowFileImport
     metaDeveloper.href = DEVELOPER_URL;
     metaSource.textContent = SOURCE_URL;
     metaSource.href = SOURCE_URL;
-    metaLicense.textContent = "GPL-3.0-or-later";
+    metaLicense.textContent = "GPL-3.0";
     metaLicense.href = LICENSE_URL;
   }
 
