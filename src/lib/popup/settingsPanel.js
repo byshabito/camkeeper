@@ -20,7 +20,7 @@ import { getProfiles, saveProfiles } from "../repo/profiles.js";
 import { getSettings, updateSettings } from "../repo/settings.js";
 import { sanitizeProfile } from "../domain/sanitizers.js";
 
-const RELEASE_TIMESTAMP = "2026-01-11T14:43:47+01:00";
+const RELEASE_TIMESTAMP = "2026-01-11T15:58:11+01:00";
 const DEVELOPER_NAME = "Shabito";
 const DEVELOPER_URL = "https://github.com/byshabito";
 const SOURCE_URL = "https://github.com/byshabito/camkeeper";

@@ -1,10 +1,10 @@
 <div align="center">
   <img src="/icons/icon-128.png" width="128" height="128" />
   <h1>CamKeeper</h1>
-  <strong>Cross-site livestream profile and bookmark manager</strong>
+  <strong>Cross-site model profile and bookmark manager</strong>
 </div>
 
-CamKeeper is a browser extension that helps you organize and manage livestream profiles you follow across multiple websites.
+CamKeeper is a browser extension that helps you organize and manage model profiles you save across multiple websites.
 
 It allows you to create a single local profile that can reference multiple usernames or pages on different platforms, making it easier to keep notes, links, and metadata in one place.
 
@@ -26,12 +26,12 @@ No accounts. No cloud services. All data remains on your device.
 ### Organization & management
 
 - Folder-based organization with filtering
-- Sorting by name, viewed, or last updated
+- Sorting by name, view time, or last updated
 - Bulk actions for merging or deleting profiles
 
 ### Local activity indicators
 
-- Local tracking of visits to saved pages
+- Local tracking of view time for saved pages
 - All activity data is stored only in the browser
 
 ### Privacy-first design
@@ -43,7 +43,7 @@ No accounts. No cloud services. All data remains on your device.
 
 ## Usage
 
-1. Visit a supported profile page
+1. Visit a supported model profile page
 2. Click the CamKeeper extension icon to save or attach it to a profile
 3. Organize profiles using folders, tags, and notes
 4. View saved details automatically when revisiting pages
@@ -51,7 +51,7 @@ No accounts. No cloud services. All data remains on your device.
 ### Keyboard shortcuts
 
 - Open popup: `Alt + Shift + K`
-- Save current page: `Alt + Shift + S`
+- Quick add current page: `Alt + Shift + S`
 
 Shortcuts can be customized in the browser's extension settings.
 
