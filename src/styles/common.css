@@ -61,6 +61,7 @@ button.primary {
 button.primary:hover {
   background: var(--accent-hover);
   border-color: var(--accent-hover);
+  filter: brightness(1.08);
 }
 
 button.danger {
