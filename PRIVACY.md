@@ -3,7 +3,7 @@
 Last updated: 2026-01-11
 
 ## Overview
-This extension does not collect, store, or sell personal data.
+This extension does not collect or sell personal data. It stores profile data and settings locally in your browser.
 
 All functionality runs locally in the user's browser unless explicitly stated otherwise.
 
@@ -31,9 +31,9 @@ The extension requests the following permissions:
   
 The extension also requests the following host permissions:
 
-- **https://chaturbate.com/***  
+- `https://chaturbate.com/*`  
   Used to: detect model pages and allow the background service worker to track view sessions on Chaturbate
-- **https://stripchat.com/***  
+- `https://stripchat.com/*`  
   Used to: detect model pages and allow the background service worker to track view sessions on Stripchat
 
 Only the minimum permissions required for the extension to function are requested.

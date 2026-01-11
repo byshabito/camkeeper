@@ -4,7 +4,7 @@
   <strong>Cross-site livestream profile and bookmark manager</strong>
 </div>
 
-CamKeeper is a browser extension that helps you organize and manage livestream profiles they follow across multiple websites.
+CamKeeper is a browser extension that helps you organize and manage livestream profiles you follow across multiple websites.
 
 It allows you to create a single local profile that can reference multiple usernames or pages on different platforms, making it easier to keep notes, links, and metadata in one place.
 
