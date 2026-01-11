@@ -114,7 +114,7 @@ function loadMetadata() {
   metaDeveloper.href = DEVELOPER_URL;
   metaSource.textContent = SOURCE_URL;
   metaSource.href = SOURCE_URL;
-  metaLicense.textContent = "MIT License";
+  metaLicense.textContent = "GPL-3.0-or-later";
   metaLicense.href = LICENSE_URL;
 }
 
