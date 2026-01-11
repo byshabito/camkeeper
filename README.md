@@ -1,8 +1,10 @@
 <div align="center">
-  <img src="/icons/icon-128.png" width="128" height="128" />
+  <img src="/icons/icon-256.png" width="256" height="256" />
   <h1>CamKeeper</h1>
   <strong>Cross-site model profile and bookmark manager</strong>
 </div>
+
+
 
 CamKeeper is a browser extension that helps you organize and manage model profiles you save across multiple websites.
 
@@ -57,7 +59,7 @@ Shortcuts can be customized in the browser's extension settings.
 
 ## Installation
 
-<!---
+<!--- Uncomment when listed
 ### Chrome / Chromium
 
 - Install from the Chrome Web Store
@@ -72,7 +74,7 @@ Shortcuts can be customized in the browser's extension settings.
 
 #### Chrome / Chromium
 
-1. Download `camkeeper-{{version}}-chrome.zip` from **Releases**
+1. Download `camkeeper-{{version}}-chrome.zip` from [Releases](https://github.com/byshabito/camkeeper/releases/latest)
 2. Extract the archive
 3. Open `chrome://extensions`
 4. Enable **Developer mode**
@@ -80,10 +82,10 @@ Shortcuts can be customized in the browser's extension settings.
 
 #### Firefox
 
-1. Download `camkeeper-{{version}}-firefox.xpi`
+1. Download `camkeeper-{{version}}-firefox.xpi` from [Releases](https://github.com/byshabito/camkeeper/releases/latest)
 2. Open `about:addons`
 3. Go to **Extensions**
-4. Click the gear icon → **Install Add-on From File…**
+4. Click the gear icon and select **Install Add-on From File…**
 5. Select the `.xpi` file
 
 **Note**: Some Firefox builds (e.g. Developer Edition, Nightly, or unsigned add-on setups) may require the following `about:config` settings for Manifest V3 extensions:
