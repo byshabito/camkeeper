@@ -6,8 +6,8 @@
 
 <div align="center">
   <img src="docs/screenshots/overview.png" width="320" />
-  <img src="docs/screenshots/detail.png" width="320" />
-  <img src="docs/screenshots/add-new.png" width="320" />
+  <img src="docs/screenshots/details.png" width="320" />
+  <img src="docs/screenshots/edit.png" width="320" />
 </div>
 
 
