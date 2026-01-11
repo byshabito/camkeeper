@@ -57,6 +57,22 @@ export function clearContainer(container) {
   while (container.firstChild) container.removeChild(container.firstChild);
 }
 
+function createSvgElement(svgString) {
+  if (!svgString) return null;
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgString, "image/svg+xml");
+  const svg = doc.documentElement;
+  if (!svg || svg.nodeName === "parsererror") return null;
+  return document.importNode(svg, true);
+}
+
+function applySvg(container, svgString) {
+  const svg = createSvgElement(svgString);
+  if (!svg) return false;
+  container.appendChild(svg);
+  return true;
+}
+
 export function createSearchHoverHandlers({ searchSort, searchInput }) {
   if (!searchSort || !searchInput) return [];
   const activate = () => searchSort.classList.add("search-active");
@@ -164,9 +180,11 @@ export function renderProfileDetail({
   detailPinButton.classList.toggle("pinned", viewModel.pinned);
   detailPinButton.title = viewModel.pinned ? "Unpin" : "Pin";
   detailPinButton.setAttribute("aria-label", detailPinButton.title);
-  detailPinButton.innerHTML = `${getPinIconSvg(viewModel.pinned)}<span>${
-    viewModel.pinned ? "Unpin" : "Pin"
-  }</span>`;
+  clearContainer(detailPinButton);
+  applySvg(detailPinButton, getPinIconSvg(viewModel.pinned));
+  const pinLabel = document.createElement("span");
+  pinLabel.textContent = viewModel.pinned ? "Unpin" : "Pin";
+  detailPinButton.appendChild(pinLabel);
 
   clearContainer(detailCams);
   viewModel.cams.forEach((cam) => {
@@ -185,7 +203,7 @@ export function renderProfileDetail({
       icon.style.color = cam.color;
       icon.style.borderColor = "transparent";
       if (cam.iconSvg) {
-        icon.innerHTML = cam.iconSvg;
+        if (!applySvg(icon, cam.iconSvg)) icon.textContent = cam.iconText;
       } else {
         icon.textContent = cam.iconText;
       }
@@ -219,7 +237,7 @@ export function renderProfileDetail({
 
     const icon = document.createElement("span");
     icon.classList.add("icon");
-    icon.innerHTML = social.iconSvg;
+    applySvg(icon, social.iconSvg);
 
     const text = document.createElement("span");
     text.textContent = social.display;
@@ -237,10 +255,13 @@ export function renderProfileDetail({
     detailTags.appendChild(chip);
   });
 
-  detailFolder.innerHTML = "";
+  clearContainer(detailFolder);
   if (viewModel.folder) {
     detailFolder.classList.remove("hidden");
-    detailFolder.innerHTML = `<span>${viewModel.folder}</span>${getFolderIconSvg()}`;
+    const folderLabel = document.createElement("span");
+    folderLabel.textContent = viewModel.folder;
+    detailFolder.appendChild(folderLabel);
+    applySvg(detailFolder, getFolderIconSvg());
   } else {
     detailFolder.classList.add("hidden");
   }
@@ -258,7 +279,7 @@ export function renderProfileList({
   emptyMessage,
 }) {
   const { profileList, emptyState } = elements;
-  profileList.innerHTML = "";
+  clearContainer(profileList);
   emptyState.classList.toggle("hidden", profiles.length > 0);
   emptyState.textContent = emptyMessage;
 
@@ -281,7 +302,7 @@ export function renderProfileList({
     if (profile.pinned) pinButton.classList.add("pinned");
     pinButton.title = profile.pinned ? "Unpin" : "Pin";
     pinButton.setAttribute("aria-label", pinButton.title);
-    pinButton.innerHTML = getPinIconSvg(profile.pinned);
+    applySvg(pinButton, getPinIconSvg(profile.pinned));
     pinButton.addEventListener("click", async (event) => {
       event.stopPropagation();
       await onPinToggle(profile.id);
@@ -314,7 +335,7 @@ export function renderProfileList({
         icon.style.color = cam.color;
         icon.style.borderColor = "transparent";
         if (cam.iconSvg) {
-          icon.innerHTML = cam.iconSvg;
+          if (!applySvg(icon, cam.iconSvg)) icon.textContent = cam.iconText;
         } else {
           icon.textContent = cam.iconText;
         }
@@ -368,7 +389,7 @@ export function renderFolderManager({
   onReorder,
 }) {
   const { folderList, folderEmpty } = elements;
-  folderList.innerHTML = "";
+  clearContainer(folderList);
   folderEmpty.classList.toggle("hidden", folders.length > 0);
 
   folders.forEach((folder) => {
@@ -380,8 +401,10 @@ export function renderFolderManager({
     dragHandle.classList.add("folder-drag-handle");
     dragHandle.setAttribute("aria-hidden", "true");
     dragHandle.draggable = true;
-    dragHandle.innerHTML =
-      '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-grip-vertical-icon lucide-grip-vertical"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>';
+    applySvg(
+      dragHandle,
+      '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-grip-vertical-icon lucide-grip-vertical"><circle cx="9" cy="12" r="1"/><circle cx="9" cy="5" r="1"/><circle cx="9" cy="19" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="15" cy="5" r="1"/><circle cx="15" cy="19" r="1"/></svg>',
+    );
 
     dragHandle.addEventListener("dragstart", (event) => {
       row.classList.add("dragging");
@@ -588,7 +611,7 @@ export function applyFormViewModel({
   });
 
   if (!attachSelect || !attachField) return;
-  attachSelect.innerHTML = "";
+  clearContainer(attachSelect);
   if (!attachOptions.length) {
     attachField.classList.add("hidden");
     return;
@@ -608,7 +631,7 @@ export function applyFormViewModel({
 export function renderFolderFilter({ elements, options, value }) {
   const { folderFilter } = elements;
   if (!folderFilter) return;
-  folderFilter.innerHTML = "";
+  clearContainer(folderFilter);
   options.forEach((option) => {
     const opt = document.createElement("option");
     opt.value = option.value;
@@ -627,7 +650,7 @@ export function renderFolderSelect({
 }) {
   const { folderSelect, folderInput } = elements;
   if (!folderSelect) return;
-  folderSelect.innerHTML = "";
+  clearContainer(folderSelect);
   options.forEach((option) => {
     const opt = document.createElement("option");
     opt.value = option.value;
