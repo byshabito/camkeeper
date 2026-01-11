@@ -2,8 +2,6 @@
   <img src="/icons/icon-128.png" width="128" height="128" />
   <h1>CamKeeper</h1>
   <strong>Cross-site livestream profile and bookmark manager</strong>
-  <br />
-  <sub>Organize profiles, notes, and links locally and privately.</sub>
 </div>
 
 CamKeeper is a browser extension that helps you organize and manage livestream profiles they follow across multiple websites.
