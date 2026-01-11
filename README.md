@@ -111,4 +111,4 @@ shabito@walletofsatoshi.com
 
 ## License
 
-[GPL-3.0-or-later](/LICENSE)
+[GPL-3.0](/LICENSE)
