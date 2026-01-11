@@ -1,66 +1,76 @@
 <div align="center">
   <img src="/icons/icon-128.png" width="128" height="128" />
   <h1>CamKeeper</h1>
-  <strong>Cross-site bookmark manager for Chaturbate and Stripchat models</strong>
+  <strong>Cross-site livestream profile and bookmark manager</strong>
   <br />
-  <sub>Unify profiles, notes, and socials. Locally, privately, and without accounts.</sub>
+  <sub>Organize profiles, notes, and links locally and privately.</sub>
 </div>
 
-## What it is
+CamKeeper is a browser extension that helps you organize and manage livestream profiles they follow across multiple websites.
 
-CamKeeper is a browser extension for users who follow many webcam models across multiple platforms.
+It allows you to create a single local profile that can reference multiple usernames or pages on different platforms, making it easier to keep notes, links, and metadata in one place.
 
-It lets you create **one profile** for a model across multiple sites and social media platforms, and gives you tools to organize, annotate, and revisit them efficiently.
-
-No accounts. No cloud. Everything stays in your browser.
+No accounts. No cloud services. All data remains on your device.
 
 ## Features
 
 ### Unified profiles
 
-- One profile per model, spanning **Chaturbate**, **Stripchat**, and socials
-- Attach multiple platform usernames to the same profile
-- Notes, tags, and social links per model
+- One local profile can reference multiple sites
+- Attach multiple usernames or URLs to a single profile
+- Add notes, tags, and external links
 
-### Smart detection
+### Page detection
 
-- Auto-detect supported model pages
-- Show the profile detail view automatically when visiting a saved model
+- Detects supported pages automatically
+- Shows saved profile details when revisiting a known page
 
 ### Organization & management
 
-- Folder system with filtering
-- Sort by name, last viewed, or last updated
-- Bulk select to merge or delete profiles
+- Folder-based organization with filtering
+- Sorting by name, viewed, or last updated
+- Bulk actions for merging or deleting profiles
 
-### Activity & status (optional)
+### Local activity indicators
 
-- Locally track time spent on saved model pages
-- Optional online-status checks with badge count
-- All activity data is stored only in your browser
+- Local tracking of visits to saved pages
+- All activity data is stored only in the browser
 
-### Privacy-first by design
+### Privacy-first design
 
-- Local-only storage (no cloud, no sync)
-- No user tracking, analytics, or data collection
-- No remote servers or third-party services
-- JSON export/import for backup or migration
+- Local-only storage (no accounts, no sync)
+- No analytics, tracking, or telemetry
+- No external servers or third-party services
+- Optional JSON export/import for backup or migration
 
 ## Usage
 
-1. Visit a model page
-2. Click the CamKeeper icon to save or attach it to a profile
-3. Use folders, tags, and notes to organize
-4. Instantly see saved details when you revisit the model
+1. Visit a supported profile page
+2. Click the CamKeeper extension icon to save or attach it to a profile
+3. Organize profiles using folders, tags, and notes
+4. View saved details automatically when revisiting pages
 
-## Shortcuts
+### Keyboard shortcuts
 
-- Open popup: `Alt+Shift+K`
-- Quick add current model: `Alt+Shift+S`
+- Open popup: `Alt + Shift + K`
+- Save current page: `Alt + Shift + S`
 
-You can customize these in your browser's extension shortcuts settings.
+Shortcuts can be customized in the browser's extension settings.
 
-## Manual Installation
+## Installation
+
+<!---
+### Chrome / Chromium
+
+- Install from the Chrome Web Store
+
+### Firefox
+
+- Install from Firefox Add-ons (AMO)
+--->
+
+<details>
+<summary>Manual installation (development / testing)</summary>
 
 ### Chrome / Chromium
 
@@ -89,25 +99,15 @@ You can customize these in your browser's extension shortcuts settings.
 > These changes are not required on standard Firefox release builds
 > when installing a signed add-on.
 
+</details>
+
 ## Data & privacy
 
-- All data is stored locally in your browser
-- Nothing is synced or transmitted
-- You can export and import your data at any time
+- All data is stored locally in the browser
+- No data is transmitted or shared
+- Data can be exported or imported at any time
 
-See [PRIVACY](/PRIVACY.md) for more information.
-
-## Support
-
-If CamKeeper saves you time or replaces a messy workflow, support its development:
-
-[Buy Me a Coffee](https://www.buymeacoffee.com/shabito)
-
-Bitcoin Lightning address:
-
-```txt
-shabito@walletofsatoshi.com
-```
+See [PRIVACY](/PRIVACY.md) for full details.
 
 ## License
 
