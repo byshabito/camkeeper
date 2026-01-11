@@ -3,11 +3,10 @@
   <h1>CamKeeper</h1>
   <strong>Cross-site model profile and bookmark manager</strong>
 </div>
-
+<br/>
 <div align="center">
   <img src="docs/screenshots/overview.png" width="320" />
   <img src="docs/screenshots/details.png" width="320" />
-  <img src="docs/screenshots/edit.png" width="320" />
 </div>
 
 
