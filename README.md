@@ -4,6 +4,13 @@
   <strong>Cross-site model profile and bookmark manager</strong>
 </div>
 
+<div align="center">
+  <img src="docs/screenshots/overview.png" width="320" />
+  <img src="docs/screenshots/detail.png" width="320" />
+  <img src="docs/screenshots/add-new.png" width="320" />
+</div>
+
+
 CamKeeper is a browser extension that helps you organize and manage model profiles you save across multiple websites.
 
 It allows you to create a single local profile that can reference multiple usernames or pages on different platforms, making it easier to keep notes, links, and metadata in one place.
