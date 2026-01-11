@@ -1,5 +1,5 @@
 /*
- * CamKeeper - Bookmark manager for webcam model profiles
+ * CamKeeper - Cross-site model profile and bookmark manager
  * Copyright (C) 2026  Shabito
  *
  * This program is free software: you can redistribute it and/or modify
