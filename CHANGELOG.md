@@ -1,8 +1,11 @@
 # Changelog
 
-## Unreleased
+## v1.0.0
 
 - Change placehoder tags
+- Add quick-add keyboard shortcut for saving the current model page
+- Add confirmation badge for quick-add shortcut
+- Add keyboard shortcut to open the popup
 
 ## v0.9.0
 

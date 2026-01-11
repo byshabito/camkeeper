@@ -53,6 +53,13 @@ No accounts. No cloud. Everything stays in your browser.
 3. Use folders, tags, and notes to organize
 4. Instantly see saved details when you revisit the model
 
+## Shortcuts
+
+- Open popup: `Alt+Shift+K`
+- Quick add current model: `Alt+Shift+S`
+
+You can customize these in your browser's extension shortcuts settings.
+
 ## Manual Installation
 
 ### Chrome / Chromium
