@@ -1,11 +1,12 @@
-import { SETTINGS_KEY, getSettings } from "../../lib/db.js";
-import { getDefaultSettings } from "../../config/background.js";
+import { SETTINGS_KEY } from "../../lib/db.js";
+import { SETTINGS_DEFAULTS } from "../../lib/domain/settings.js";
+import { getSettings } from "../../lib/repo/settings.js";
 import { initVisitTracking } from "./visits.js";
 
 const state = {
   activeTabId: null,
 };
-const settings = getDefaultSettings();
+const settings = { ...SETTINGS_DEFAULTS };
 
 function logDebug(message, data) {
   if (!settings.debugLogsEnabled) return;
@@ -16,10 +17,7 @@ const visits = initVisitTracking(state, logDebug);
 
 async function loadSettings() {
   const nextSettings = await getSettings();
-  settings.debugLogsEnabled =
-    typeof nextSettings.debugLogsEnabled === "boolean"
-      ? nextSettings.debugLogsEnabled
-      : settings.debugLogsEnabled;
+  settings.debugLogsEnabled = nextSettings.debugLogsEnabled;
 }
 
 chrome.storage.onChanged.addListener((changes, area) => {

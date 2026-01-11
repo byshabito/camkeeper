@@ -1,6 +1,6 @@
-import { getProfiles, getSettings, saveProfiles, saveSettings } from "../../lib/db.js";
-import { DEFAULT_DEBUG_LOGS_ENABLED } from "../../config/background.js";
-import { sanitizeProfile } from "../../lib/storage.js";
+import { getProfiles, saveProfiles } from "../../lib/repo/profiles.js";
+import { getSettings, updateSettings } from "../../lib/repo/settings.js";
+import { sanitizeProfile } from "../../lib/domain/sanitizers.js";
 const RELEASE_TIMESTAMP = "2026-01-10T18:17:13+01:00";
 const DEVELOPER_NAME = "Shabito";
 const DEVELOPER_URL = "https://github.com/byshabito";
@@ -47,10 +47,7 @@ async function loadSettings() {
   if (!debugLogsInput) return;
 
   const settings = await getSettings();
-  const debugLogsEnabled =
-    typeof settings.debugLogsEnabled === "boolean"
-      ? settings.debugLogsEnabled
-      : DEFAULT_DEBUG_LOGS_ENABLED;
+  const debugLogsEnabled = settings.debugLogsEnabled;
 
   debugLogsInput.checked = debugLogsEnabled;
 }
@@ -58,12 +55,7 @@ async function loadSettings() {
 async function persistSettings() {
   if (!debugLogsInput) return;
 
-  const existing = await getSettings();
-  const settings = {
-    ...existing,
-    debugLogsEnabled: debugLogsInput.checked,
-  };
-  await saveSettings(settings);
+  await updateSettings({ debugLogsEnabled: debugLogsInput.checked });
 }
 
 function showSettingsFeedback(message) {

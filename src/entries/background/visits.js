@@ -1,7 +1,7 @@
-import { getProfiles, saveProfiles, getState, setState } from "../../lib/db.js";
-import { ACTIVE_VIEW_SESSION_STATE_KEY } from "../../config/background.js";
-
-const MAX_VIEW_HISTORY_DAYS = 200;
+import { getState, setState } from "../../lib/repo/state.js";
+import { ACTIVE_VIEW_SESSION_STATE_KEY } from "../../lib/domain/stateKeys.js";
+import { parseUrl } from "../../lib/domain/urls.js";
+import { recordProfileView } from "../../lib/repo/profiles.js";
 
 export function initVisitTracking(state, logDebug) {
   let activeSession = null;
@@ -9,38 +9,6 @@ export function initVisitTracking(state, logDebug) {
   let focusedWindowId = null;
   let sessionLoaded = false;
   let sessionLoadPromise = null;
-
-  function getDayStartMs(ts) {
-    const day = new Date(ts);
-    day.setHours(0, 0, 0, 0);
-    return day.getTime();
-  }
-
-  function parseUrlSafe(url) {
-    try {
-      const u = new URL(url);
-      const host = u.hostname.replace(/^www\./, "").toLowerCase();
-      let username = "";
-      if (host === "chaturbate.com") {
-        if (u.pathname.startsWith("/in/")) {
-          username = u.searchParams.get("room") || "";
-        }
-        if (!username) {
-          const parts = u.pathname.split("/").filter(Boolean);
-          username = parts[0] || "";
-        }
-      } else if (host === "stripchat.com") {
-        const parts = u.pathname.split("/").filter(Boolean);
-        username = parts[0] || "";
-      } else {
-        return null;
-      }
-      if (!username) return null;
-      return { site: host, username: username.toLowerCase() };
-    } catch (error) {
-      return null;
-    }
-  }
 
   function coerceSession(stored) {
     if (!stored || typeof stored !== "object") return null;
@@ -74,56 +42,13 @@ export function initVisitTracking(state, logDebug) {
   async function recordActiveTime(session, endedAt) {
     const durationMs = endedAt - session.startedAt;
     if (!Number.isFinite(durationMs) || durationMs <= 0) return;
-    const profiles = await getProfiles();
-    let updatedAny = false;
-    const updated = profiles.map((profile) => {
-      const cams = (profile.cams || []).map((cam) => {
-        if (cam.site === session.site && cam.username === session.username) {
-          updatedAny = true;
-          const existing = Number.isFinite(cam.viewMs) ? cam.viewMs : 0;
-          const history = Array.isArray(cam.viewHistory) ? cam.viewHistory : [];
-          const dayStart = getDayStartMs(endedAt);
-          let dayFound = false;
-          const nextHistory = history
-            .map((entry) => {
-              if (!entry || typeof entry !== "object") return null;
-              const entryDayStart = Number.isFinite(entry.dayStart)
-                ? entry.dayStart
-                : Number.isFinite(entry.endedAt)
-                  ? getDayStartMs(entry.endedAt)
-                  : null;
-              const entryDuration = Number.isFinite(entry.durationMs) ? entry.durationMs : 0;
-              if (!Number.isFinite(entryDayStart) || entryDuration <= 0) return null;
-              if (entryDayStart === dayStart) {
-                dayFound = true;
-                return {
-                  dayStart: entryDayStart,
-                  durationMs: entryDuration + durationMs,
-                };
-              }
-              return { dayStart: entryDayStart, durationMs: entryDuration };
-            })
-            .filter(Boolean);
-          if (!dayFound) {
-            nextHistory.push({ dayStart, durationMs });
-          }
-          nextHistory.sort((a, b) => a.dayStart - b.dayStart);
-          if (nextHistory.length > MAX_VIEW_HISTORY_DAYS) {
-            nextHistory.splice(0, nextHistory.length - MAX_VIEW_HISTORY_DAYS);
-          }
-          return {
-            ...cam,
-            viewMs: existing + durationMs,
-            lastViewedAt: endedAt,
-            viewHistory: nextHistory,
-          };
-        }
-        return cam;
-      });
-      return { ...profile, cams };
+    const updated = await recordProfileView({
+      site: session.site,
+      username: session.username,
+      endedAt,
+      durationMs,
     });
-    if (!updatedAny) return;
-    await saveProfiles(updated);
+    if (!updated) return;
     logDebug("[CamKeeper] View time recorded", {
       tabId: session.tabId,
       site: session.site,
@@ -151,7 +76,7 @@ export function initVisitTracking(state, logDebug) {
   async function startSession(tab) {
     if (!tab || !tab.url) return;
     await loadSessionFromStorage();
-    const parsed = parseUrlSafe(tab.url);
+    const parsed = parseUrl(tab.url);
     if (!parsed) return;
     if (activeSession && activeSession.tabId === tab.id) return;
     if (activeSession && activeSession.tabId !== tab.id) {

@@ -1,11 +1,15 @@
-import { migrateLegacyCams, sanitizeProfile } from "./storage.js";
-
 export const SETTINGS_KEY = "camkeeper_settings_v1";
 export const STORAGE_KEY = "camkeeper_profiles_v1";
-const LEGACY_KEYS = ["camkeeper_profiles", "profiles", "cams"];
 
 const storage = chrome.storage.local;
 const syncStorage = chrome.storage?.sync;
+
+async function readStorage(area, keys) {
+  if (!area) return {};
+  return new Promise((resolve) => {
+    area.get(keys, (res) => resolve(res || {}));
+  });
+}
 
 function coerceProfiles(raw) {
   if (!raw) return [];
@@ -17,87 +21,33 @@ function coerceProfiles(raw) {
       return [];
     }
   }
-  if (typeof raw === "object") {
-    if (Array.isArray(raw.profiles)) return raw.profiles;
-    if (Array.isArray(raw.items)) return raw.items;
-    if (Array.isArray(raw.bookmarks)) return raw.bookmarks;
-    const values = Object.values(raw);
-    if (values.length && values.every((value) => typeof value === "object")) {
-      const hasProfileShape = values.some(
-        (value) =>
-          value &&
-          (Array.isArray(value.cams) ||
-            Array.isArray(value.platforms) ||
-            Array.isArray(value.sites) ||
-            typeof value.name === "string"),
-      );
-      if (hasProfileShape) return values;
-    }
-  }
   return [];
 }
 
-async function readStorage(area, keys) {
-  if (!area) return {};
-  return new Promise((resolve) => {
-    area.get(keys, (res) => resolve(res || {}));
-  });
+export async function readLocal(keys) {
+  return readStorage(storage, keys);
 }
 
-function extractProfiles(data) {
-  let profiles = coerceProfiles(data[STORAGE_KEY]);
-  let shouldPersist = false;
-
-  if (!profiles.length) {
-    const legacyCandidates = [
-      data.camkeeper_profiles,
-      data.profiles,
-      data.camkeeper_profiles_v1,
-    ];
-    for (const candidate of legacyCandidates) {
-      const legacyProfiles = coerceProfiles(candidate);
-      if (legacyProfiles.length) {
-        profiles = legacyProfiles;
-        shouldPersist = true;
-        break;
-      }
-    }
-
-    if (!profiles.length && Array.isArray(data.cams) && data.cams.length) {
-      profiles = migrateLegacyCams(data.cams);
-      shouldPersist = true;
-    }
-  }
-
-  return {
-    profiles: (profiles || []).map((profile) => sanitizeProfile(profile)),
-    shouldPersist,
-  };
+export async function readSync(keys) {
+  return readStorage(syncStorage, keys);
 }
 
 async function loadProfiles() {
-  const keys = [STORAGE_KEY, ...LEGACY_KEYS];
-  const data = await readStorage(storage, keys);
-  let { profiles, shouldPersist } = extractProfiles(data);
+  const data = await readStorage(storage, STORAGE_KEY);
+  let profiles = coerceProfiles(data[STORAGE_KEY]);
 
   if (!profiles.length && syncStorage) {
-    const syncData = await readStorage(syncStorage, keys);
-    const syncResult = extractProfiles(syncData);
-    profiles = syncResult.profiles;
-    shouldPersist = syncResult.shouldPersist || shouldPersist;
-  }
-
-  if (profiles.length && shouldPersist) {
-    await persistProfiles(profiles);
+    const syncData = await readStorage(syncStorage, STORAGE_KEY);
+    profiles = coerceProfiles(syncData[STORAGE_KEY]);
   }
 
   return profiles;
 }
 
 async function persistProfiles(profiles) {
-  const cleaned = (profiles || []).map((profile) => sanitizeProfile(profile));
-  await new Promise((resolve) => storage.set({ [STORAGE_KEY]: cleaned }, resolve));
-  return cleaned;
+  const next = profiles || [];
+  await new Promise((resolve) => storage.set({ [STORAGE_KEY]: next }, resolve));
+  return next;
 }
 
 export async function getProfiles() {
@@ -110,13 +60,12 @@ export async function getProfile(id) {
 }
 
 export async function saveProfile(profile) {
-  const cleaned = sanitizeProfile(profile);
   const profiles = await loadProfiles();
-  const updated = profiles.some((item) => item.id === cleaned.id)
-    ? profiles.map((item) => (item.id === cleaned.id ? cleaned : item))
-    : [...profiles, cleaned];
+  const updated = profiles.some((item) => item.id === profile.id)
+    ? profiles.map((item) => (item.id === profile.id ? profile : item))
+    : [...profiles, profile];
   await persistProfiles(updated);
-  return cleaned;
+  return profile;
 }
 
 export async function saveProfiles(profiles) {
