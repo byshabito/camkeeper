@@ -71,7 +71,7 @@ No accounts. No cloud. Everything stays in your browser.
 4. Click the gear icon → **Install Add-on From File…**
 5. Select the `.xpi` file
 
-> **Note (Firefox – advanced):**
+> [!NOTE]
 > Some Firefox builds (e.g. Developer Edition, Nightly, or unsigned add-on setups)
 > may require the following `about:config` settings for Manifest V3 extensions:
 >
@@ -88,6 +88,8 @@ No accounts. No cloud. Everything stays in your browser.
 - Nothing is synced or transmitted
 - You can export and import your data at any time
 
+See [PRIVACY](/PRIVACY.md) for more information.
+
 ## Support
 
 If CamKeeper saves you time or replaces a messy workflow, support its development:
@@ -102,8 +104,4 @@ shabito@walletofsatoshi.com
 
 ## License
 
-[GPL-3.0](/LICENSE)
-
-## Privacy
-
-CamKeeper stores data locally in your browser. See [PRIVACY](/PRIVACY.md).
+[GPL-3.0-or-later](/LICENSE)
