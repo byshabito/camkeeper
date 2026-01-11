@@ -88,17 +88,13 @@ Shortcuts can be customized in the browser's extension settings.
 4. Click the gear icon → **Install Add-on From File…**
 5. Select the `.xpi` file
 
-> [!NOTE]
-> Some Firefox builds (e.g. Developer Edition, Nightly, or unsigned add-on setups)
-> may require the following `about:config` settings for Manifest V3 extensions:
->
-> - `xpinstall.signatures.required = false`
-> - `extensions.manifestV3.enabled = true`
-> - `extensions.backgroundServiceWorker.enabled = true`
->
-> These changes are not required on standard Firefox release builds
-> when installing a signed add-on.
+**Note**: Some Firefox builds (e.g. Developer Edition, Nightly, or unsigned add-on setups) may require the following `about:config` settings for Manifest V3 extensions:
 
+- `xpinstall.signatures.required = false`
+- `extensions.manifestV3.enabled = true`
+- `extensions.backgroundServiceWorker.enabled = true`
+
+These changes are not required on standard Firefox release builds when installing a signed add-on.
 </details>
 
 ## Data & privacy
