@@ -72,7 +72,7 @@ Shortcuts can be customized in the browser's extension settings.
 <details>
 <summary>Manual installation (development / testing)</summary>
 
-### Chrome / Chromium
+#### Chrome / Chromium
 
 1. Download `camkeeper-{{version}}-chrome.zip` from **Releases**
 2. Extract the archive
@@ -80,7 +80,7 @@ Shortcuts can be customized in the browser's extension settings.
 4. Enable **Developer mode**
 5. Click **Load unpacked** and select the extracted folder
 
-### Firefox
+#### Firefox
 
 1. Download `camkeeper-{{version}}-firefox.xpi`
 2. Open `about:addons`
