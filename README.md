@@ -1,7 +1,7 @@
 <div align="center">
   <img src="/icons/icon-256.png" width="256" height="256" />
   <h1>CamKeeper</h1>
-  <strong>Creator profile and livestream bookmark manager</strong>
+  <strong>Cross-site creator profile manager</strong>
 </div>
 <br/>
 <div align="center">
@@ -10,7 +10,7 @@
 </div>
 <br/>
 
-CamKeeper is a browser extension that helps you organize and manage creator profiles you save across multiple websites.
+CamKeeper is a browser extension that helps you organize and manage creator profiles you save across multiple platforms.
 
 It allows you to create a single local profile that can reference multiple usernames or pages on different platforms, making it easier to keep notes, links, and metadata in one place.
 

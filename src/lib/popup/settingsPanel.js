@@ -1,5 +1,5 @@
 /*
- * CamKeeper - Creator profile and livestream bookmark manager
+ * CamKeeper - Cross-site creator profile manager
  * Copyright (C) 2026  Shabito
  *
  * This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,7 @@ import { getProfiles, saveProfiles } from "../repo/profiles.js";
 import { getSettings, updateSettings } from "../repo/settings.js";
 import { sanitizeProfile } from "../domain/sanitizers.js";
 
-const RELEASE_TIMESTAMP = "2026-01-11T19:20:06+01:00";
+const RELEASE_TIMESTAMP = "2026-01-13T23:21:52+01:00";
 const DEVELOPER_NAME = "Shabito";
 const DEVELOPER_URL = "https://github.com/byshabito";
 const SOURCE_URL = "https://github.com/byshabito/camkeeper";

@@ -1,7 +1,7 @@
 {
   "name": "CamKeeper",
-  "description": "Creator profile and livestream bookmark manager",
-  "version": "1.0.0",
+  "description": "Cross-site creator profile manager",
+  "version": "1.0.1",
   "developer": {
     "name": "Shabito",
     "url": "https://github.com/byshabito/camkeeper"
