@@ -1,5 +1,5 @@
 /*
- * CamKeeper - Cross-site model profile and bookmark manager
+ * CamKeeper - Creator profile and livestream bookmark manager
  * Copyright (C) 2026  Shabito
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,14 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import SITES, { SITE_KEYS } from "../domain/sites.js";
-import {
-  parseCamInput,
-  parseSocialInput,
-  parseSocialUrl,
-  parseUrl,
-  buildSocialUrl,
-} from "../domain/urls.js";
+import { getSites, getSiteKeys, setSitesFromSettings } from "../domain/sites.js";
+import { parseCamInput, parseSocialInput, parseSocialUrl, parseUrl, buildSocialUrl } from "../domain/urls.js";
 import { SOCIAL_OPTIONS } from "../domain/socialOptions.js";
 import { createBulkSelection } from "../bulkSelection.js";
 import { createPopupDialogs } from "./dialogs.js";
@@ -42,6 +36,7 @@ import {
 import { findDuplicateProfile } from "../domain/profiles.js";
 import { normalizeText } from "../domain/text.js";
 import { SETTINGS_DEFAULTS } from "../domain/settings.js";
+import { getSettings } from "../repo/settings.js";
 import {
   deleteProfileById,
   deleteProfilesByIds,
@@ -150,6 +145,8 @@ export function initPopupController({ elements }) {
   const overviewIcon = settingsToggle?.querySelector(".overview-icon") || null;
   const dialogs = createPopupDialogs();
   const DEFAULT_SORT = SETTINGS_DEFAULTS.lastSort;
+  let siteKeys = getSiteKeys();
+  let sites = getSites();
   const SORT_OPTIONS = new Set(["most", "month", "recent", "updated", "name"]);
   const state = createPopupState();
 
@@ -184,6 +181,23 @@ export function initPopupController({ elements }) {
         await renderList();
       }
     },
+    onSitesChanged: async (nextSettings) => {
+      await refreshSites(nextSettings);
+      if (detailView && !detailView.classList.contains("hidden")) {
+        const currentProfile = state.getValue("currentProfile");
+        if (currentProfile) viewState.go("detail", currentProfile);
+        return;
+      }
+      if (formView && !formView.classList.contains("hidden")) {
+        applyForm(
+          state.getValue("currentProfile"),
+          state.getValue("attachSeedCams"),
+          state.getValue("attachProfiles"),
+        );
+        return;
+      }
+      renderList();
+    },
   });
 
   let viewState;
@@ -216,6 +230,13 @@ export function initPopupController({ elements }) {
     },
     onRender: () => renderList(),
   });
+
+  async function refreshSites(nextSettings = null) {
+    const settings = nextSettings || (await getSettings());
+    setSitesFromSettings(settings?.livestreamSites);
+    sites = getSites();
+    siteKeys = getSiteKeys();
+  }
 
   async function applyListPreferences() {
     const { sortKey, folderFilter, folderOrder } = await loadListPreferences({
@@ -258,7 +279,7 @@ export function initPopupController({ elements }) {
           formatDuration,
           formatSocialHandle,
           buildSocialUrl,
-          sites: SITES,
+          sites,
           getPlatformIconSvg,
           getSocialIconSvg,
         });
@@ -334,9 +355,7 @@ export function initPopupController({ elements }) {
   const SOCIAL_ICON_PATHS = {
     instagram: "src/assets/social-icons/instagram.svg",
     x: "src/assets/social-icons/x.svg",
-    onlyfans: "src/assets/social-icons/onlyfans.svg",
     tiktok: "src/assets/social-icons/tiktok.svg",
-    fansly: "src/assets/social-icons/fansly.svg",
     telegram: "src/assets/social-icons/telegram.svg",
     threads: "src/assets/social-icons/threads.svg",
     youtube: "src/assets/social-icons/youtube.svg",
@@ -346,10 +365,7 @@ export function initPopupController({ elements }) {
   };
 
   const PLATFORM_ICON_CACHE = new Map();
-  const PLATFORM_ICON_PATHS = {
-    "chaturbate.com": "src/assets/platform-icons/chaturbate.svg",
-    "stripchat.com": "src/assets/platform-icons/stripchat.svg",
-  };
+  const PLATFORM_ICON_PATHS = {};
 
   function updateFolderOptions(profiles, currentFolder) {
     const preferredFolderOrder = state.getValue("preferredFolderOrder");
@@ -481,7 +497,7 @@ export function initPopupController({ elements }) {
       seedCams,
       profiles,
       editingId: state.getValue("editingId"),
-      defaultSiteKey: SITE_KEYS[0],
+      defaultSiteKey: siteKeys[0],
     });
     applyFormViewModel({
       viewModel,
@@ -496,8 +512,8 @@ export function initPopupController({ elements }) {
         attachSelect,
       },
       createFormRow,
-      siteKeys: SITE_KEYS,
-      sites: SITES,
+      siteKeys,
+      sites,
       socialOptions: SOCIAL_OPTIONS,
       parseCamInput,
       parseSocialInput,
@@ -512,7 +528,7 @@ export function initPopupController({ elements }) {
       profiles: state.getValue("attachProfiles"),
       seedCams: state.getValue("attachSeedCams"),
       editingId: state.getValue("editingId"),
-      defaultSiteKey: SITE_KEYS[0],
+      defaultSiteKey: siteKeys[0],
     });
     if (!viewModel) return;
     applyFormViewModel({
@@ -528,8 +544,8 @@ export function initPopupController({ elements }) {
         attachSelect,
       },
       createFormRow,
-      siteKeys: SITE_KEYS,
-      sites: SITES,
+      siteKeys,
+      sites,
       socialOptions: SOCIAL_OPTIONS,
       parseCamInput,
       parseSocialInput,
@@ -600,7 +616,7 @@ export function initPopupController({ elements }) {
       query: listControls.query,
       folderKey: listControls.folderKey,
       sortKey: listControls.sortKey,
-      sites: SITES,
+      sites,
       getPlatformIconSvg,
     });
     renderProfileList({
@@ -642,8 +658,8 @@ export function initPopupController({ elements }) {
     createFormRow({
       type,
       values: {},
-      siteKeys: SITE_KEYS,
-      sites: SITES,
+      siteKeys,
+      sites,
       socialOptions: SOCIAL_OPTIONS,
       parseCamInput,
       parseSocialInput,
@@ -850,6 +866,7 @@ export function initPopupController({ elements }) {
   }
 
   const start = async () => {
+    await refreshSites();
     await Promise.all([loadSocialIcons(), loadPlatformIcons()]);
     await applyListPreferences();
     if (initialTab === "settings" || isEmbedded) {

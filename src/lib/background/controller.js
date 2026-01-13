@@ -1,5 +1,5 @@
 /*
- * CamKeeper - Cross-site model profile and bookmark manager
+ * CamKeeper - Creator profile and livestream bookmark manager
  * Copyright (C) 2026  Shabito
  *
  * This program is free software: you can redistribute it and/or modify
@@ -19,6 +19,7 @@
 import { SETTINGS_KEY } from "../db.js";
 import { SETTINGS_DEFAULTS } from "../domain/settings.js";
 import { sanitizeProfile } from "../domain/sanitizers.js";
+import { setSitesFromSettings } from "../domain/sites.js";
 import { parseUrl } from "../domain/urls.js";
 import { findDuplicateProfile } from "../domain/profiles.js";
 import { getProfiles, saveProfiles } from "../repo/profiles.js";
@@ -35,6 +36,7 @@ export function initBackground() {
 
   async function loadSettings() {
     const nextSettings = await getSettings();
+    setSitesFromSettings(nextSettings.livestreamSites);
     settings.viewMetric = nextSettings.viewMetric;
     await visits.setMode(settings.viewMetric);
   }

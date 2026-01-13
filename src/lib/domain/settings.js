@@ -1,5 +1,5 @@
 /*
- * CamKeeper - Cross-site model profile and bookmark manager
+ * CamKeeper - Creator profile and livestream bookmark manager
  * Copyright (C) 2026  Shabito
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,11 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { DEFAULT_LIVESTREAM_SITES, normalizeLivestreamSites } from "./sites.js";
+
 export const SETTINGS_DEFAULTS = Object.freeze({
   viewMetric: "open",
   lastSort: "month",
   lastFolderFilter: "",
   lastFolderOrder: [],
+  livestreamSites: DEFAULT_LIVESTREAM_SITES.slice(),
 });
 
 export function normalizeSettings(raw) {
@@ -40,6 +43,7 @@ export function normalizeSettings(raw) {
     lastFolderOrder: Array.isArray(source.lastFolderOrder)
       ? source.lastFolderOrder.filter((item) => typeof item === "string")
       : SETTINGS_DEFAULTS.lastFolderOrder,
+    livestreamSites: normalizeLivestreamSites(source.livestreamSites),
   };
 }
 

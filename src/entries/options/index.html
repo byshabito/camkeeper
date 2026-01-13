@@ -1,5 +1,5 @@
 <!--
-  CamKeeper - Cross-site model profile and bookmark manager
+  CamKeeper - Creator profile and livestream bookmark manager
   Copyright (C) 2026  Shabito
  
   This program is free software: you can redistribute it and/or modify
@@ -82,7 +82,7 @@
             <button id="export-button" class="ghost">Download</button>
           </div>
         </div>
-        <div class="export">
+        <div class="export stacked">
           <div>
             <h3>Import backup</h3>
             <p>Restore profiles, folders, and history from a JSON backup.</p>
@@ -111,13 +111,22 @@
         <div class="export no-divider">
           <div>
             <h3>View time counting</h3>
-            <p>Choose whether view time is tracked while a cam is focused or simply while a cam page is open.</p>
+            <p>Choose whether view time is tracked while a livestream is focused or simply while a livestream page is open.</p>
           </div>
           <div class="actions">
             <select id="view-metric">
-              <option value="focus">Cam in focus</option>
-              <option value="open">Cam open</option>
+              <option value="focus">Livestream in focus</option>
+              <option value="open">Livestream open</option>
             </select>
+          </div>
+        </div>
+        <div class="export">
+          <div>
+            <h3>Supported livestreaming sites</h3>
+            <p>Add one domain per line (for example, twitch.tv). These are used for detection and view tracking.</p>
+          </div>
+          <div class="actions">
+            <textarea id="livestream-sites" rows="4" placeholder="twitch.tv&#10;youtube.com"></textarea>
           </div>
         </div>
       </section>

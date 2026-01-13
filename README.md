@@ -1,7 +1,7 @@
 <div align="center">
   <img src="/icons/icon-256.png" width="256" height="256" />
   <h1>CamKeeper</h1>
-  <strong>Cross-site model profile and bookmark manager</strong>
+  <strong>Creator profile and livestream bookmark manager</strong>
 </div>
 <br/>
 <div align="center">
@@ -10,7 +10,7 @@
 </div>
 <br/>
 
-CamKeeper is a browser extension that helps you organize and manage model profiles you save across multiple websites.
+CamKeeper is a browser extension that helps you organize and manage creator profiles you save across multiple websites.
 
 It allows you to create a single local profile that can reference multiple usernames or pages on different platforms, making it easier to keep notes, links, and metadata in one place.
 
@@ -26,7 +26,8 @@ No accounts. No cloud services. All data remains on your device.
 
 ### Page detection
 
-- Detects supported pages automatically
+- Detects supported pages automatically (configurable in settings)
+- Default support for Twitch and YouTube
 - Shows saved profile details when revisiting a known page
 
 ### Organization & management
@@ -37,7 +38,7 @@ No accounts. No cloud services. All data remains on your device.
 
 ### Local activity indicators
 
-- Local tracking of view time for saved pages
+- Local tracking of view time for saved livestream pages
 - All activity data is stored only in the browser
 
 ### Privacy-first design
@@ -49,7 +50,7 @@ No accounts. No cloud services. All data remains on your device.
 
 ## Usage
 
-1. Visit a supported model profile page
+1. Visit a supported creator profile page
 2. Click the CamKeeper extension icon to save or attach it to a profile
 3. Organize profiles using folders, tags, and notes
 4. View saved details automatically when revisiting pages

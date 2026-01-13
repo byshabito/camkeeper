@@ -1,5 +1,5 @@
 /*
- * CamKeeper - Cross-site model profile and bookmark manager
+ * CamKeeper - Creator profile and livestream bookmark manager
  * Copyright (C) 2026  Shabito
  *
  * This program is free software: you can redistribute it and/or modify
@@ -17,8 +17,6 @@
  */
 
 export const SOCIAL_OPTIONS = [
-  { id: "onlyfans", label: "OnlyFans" },
-  { id: "fansly", label: "Fansly" },
   { id: "x", label: "X" },
   { id: "instagram", label: "Instagram" },
   { id: "threads", label: "Threads" },

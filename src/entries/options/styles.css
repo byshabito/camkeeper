@@ -1,5 +1,5 @@
 /*
- * CamKeeper - Cross-site model profile and bookmark manager
+ * CamKeeper - Creator profile and livestream bookmark manager
  * Copyright (C) 2026  Shabito
  *
  * This program is free software: you can redistribute it and/or modify
@@ -351,6 +351,15 @@ body.embedded .settings-scope {
   justify-content: space-between;
   align-items: center;
   gap: 12px;
+}
+
+.settings-scope .export.stacked {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.settings-scope .export.stacked .actions {
+  justify-content: flex-start;
 }
 
 .settings-scope .export.no-divider {

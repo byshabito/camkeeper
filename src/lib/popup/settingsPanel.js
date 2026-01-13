@@ -1,5 +1,5 @@
 /*
- * CamKeeper - Cross-site model profile and bookmark manager
+ * CamKeeper - Creator profile and livestream bookmark manager
  * Copyright (C) 2026  Shabito
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,6 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+import { normalizeLivestreamHost, setSitesFromSettings } from "../domain/sites.js";
 import { getProfiles, saveProfiles } from "../repo/profiles.js";
 import { getSettings, updateSettings } from "../repo/settings.js";
 import { sanitizeProfile } from "../domain/sanitizers.js";
@@ -26,11 +27,17 @@ const DEVELOPER_URL = "https://github.com/byshabito";
 const SOURCE_URL = "https://github.com/byshabito/camkeeper";
 const LICENSE_URL = "https://www.gnu.org/licenses/gpl-3.0.en.html";
 
-export function initSettingsPanel({ elements, onProfilesChanged, allowFileImport = true } = {}) {
+export function initSettingsPanel({
+  elements,
+  onProfilesChanged,
+  onSitesChanged,
+  allowFileImport = true,
+} = {}) {
   const {
     exportButton,
     importInput,
     viewMetricSelect,
+    livestreamSitesInput,
     settingsFeedback,
     backupFeedback,
     bitcoinDonateButton,
@@ -87,15 +94,34 @@ export function initSettingsPanel({ elements, onProfilesChanged, allowFileImport
 
   async function loadSettings() {
     const settings = await getSettings();
+    setSitesFromSettings(settings.livestreamSites);
     if (viewMetricSelect) {
       viewMetricSelect.value = settings.viewMetric || "focus";
+    }
+    if (livestreamSitesInput) {
+      const sites = Array.isArray(settings.livestreamSites) ? settings.livestreamSites : [];
+      livestreamSitesInput.value = sites.join("\n");
     }
   }
 
   async function persistSettings() {
-    await updateSettings({
+    const next = {
       viewMetric: viewMetricSelect ? viewMetricSelect.value : undefined,
-    });
+    };
+    if (livestreamSitesInput) {
+      next.livestreamSites = Array.from(
+        new Set(
+          livestreamSitesInput.value
+            .split("\n")
+            .map((line) => normalizeLivestreamHost(line))
+            .filter(Boolean),
+        ),
+      );
+    }
+    const updated = await updateSettings(next);
+    if (onSitesChanged) {
+      await onSitesChanged(updated);
+    }
   }
 
   function openBitcoinModal() {
@@ -232,6 +258,14 @@ export function initSettingsPanel({ elements, onProfilesChanged, allowFileImport
 
   if (viewMetricSelect) {
     viewMetricSelect.addEventListener("change", async () => {
+      await persistSettings();
+      await loadSettings();
+      showSettingsFeedback("Settings saved successfully.");
+    });
+  }
+
+  if (livestreamSitesInput) {
+    livestreamSitesInput.addEventListener("change", async () => {
       await persistSettings();
       await loadSettings();
       showSettingsFeedback("Settings saved successfully.");

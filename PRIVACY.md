@@ -10,8 +10,8 @@ All functionality runs locally in the user's browser unless explicitly stated ot
 ## Data Access
 The extension accesses the following data solely to provide its core functionality:
 
-- Current tab URL (to detect model pages when adding profiles)
-- Tab URLs on supported sites (to track view sessions in the background service worker)
+- Current tab URL (to detect livestream profile pages when adding profiles)
+- Tab URLs (to track view sessions in the background service worker for user-configured sites)
 - Browser extension storage (to store profiles, folders, view history, and settings)
 
 This data is:
@@ -27,15 +27,8 @@ The extension requests the following permissions:
 - **activeTab**  
   Used to: read the active tab URL when the user adds a profile from the current page
 - **tabs**  
-  Used to: observe tab activity so the background service worker can track view sessions on supported sites
+  Used to: observe tab activity so the background service worker can track view sessions on user-configured sites
   
-The extension also requests the following host permissions:
-
-- `https://chaturbate.com/*`  
-  Used to: detect model pages and allow the background service worker to track view sessions on Chaturbate
-- `https://stripchat.com/*`  
-  Used to: detect model pages and allow the background service worker to track view sessions on Stripchat
-
 Only the minimum permissions required for the extension to function are requested.
 
 ## Data Storage
@@ -44,9 +37,6 @@ Only the minimum permissions required for the extension to function are requeste
 
 ## Third-Party Services
 This extension does not use third-party analytics, tracking, or advertising services.
-
-## Age Restriction
-This extension is intended for use with adult (18+) websites and is not directed at minors.
 
 ## Changes
 This privacy policy may be updated if the extension's functionality changes.  

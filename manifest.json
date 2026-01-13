@@ -1,6 +1,6 @@
 {
   "name": "CamKeeper",
-  "description": "Cross-site model profile and bookmark manager",
+  "description": "Creator profile and livestream bookmark manager",
   "version": "1.0.0",
   "author": "Shabito",
   "homepage_url": "https://github.com/byshabito/camkeeper",
@@ -9,10 +9,6 @@
     "storage",
     "activeTab",
     "tabs"
-  ],
-  "host_permissions": [
-    "https://chaturbate.com/*",
-    "https://stripchat.com/*"
   ],
   "icons": {
     "16": "icons/icon-16.png",
@@ -42,7 +38,7 @@
         "default": "Alt+Shift+S",
         "mac": "Alt+Shift+S"
       },
-      "description": "Quick add current model profile"
+      "description": "Quick add current livestream profile"
     }
   },
   "options_ui": {

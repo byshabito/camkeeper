@@ -1,5 +1,5 @@
 /*
- * CamKeeper - Cross-site model profile and bookmark manager
+ * CamKeeper - Creator profile and livestream bookmark manager
  * Copyright (C) 2026  Shabito
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,18 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import SITES from "./sites.js";
+import { getSites, isYouTubeHost, normalizeHost } from "./sites.js";
 import { normalizeText } from "./text.js";
-
-function normalizeHost(hostname) {
-  let host = hostname.toLowerCase();
-  let prev;
-  do {
-    prev = host;
-    host = host.replace(/^(www\.|m\.|mobile\.|amp\.)/, "");
-  } while (host !== prev);
-  return host;
-}
 
 function normalizeWebsiteHandleFromUrl(url) {
   if (!url || !url.hostname) return "";
@@ -56,26 +46,27 @@ export function normalizeWebsiteHandle(value) {
   }
 }
 
-export function parseUrl(u) {
+export function parseUrl(u, sites = getSites()) {
   try {
     const url = new URL(u);
     const host = normalizeHost(url.hostname);
-    const siteKey = Object.keys(SITES).find(
+    const siteKey = Object.keys(sites).find(
       (key) => host === key || host.endsWith(`.${key}`),
     );
     if (!siteKey) return null;
 
     let username = "";
-    if (siteKey === "chaturbate.com") {
-      if (url.pathname.startsWith("/in/")) {
-        username = url.searchParams.get("room") || "";
-      }
-      if (!username) {
-        const parts = url.pathname.split("/").filter(Boolean);
-        username = parts[0] || "";
+    const parts = url.pathname.split("/").filter(Boolean);
+    if (isYouTubeHost(siteKey)) {
+      const first = parts[0] || "";
+      if (first.startsWith("@")) {
+        username = first.slice(1);
+      } else if (["channel", "c", "user"].includes(first) && parts[1]) {
+        username = `${first}/${parts[1]}`;
+      } else {
+        username = first;
       }
     } else {
-      const parts = url.pathname.split("/").filter(Boolean);
       username = parts[0] || "";
     }
 
@@ -107,12 +98,6 @@ export function parseSocialUrl(u) {
           return segment;
         }
       });
-
-    if (host === "fansly.com" || host === "fans.ly") {
-      const first = path[0] || "";
-      const handle = ["u", "user", "profile"].includes(first) ? path[1] || "" : first;
-      return handle ? { platform: "fansly", handle: handle.toLowerCase() } : null;
-    }
 
     if (host === "instagram.com") {
       const first = path[0] || "";
@@ -154,14 +139,6 @@ export function parseSocialUrl(u) {
       return handle ? { platform: "x", handle: handle.toLowerCase() } : null;
     }
 
-    if (host === "onlyfans.com") {
-      const first = path[0] || "";
-      const blocked = ["my", "subscriptions", "settings", "posts"];
-      if (!first || blocked.includes(first)) return null;
-      const handle = first;
-      return handle ? { platform: "onlyfans", handle: handle.toLowerCase() } : null;
-    }
-
     if (host.endsWith("youtube.com")) {
       const first = path[0] || "";
       if (first.startsWith("@")) {
@@ -198,8 +175,6 @@ export function buildSocialUrl(social) {
   const platform = normalizeText(social?.platform);
 
   switch (platform) {
-    case "fansly":
-      return `https://fansly.com/${normalized}`;
     case "instagram":
       return `https://instagram.com/${normalized}`;
     case "threads":
@@ -210,8 +185,6 @@ export function buildSocialUrl(social) {
       return `https://www.youtube.com/@${normalized}`;
     case "x":
       return `https://x.com/${normalized}`;
-    case "onlyfans":
-      return `https://onlyfans.com/${normalized}`;
     case "tiktok":
       return `https://www.tiktok.com/@${normalized}`;
     case "website":
@@ -222,12 +195,12 @@ export function buildSocialUrl(social) {
   }
 }
 
-export function parseCamInput(value) {
+export function parseCamInput(value, sites = getSites()) {
   const raw = (value || "").trim();
   if (!raw) return null;
 
   if (/^https?:\/\//i.test(raw)) {
-    return parseUrl(raw);
+    return parseUrl(raw, sites);
   }
 
   return { site: null, username: raw.replace(/^@/, "").toLowerCase() };

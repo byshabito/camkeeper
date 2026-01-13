@@ -1,5 +1,5 @@
 /*
- * CamKeeper - Cross-site model profile and bookmark manager
+ * CamKeeper - Creator profile and livestream bookmark manager
  * Copyright (C) 2026  Shabito
  *
  * This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import SITES from "./sites.js";
+import { getSites } from "./sites.js";
 import { normalizeText } from "./text.js";
 import { parseSocialUrl } from "./urls.js";
 
@@ -75,6 +75,7 @@ function sanitizeViewHistory(viewHistory) {
 }
 
 export function sanitizeCams(cams) {
+  const sites = getSites();
   const cleaned = (cams || [])
     .map((cam) => ({
       site: normalizeText(cam.site),
@@ -91,7 +92,7 @@ export function sanitizeCams(cams) {
           : null,
       viewHistory: sanitizeViewHistory(cam.viewHistory),
     }))
-    .filter((cam) => cam.site && cam.username && SITES[cam.site]);
+    .filter((cam) => cam.site && cam.username && sites[cam.site]);
 
   const merged = new Map();
   cleaned.forEach((cam) => {

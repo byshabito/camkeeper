@@ -1,9 +1,14 @@
 # Changelog
 
+## v1.0.1
+
+- Add configurable livestream site list with Twitch/YouTube defaults
+- Remove adult platform references and fixed host permissions
+
 ## v1.0.0
 
 - Change placeholder tags
-- Add quick-add keyboard shortcut for saving the current model page
+- Add quick-add keyboard shortcut for saving the current creator page
 - Add confirmation badge for quick-add shortcut
 - Add keyboard shortcut to open the popup
 
@@ -20,7 +25,7 @@
 - Update About label and license text in settings
 - Add a view time metric setting (focus vs page sessions)
 - Remove the debug logs setting
-- Default view time metric to Cam open
+- Default view time metric to Livestream open
 - Add a stronger hover color for primary buttons
 - Remove Save button and save automatically when value changes
 
@@ -31,7 +36,7 @@
 - Default online status checks to off with a 5-minute refresh interval
 - Clarify backup and configuration setting labels
 - Add multi-size favicons to the popup and options pages
-- Fix saving when attaching a new cam username to an existing profile
+- Fix saving when attaching a new livestream username to an existing profile
 
 ## v0.8.3
 
@@ -57,7 +62,7 @@
 - Add most viewed (30 days) sort option
 - Track daily view history buckets for rolling view totals
 - Remember last selected sort in the popup
-- Add filter for currently online models
+- Add filter for currently online creators
 - Remember last selected folder filter in the popup
 - Hide the online filter when online checks are disabled (live update)
 
@@ -67,7 +72,7 @@
 
 ## v0.6.4
 
-- Rename platform references to cam
+- Rename platform references to livestream
 
 ## v0.6.3
 
@@ -86,7 +91,7 @@
 ## v0.6.0
 
 - Centralize storage access behind the unified API
-- Add shared online status API modules for Chaturbate and Stripchat
+- Add shared online status API modules
 - Add shared background config defaults
 - Refactor background logic into modular services
 - Default folder selector to "No folder" for new or unfiled profiles
@@ -98,7 +103,7 @@
 
 ## v0.5.1
 
-- Switch Stripchat status endpoint and parsing
+- Switch livestream status endpoint and parsing
 
 ## v0.5.0
 
@@ -116,7 +121,7 @@
 
 ## v0.4.0
 
-- Add background online status checks (Chaturbate + Stripchat)
+- Add background online status checks
 - Add settings to enable checks and set the interval
 
 ## v0.3.0
@@ -152,7 +157,7 @@
 
 - Multi-platform profiles with notes, tags, and socials
 - Smart URL parsing for platform/social inputs
-- Auto detail view on saved model pages
+- Auto detail view on saved creator pages
 - Add current platform to an existing profile
 - Bulk select to merge or delete
 - Local-only storage with JSON export/import

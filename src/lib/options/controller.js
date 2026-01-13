@@ -1,5 +1,5 @@
 /*
- * CamKeeper - Cross-site model profile and bookmark manager
+ * CamKeeper - Creator profile and livestream bookmark manager
  * Copyright (C) 2026  Shabito
  *
  * This program is free software: you can redistribute it and/or modify
@@ -23,6 +23,7 @@ export function initOptionsController() {
     exportButton: document.getElementById("export-button"),
     importInput: document.getElementById("import-input"),
     viewMetricSelect: document.getElementById("view-metric"),
+    livestreamSitesInput: document.getElementById("livestream-sites"),
     settingsFeedback: document.getElementById("settings-feedback"),
     backupFeedback: document.getElementById("backup-feedback"),
     bitcoinDonateButton: document.getElementById("bitcoin-donate-button"),
