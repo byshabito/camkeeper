@@ -69,18 +69,55 @@ export function normalizeLivestreamHost(value) {
   }
 }
 
+function normalizeColor(value) {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim();
+  return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(trimmed) ? trimmed : "";
+}
+
+export function normalizeLivestreamSiteEntries(rawSites) {
+  if (!Array.isArray(rawSites) || !rawSites.length) {
+    return DEFAULT_LIVESTREAM_SITE_HOSTS.map((host) => ({ host }));
+  }
+  const entries = [];
+  rawSites.forEach((entry) => {
+    if (typeof entry === "string") {
+      const host = normalizeLivestreamHost(entry);
+      if (host) entries.push({ host });
+      return;
+    }
+    if (entry && typeof entry === "object") {
+      const host = normalizeLivestreamHost(entry.host || entry.hostname || entry.domain || "");
+      if (!host) return;
+      const label = typeof entry.label === "string" ? entry.label.trim() : "";
+      const abbr = typeof entry.abbr === "string" ? entry.abbr.trim() : "";
+      const color = normalizeColor(entry.color);
+      entries.push({
+        host,
+        label: label || "",
+        abbr: abbr || "",
+        color: color || "",
+      });
+    }
+  });
+  if (!entries.length) return DEFAULT_LIVESTREAM_SITE_HOSTS.map((host) => ({ host }));
+  const byHost = new Map();
+  entries.forEach((entry) => {
+    if (!byHost.has(entry.host)) {
+      byHost.set(entry.host, { ...entry });
+      return;
+    }
+    const current = byHost.get(entry.host);
+    byHost.set(entry.host, {
+      ...current,
+      ...entry,
+    });
+  });
+  return Array.from(byHost.values());
+}
+
 export function normalizeLivestreamSites(rawSites) {
-  if (!Array.isArray(rawSites)) return DEFAULT_LIVESTREAM_SITE_HOSTS.slice();
-  const normalized = rawSites
-    .map((entry) => {
-      if (typeof entry === "string") return normalizeLivestreamHost(entry);
-      if (entry && typeof entry === "object") {
-        return normalizeLivestreamHost(entry.host || entry.hostname || "");
-      }
-      return "";
-    })
-    .filter(Boolean);
-  return normalized.length ? Array.from(new Set(normalized)) : DEFAULT_LIVESTREAM_SITE_HOSTS.slice();
+  return normalizeLivestreamSiteEntries(rawSites).map((entry) => entry.host);
 }
 
 export function isYouTubeHost(host) {
@@ -99,13 +136,14 @@ function buildProfileUrl(host, username) {
   return `https://${host}/${handle}`;
 }
 
-export function buildSites(siteHosts) {
-  const hosts = normalizeLivestreamSites(siteHosts);
-  return hosts.reduce((acc, host) => {
+export function buildSites(siteEntries) {
+  const entries = normalizeLivestreamSiteEntries(siteEntries);
+  return entries.reduce((acc, entry) => {
+    const host = entry.host;
     const metadata = KNOWN_SITE_METADATA[host] || {};
-    const label = metadata.label || buildLabel(host);
-    const abbr = metadata.abbr || buildAbbr(label, host);
-    const color = metadata.color || DEFAULT_SITE_COLOR;
+    const label = entry.label || metadata.label || buildLabel(host);
+    const abbr = entry.abbr || metadata.abbr || buildAbbr(label, host);
+    const color = entry.color || metadata.color || DEFAULT_SITE_COLOR;
     acc[host] = {
       host,
       label,
@@ -132,4 +170,4 @@ export function getSiteKeys() {
   return Object.keys(sites);
 }
 
-export const DEFAULT_LIVESTREAM_SITES = DEFAULT_LIVESTREAM_SITE_HOSTS.slice();
+export const DEFAULT_LIVESTREAM_SITES = DEFAULT_LIVESTREAM_SITE_HOSTS.map((host) => ({ host }));

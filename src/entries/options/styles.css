@@ -329,6 +329,10 @@ body.embedded .settings-scope {
   display: none;
 }
 
+.settings-scope .file-input {
+  display: none;
+}
+
 .settings-scope .toggle {
   display: inline-flex;
   align-items: center;
@@ -360,6 +364,44 @@ body.embedded .settings-scope {
 
 .settings-scope .export.stacked .actions {
   justify-content: flex-start;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.site-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.site-row {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.5fr) minmax(120px, 1fr) 70px 90px auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.site-row input[type="color"] {
+  padding: 0;
+  height: 34px;
+  width: 100%;
+  border-radius: 8px;
+}
+
+.site-row button {
+  height: 32px;
+}
+
+@media (max-width: 720px) {
+  .site-row {
+    grid-template-columns: 1fr 1fr;
+  }
+  .site-row input[type="color"] {
+    grid-column: span 1;
+  }
+  .site-row button {
+    grid-column: span 2;
+  }
 }
 
 .settings-scope .export.no-divider {

@@ -16,14 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { DEFAULT_LIVESTREAM_SITES, normalizeLivestreamSites } from "./sites.js";
+import { DEFAULT_LIVESTREAM_SITES, normalizeLivestreamSiteEntries } from "./sites.js";
 
 export const SETTINGS_DEFAULTS = Object.freeze({
   viewMetric: "open",
   lastSort: "month",
   lastFolderFilter: "",
   lastFolderOrder: [],
-  livestreamSites: DEFAULT_LIVESTREAM_SITES.slice(),
+  livestreamSites: DEFAULT_LIVESTREAM_SITES.map((item) => ({ ...item })),
 });
 
 export function normalizeSettings(raw) {
@@ -43,7 +43,7 @@ export function normalizeSettings(raw) {
     lastFolderOrder: Array.isArray(source.lastFolderOrder)
       ? source.lastFolderOrder.filter((item) => typeof item === "string")
       : SETTINGS_DEFAULTS.lastFolderOrder,
-    livestreamSites: normalizeLivestreamSites(source.livestreamSites),
+    livestreamSites: normalizeLivestreamSiteEntries(source.livestreamSites),
   };
 }
 

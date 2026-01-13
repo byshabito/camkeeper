@@ -21,9 +21,11 @@ import { initSettingsPanel } from "../popup/settingsPanel.js";
 export function initOptionsController() {
   const elements = {
     exportButton: document.getElementById("export-button"),
+    importButton: document.getElementById("import-button"),
     importInput: document.getElementById("import-input"),
     viewMetricSelect: document.getElementById("view-metric"),
-    livestreamSitesInput: document.getElementById("livestream-sites"),
+    livestreamSitesList: document.getElementById("livestream-sites-list"),
+    addLivestreamSiteButton: document.getElementById("add-livestream-site"),
     settingsFeedback: document.getElementById("settings-feedback"),
     backupFeedback: document.getElementById("backup-feedback"),
     bitcoinDonateButton: document.getElementById("bitcoin-donate-button"),

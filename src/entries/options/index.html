@@ -61,44 +61,9 @@
         </div>
       </header>
 
-      <section class="panel">
-        <header class="panel-header">
-          <h2>Backup</h2>
-          <div class="panel-actions">
-            <span
-              id="backup-feedback"
-              class="settings-feedback"
-              role="status"
-              aria-live="polite"
-            ></span>
-          </div>
-        </header>
-        <div class="export no-divider">
-          <div>
-            <h3>Download backup</h3>
-            <p>Export a JSON backup with profiles, folders, and history.</p>
-          </div>
-          <div class="actions">
-            <button id="export-button" class="ghost">Download</button>
-          </div>
-        </div>
-        <div class="export stacked">
-          <div>
-            <h3>Import backup</h3>
-            <p>Restore profiles, folders, and history from a JSON backup.</p>
-          </div>
-          <div class="actions">
-            <label class="file-button ghost">
-              Import
-              <input id="import-input" type="file" accept="application/json" />
-            </label>
-          </div>
-        </div>
-      </section>
-
       <section class="panel settings-panel">
         <header class="panel-header">
-          <h2>Configuration</h2>
+          <h2>Livestream</h2>
           <div class="panel-actions">
             <span
               id="settings-feedback"
@@ -120,13 +85,47 @@
             </select>
           </div>
         </div>
-        <div class="export">
+        <div class="export stacked">
           <div>
-            <h3>Supported livestreaming sites</h3>
-            <p>Add one domain per line (for example, twitch.tv). These are used for detection and view tracking.</p>
+            <h3>Supported sites</h3>
+            <p>Add livestreaming sites for detection and view tracking. Customize labels, abbreviations, and colors.</p>
           </div>
           <div class="actions">
-            <textarea id="livestream-sites" rows="4" placeholder="twitch.tv&#10;youtube.com"></textarea>
+            <div id="livestream-sites-list" class="site-list"></div>
+            <button id="add-livestream-site" class="ghost" type="button">Add site</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel">
+        <header class="panel-header">
+          <h2>Backup</h2>
+          <div class="panel-actions">
+            <span
+              id="backup-feedback"
+              class="settings-feedback"
+              role="status"
+              aria-live="polite"
+            ></span>
+          </div>
+        </header>
+        <div class="export no-divider">
+          <div>
+            <h3>Download backup</h3>
+            <p>Export a JSON backup with profiles, folders, and history.</p>
+          </div>
+          <div class="actions">
+            <button id="export-button" class="ghost">Download</button>
+          </div>
+        </div>
+        <div class="export">
+          <div>
+            <h3>Import backup</h3>
+            <p>Restore profiles, folders, and history from a JSON backup.</p>
+          </div>
+          <div class="actions">
+            <button id="import-button" class="ghost" type="button">Import</button>
+            <input id="import-input" class="file-input" type="file" accept="application/json" />
           </div>
         </div>
       </section>

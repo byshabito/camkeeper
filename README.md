@@ -28,6 +28,7 @@ No accounts. No cloud services. All data remains on your device.
 
 - Detects supported pages automatically (configurable in settings)
 - Default support for Twitch and YouTube
+- Customize site labels, abbreviations, and colors in settings
 - Shows saved profile details when revisiting a known page
 
 ### Organization & management

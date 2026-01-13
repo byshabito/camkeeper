@@ -16,7 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { normalizeLivestreamHost, setSitesFromSettings } from "../domain/sites.js";
+import {
+  buildSites,
+  normalizeLivestreamHost,
+  normalizeLivestreamSiteEntries,
+  setSitesFromSettings,
+} from "../domain/sites.js";
 import { getProfiles, saveProfiles } from "../repo/profiles.js";
 import { getSettings, updateSettings } from "../repo/settings.js";
 import { sanitizeProfile } from "../domain/sanitizers.js";
@@ -35,9 +40,11 @@ export function initSettingsPanel({
 } = {}) {
   const {
     exportButton,
+    importButton,
     importInput,
     viewMetricSelect,
-    livestreamSitesInput,
+    livestreamSitesList,
+    addLivestreamSiteButton,
     settingsFeedback,
     backupFeedback,
     bitcoinDonateButton,
@@ -98,9 +105,8 @@ export function initSettingsPanel({
     if (viewMetricSelect) {
       viewMetricSelect.value = settings.viewMetric || "focus";
     }
-    if (livestreamSitesInput) {
-      const sites = Array.isArray(settings.livestreamSites) ? settings.livestreamSites : [];
-      livestreamSitesInput.value = sites.join("\n");
+    if (livestreamSitesList) {
+      renderLivestreamSiteRows(settings.livestreamSites || []);
     }
   }
 
@@ -108,19 +114,118 @@ export function initSettingsPanel({
     const next = {
       viewMetric: viewMetricSelect ? viewMetricSelect.value : undefined,
     };
-    if (livestreamSitesInput) {
-      next.livestreamSites = Array.from(
-        new Set(
-          livestreamSitesInput.value
-            .split("\n")
-            .map((line) => normalizeLivestreamHost(line))
-            .filter(Boolean),
-        ),
-      );
+    if (livestreamSitesList) {
+      next.livestreamSites = collectLivestreamSites();
     }
     const updated = await updateSettings(next);
     if (onSitesChanged) {
       await onSitesChanged(updated);
+    }
+  }
+
+  function normalizeColor(value) {
+    if (typeof value !== "string") return "";
+    const trimmed = value.trim();
+    return /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(trimmed) ? trimmed : "";
+  }
+
+  function createSiteRow(entry, siteDefaults) {
+    const row = document.createElement("div");
+    row.classList.add("site-row");
+
+    const hostInput = document.createElement("input");
+    hostInput.type = "text";
+    hostInput.placeholder = "twitch.tv";
+    hostInput.value = entry.host || "";
+    hostInput.setAttribute("data-field", "host");
+
+    const labelInput = document.createElement("input");
+    labelInput.type = "text";
+    labelInput.placeholder = "Label";
+    labelInput.value = entry.label || siteDefaults.label || "";
+    labelInput.setAttribute("data-field", "label");
+
+    const abbrInput = document.createElement("input");
+    abbrInput.type = "text";
+    abbrInput.placeholder = "Abbr";
+    abbrInput.value = entry.abbr || siteDefaults.abbr || "";
+    abbrInput.setAttribute("data-field", "abbr");
+
+    const colorInput = document.createElement("input");
+    colorInput.type = "color";
+    colorInput.value = normalizeColor(entry.color) || siteDefaults.color || "#64748b";
+    colorInput.setAttribute("data-field", "color");
+
+    const removeButton = document.createElement("button");
+    removeButton.type = "button";
+    removeButton.classList.add("ghost");
+    removeButton.textContent = "Remove";
+    removeButton.addEventListener("click", async () => {
+      row.remove();
+      await persistSettings();
+      await loadSettings();
+      showSettingsFeedback("Settings saved successfully.");
+    });
+
+    row.appendChild(hostInput);
+    row.appendChild(labelInput);
+    row.appendChild(abbrInput);
+    row.appendChild(colorInput);
+    row.appendChild(removeButton);
+    return row;
+  }
+
+  function collectLivestreamSites() {
+    if (!livestreamSitesList) return [];
+    const rows = Array.from(livestreamSitesList.querySelectorAll(".site-row"));
+    const entries = [];
+    rows.forEach((row) => {
+      const host = normalizeLivestreamHost(
+        row.querySelector('[data-field="host"]')?.value || "",
+      );
+      if (!host) return;
+      const label = (row.querySelector('[data-field="label"]')?.value || "").trim();
+      const abbr = (row.querySelector('[data-field="abbr"]')?.value || "").trim();
+      const color = normalizeColor(row.querySelector('[data-field="color"]')?.value || "");
+      entries.push({
+        host,
+        label,
+        abbr,
+        color,
+      });
+    });
+    const byHost = new Map();
+    entries.forEach((entry) => {
+      if (!byHost.has(entry.host)) {
+        byHost.set(entry.host, entry);
+        return;
+      }
+      byHost.set(entry.host, { ...byHost.get(entry.host), ...entry });
+    });
+    return Array.from(byHost.values());
+  }
+
+  function renderLivestreamSiteRows(rawSites) {
+    if (!livestreamSitesList) return;
+    const entries = normalizeLivestreamSiteEntries(rawSites);
+    const sites = buildSites(entries);
+    livestreamSitesList.innerHTML = "";
+    entries.forEach((entry) => {
+      const siteDefaults = sites[entry.host] || {
+        label: "",
+        abbr: "",
+        color: "#64748b",
+      };
+      const row = createSiteRow(entry, siteDefaults);
+      livestreamSitesList.appendChild(row);
+    });
+    if (!entries.length) {
+      const row = createSiteRow({ host: "", label: "", abbr: "", color: "" }, {
+        label: "",
+        abbr: "",
+        color: "#64748b",
+      });
+      livestreamSitesList.appendChild(row);
     }
   }
 
@@ -218,6 +323,7 @@ export function initSettingsPanel({
 
     const importLabel = importInput.closest("label");
     if (!allowFileImport) {
+      const trigger = importButton || importLabel || importInput;
       const handlePopupImport = async (event) => {
         event.preventDefault();
         if (window.showOpenFilePicker) {
@@ -244,8 +350,12 @@ export function initSettingsPanel({
         openOptionsPage();
         showSettingsFeedback("Import opens in the settings tab.");
       };
-      importInput.addEventListener("click", handlePopupImport);
-      if (importLabel) importLabel.addEventListener("click", handlePopupImport);
+      if (trigger) trigger.addEventListener("click", handlePopupImport);
+    }
+    if (importButton) {
+      importButton.addEventListener("click", () => {
+        importInput.click();
+      });
     }
 
     importInput.addEventListener("change", async (event) => {
@@ -264,11 +374,25 @@ export function initSettingsPanel({
     });
   }
 
-  if (livestreamSitesInput) {
-    livestreamSitesInput.addEventListener("change", async () => {
+  if (livestreamSitesList) {
+    livestreamSitesList.addEventListener("change", async () => {
       await persistSettings();
       await loadSettings();
       showSettingsFeedback("Settings saved successfully.");
+    });
+  }
+
+  if (addLivestreamSiteButton) {
+    addLivestreamSiteButton.addEventListener("click", () => {
+      if (!livestreamSitesList) return;
+      const row = createSiteRow({ host: "", label: "", abbr: "", color: "" }, {
+        label: "",
+        abbr: "",
+        color: "#64748b",
+      });
+      livestreamSitesList.appendChild(row);
+      const hostInput = row.querySelector('[data-field="host"]');
+      if (hostInput) hostInput.focus();
     });
   }
 
