@@ -5,8 +5,8 @@
 </div>
 <br/>
 <div align="center">
-  <img src="docs/screenshots/overview.png" width="320" />
-  <img src="docs/screenshots/details.png" width="320" />
+  <img src="docs/screenshots/overview.jpg" width="320" />
+  <img src="docs/screenshots/details.jpg" width="320" />
 </div>
 <br/>
 
