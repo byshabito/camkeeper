@@ -23,8 +23,12 @@ body {
   height: 100%;
 }
 
+html {
+  background: var(--bg);
+}
+
 body {
-  margin: 0;
+  margin: 0 auto;
   padding: 14px;
   width: 380px;
   min-width: 340px;
