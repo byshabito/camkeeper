@@ -16,11 +16,17 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { getSites, getSiteKeys, setSitesFromSettings } from "../domain/sites.js";
-import { parseCamInput, parseSocialInput, parseSocialUrl, parseUrl, buildSocialUrl } from "../domain/urls.js";
-import { SOCIAL_OPTIONS } from "../domain/socialOptions.js";
-import { createBulkSelection } from "../bulkSelection.js";
-import { createPopupDialogs } from "./dialogs.js";
+import { getSites, getSiteKeys, setSitesFromSettings } from "../../domain/sites.js";
+import {
+  parseCamInput,
+  parseSocialInput,
+  parseSocialUrl,
+  parseUrl,
+  buildSocialUrl,
+} from "../../domain/urls.js";
+import { SOCIAL_OPTIONS } from "../../domain/socialOptions.js";
+import { createBulkSelection } from "../../bulkSelection.js";
+import { createPopupDialogs } from "../../popup/dialogs.js";
 import {
   formatDuration,
   formatSocialHandle,
@@ -32,11 +38,11 @@ import {
   selectFormViewModel,
   selectAttachFormViewModel,
   selectFolderOptionsViewModel,
-} from "./selectors.js";
-import { findDuplicateProfile } from "../domain/profiles.js";
-import { normalizeText } from "../domain/text.js";
-import { SETTINGS_DEFAULTS } from "../domain/settings.js";
-import { getSettings } from "../repo/settings.js";
+} from "../selectors/popupSelectors.js";
+import { findDuplicateProfile } from "../../domain/profiles.js";
+import { normalizeText } from "../../domain/text.js";
+import { SETTINGS_DEFAULTS } from "../../domain/settings.js";
+import { getSettings } from "../../repo/settings.js";
 import {
   deleteProfileById,
   deleteProfilesByIds,
@@ -50,28 +56,29 @@ import {
   saveProfileForm,
   saveSortPreference,
   toggleProfilePin,
-} from "./actions.js";
+} from "../../popup/actions.js";
 import {
   clearFormError,
   applyFormViewModel,
   createFormRow,
   createFolderSelectHandlers,
-  createListControlHandlers,
-  createSearchHoverHandlers,
-  renderFolderManager,
-  renderFolderFilter,
-  renderFolderSelect,
-  renderProfileDetail,
-  renderProfileList,
   getFormData,
   getAttachSelection,
-  setSettingsToggleState,
-  setViewVisibility,
+  renderFolderSelect,
   showFormError,
-} from "./effects.js";
-import { createPopupState } from "./state.js";
-import { createViewStateMachine } from "./viewState.js";
-import { initSettingsPanel } from "./settingsPanel.js";
+} from "../components/profileForm.js";
+import {
+  createListControlHandlers,
+  createSearchHoverHandlers,
+  renderFolderFilter,
+} from "../components/listControls.js";
+import { renderFolderManager } from "../components/folderManager.js";
+import { renderProfileDetail } from "../components/profileDetail.js";
+import { renderProfileList } from "../components/profileList.js";
+import { setSettingsToggleState, setViewVisibility } from "../components/viewVisibility.js";
+import { createPopupState } from "../state/popupState.js";
+import { createViewStateMachine } from "../state/viewState.js";
+import { initSettingsPanel } from "../components/settingsPanel.js";
 
 export function initPopupController({ elements }) {
   const {

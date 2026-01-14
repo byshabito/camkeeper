@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { initSettingsPanel } from "../popup/settingsPanel.js";
+import { initSettingsPanel } from "../components/settingsPanel.js";
 
 export function initOptionsController() {
   const elements = {

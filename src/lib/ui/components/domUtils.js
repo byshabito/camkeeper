@@ -16,6 +16,23 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { initOptionsController } from "../../lib/ui/controllers/optionsController.js";
+export function clearContainer(container) {
+  if (!container) return;
+  while (container.firstChild) container.removeChild(container.firstChild);
+}
 
-initOptionsController();
+function createSvgElement(svgString) {
+  if (!svgString) return null;
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(svgString, "image/svg+xml");
+  const svg = doc.documentElement;
+  if (!svg || svg.nodeName === "parsererror") return null;
+  return document.importNode(svg, true);
+}
+
+export function applySvg(container, svgString) {
+  const svg = createSvgElement(svgString);
+  if (!svg) return false;
+  container.appendChild(svg);
+  return true;
+}

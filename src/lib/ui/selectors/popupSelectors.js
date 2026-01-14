@@ -16,11 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { sortBySelection } from "../sort.js";
-import { matchQuery } from "../domain/profiles.js";
-import { sanitizeCams } from "../domain/sanitizers.js";
-import { normalizeWebsiteHandle } from "../domain/urls.js";
-import { normalizeText } from "../domain/text.js";
+import { sortBySelection } from "../../sort.js";
+import { matchQuery } from "../../domain/profiles.js";
+import { sanitizeCams } from "../../domain/sanitizers.js";
+import { normalizeWebsiteHandle } from "../../domain/urls.js";
+import { normalizeText } from "../../domain/text.js";
 
 export function normalizeFolderKey(folderName) {
   return normalizeText(folderName);
