@@ -588,6 +588,7 @@ export function initPopupController({ elements }) {
       parseSocialInput,
       selectedAttachId: selectedId || "",
     });
+    updateFolderOptions(state.getValue("attachProfiles"), viewModel.form.folder);
   }
 
   function openEditor(profile, seedCams, source = "list", profiles = []) {
