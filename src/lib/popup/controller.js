@@ -149,6 +149,8 @@ export function initPopupController({ elements }) {
   let sites = getSites();
   const SORT_OPTIONS = new Set(["most", "month", "recent", "updated", "name"]);
   const state = createPopupState();
+  let renderListToken = 0;
+  let renderFolderToken = 0;
 
   const urlParams = new URLSearchParams(window.location.search);
   const initialTab = urlParams.get("tab");
@@ -499,11 +501,14 @@ export function initPopupController({ elements }) {
 
   async function renderFolderManagerView(prefetchedProfiles = null) {
     if (!folderList) return;
+    const token = ++renderFolderToken;
     const profiles = prefetchedProfiles || (await fetchProfiles());
+    if (token !== renderFolderToken) return;
     const viewModel = selectFolderManagerViewModel(
       profiles,
       state.getValue("preferredFolderOrder"),
     );
+    if (token !== renderFolderToken) return;
     renderFolderManager({
       folders: viewModel.folders,
       elements: { folderList, folderEmpty },
@@ -515,7 +520,7 @@ export function initPopupController({ elements }) {
         renameFolder(folder.name, nextValue);
       },
       onDelete: async (folder) => {
-      const confirmed = await dialogs.confirmDeleteFolder(folder.name);
+        const confirmed = await dialogs.confirmDeleteFolder(folder.name);
         if (!confirmed) return;
         deleteFolder(folder.name);
       },
@@ -636,7 +641,9 @@ export function initPopupController({ elements }) {
   }
 
   async function renderList() {
+    const token = ++renderListToken;
     const profiles = await fetchProfiles();
+    if (token !== renderListToken) return;
     const profilesById = new Map(profiles.map((profile) => [profile.id, profile]));
     updateFolderOptions(profiles);
     const listControls = selectListControlsViewModel({
@@ -651,6 +658,7 @@ export function initPopupController({ elements }) {
       sites,
       getPlatformIconSvg,
     });
+    if (token !== renderListToken) return;
     renderProfileList({
       profiles: viewModel.profiles,
       elements: { profileList, emptyState },
