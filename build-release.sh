@@ -75,7 +75,7 @@ with open(path, "w", encoding="utf-8") as f:
 PY
 }
 
-update_options_metadata "${ROOT_DIR}/src/lib/popup/settingsPanel.js"
+update_options_metadata "${ROOT_DIR}/src/lib/ui/components/settingsPanel.js"
 
 mkdir -p "${DIST_DIR}"
 rm -rf "${TMP_CHROME}" "${TMP_FIREFOX}"
