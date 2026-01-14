@@ -1,7 +1,7 @@
 {
   "name": "CamKeeper",
   "description": "Cross-site creator profile manager",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "developer": {
     "name": "Shabito",
     "url": "https://github.com/byshabito/camkeeper"

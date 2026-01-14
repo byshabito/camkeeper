@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.2
+
+- Preserve folders when attaching to an exisiting profile
+
 ## v1.0.1
 
 - Add configurable livestream site list with Twitch/YouTube defaults
