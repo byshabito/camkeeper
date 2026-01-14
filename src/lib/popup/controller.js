@@ -310,36 +310,66 @@ export function initPopupController({ elements }) {
     },
   });
 
-  async function loadSocialIcons() {
-    const entries = Object.entries(SOCIAL_ICON_PATHS);
+  function readIconCache(storageKey) {
+    try {
+      const raw = window.sessionStorage?.getItem(storageKey);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (error) {
+      return {};
+    }
+  }
+
+  function hydrateIconCache(cache, storageKey) {
+    const stored = readIconCache(storageKey);
+    Object.entries(stored).forEach(([key, value]) => {
+      if (!cache.has(key) && typeof value === "string" && value) {
+        cache.set(key, value);
+      }
+    });
+  }
+
+  function persistIconCache(cache, storageKey) {
+    if (!window.sessionStorage) return;
+    try {
+      const payload = {};
+      cache.forEach((value, key) => {
+        if (typeof value === "string" && value) {
+          payload[key] = value;
+        }
+      });
+      window.sessionStorage.setItem(storageKey, JSON.stringify(payload));
+    } catch (error) {
+      return;
+    }
+  }
+
+  async function loadIconSet(paths, cache, storageKey) {
+    hydrateIconCache(cache, storageKey);
+    const entries = Object.entries(paths).filter(([key]) => !cache.has(key));
+    if (!entries.length) return;
     await Promise.all(
       entries.map(async ([key, path]) => {
         try {
           const response = await fetch(chrome.runtime.getURL(path));
           if (!response.ok) return;
           const text = await response.text();
-          SOCIAL_ICON_CACHE.set(key, text);
+          cache.set(key, text);
         } catch (error) {
-          // Ignore icon loading errors and fall back to link icon.
+          return;
         }
       }),
     );
+    persistIconCache(cache, storageKey);
+  }
+
+  async function loadSocialIcons() {
+    await loadIconSet(SOCIAL_ICON_PATHS, SOCIAL_ICON_CACHE, SOCIAL_ICON_STORAGE_KEY);
   }
 
   async function loadPlatformIcons() {
-    const entries = Object.entries(PLATFORM_ICON_PATHS);
-    await Promise.all(
-      entries.map(async ([key, path]) => {
-        try {
-          const response = await fetch(chrome.runtime.getURL(path));
-          if (!response.ok) return;
-          const text = await response.text();
-          PLATFORM_ICON_CACHE.set(key, text);
-        } catch (error) {
-          // Ignore icon loading errors and fall back to text.
-        }
-      }),
-    );
+    await loadIconSet(PLATFORM_ICON_PATHS, PLATFORM_ICON_CACHE, PLATFORM_ICON_STORAGE_KEY);
   }
 
   function getPlatformIconSvg(site) {
@@ -352,6 +382,7 @@ export function initPopupController({ elements }) {
   }
 
   const SOCIAL_ICON_CACHE = new Map();
+  const SOCIAL_ICON_STORAGE_KEY = "camkeeper_social_icons_v1";
   const SOCIAL_ICON_PATHS = {
     instagram: "src/assets/social-icons/instagram.svg",
     x: "src/assets/social-icons/x.svg",
@@ -365,6 +396,7 @@ export function initPopupController({ elements }) {
   };
 
   const PLATFORM_ICON_CACHE = new Map();
+  const PLATFORM_ICON_STORAGE_KEY = "camkeeper_platform_icons_v1";
   const PLATFORM_ICON_PATHS = {};
 
   function updateFolderOptions(profiles, currentFolder) {
