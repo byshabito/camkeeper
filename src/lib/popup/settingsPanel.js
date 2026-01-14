@@ -306,6 +306,10 @@ export function initSettingsPanel({
     exportButton.addEventListener("click", async () => {
       try {
         const profiles = await getProfiles();
+        if (!profiles.length) {
+          showBackupFeedback("No profiles to export.");
+          return;
+        }
         const data = JSON.stringify(profiles, null, 2);
         const blob = new Blob([data], { type: "application/json" });
         const url = URL.createObjectURL(blob);
@@ -316,7 +320,7 @@ export function initSettingsPanel({
         anchor.click();
         anchor.remove();
         URL.revokeObjectURL(url);
-        showBackupFeedback("Backup exported.");
+        showBackupFeedback(`Exported ${profiles.length} profiles.`);
       } catch (error) {
         console.error("Export failed:", error);
         showBackupFeedback("Export failed.");
@@ -342,7 +346,11 @@ export function initSettingsPanel({
           .map((item) => sanitizeProfile(item));
         if (!imported.length) throw new Error("No profiles found");
         await saveProfiles(imported);
-        showBackupFeedback("Import complete.");
+        const skipped = data.length - imported.length;
+        const message = skipped
+          ? `Imported ${imported.length} profiles. ${skipped} skipped.`
+          : `Imported ${imported.length} profiles.`;
+        showBackupFeedback(message);
         if (onProfilesChanged) await onProfilesChanged();
       } catch (error) {
         console.error("Import failed:", error);
