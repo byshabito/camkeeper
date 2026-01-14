@@ -22,10 +22,40 @@ export const STORAGE_KEY = "camkeeper_profiles_v1";
 const storage = chrome.storage.local;
 const syncStorage = chrome.storage?.sync;
 
+function getStorageError() {
+  return chrome.runtime?.lastError || null;
+}
+
+function reportStorageError(action, error) {
+  if (!error) return;
+  console.warn(`[CamKeeper] Storage ${action} failed`, error);
+}
+
 async function readStorage(area, keys) {
   if (!area) return {};
   return new Promise((resolve) => {
-    area.get(keys, (res) => resolve(res || {}));
+    area.get(keys, (res) => {
+      const error = getStorageError();
+      if (error) {
+        reportStorageError("read", error);
+        resolve({});
+        return;
+      }
+      resolve(res || {});
+    });
+  });
+}
+
+async function writeStorage(area, payload) {
+  if (!area) return;
+  await new Promise((resolve) => {
+    area.set(payload, () => {
+      const error = getStorageError();
+      if (error) {
+        reportStorageError("write", error);
+      }
+      resolve();
+    });
   });
 }
 
@@ -64,7 +94,7 @@ async function loadProfiles() {
 
 async function persistProfiles(profiles) {
   const next = profiles || [];
-  await new Promise((resolve) => storage.set({ [STORAGE_KEY]: next }, resolve));
+  await writeStorage(storage, { [STORAGE_KEY]: next });
   return next;
 }
 
@@ -98,29 +128,21 @@ export async function deleteProfile(id) {
 }
 
 export async function getSettings() {
-  const data = await new Promise((resolve) => {
-    storage.get(SETTINGS_KEY, (res) => resolve(res));
-  });
+  const data = await readStorage(storage, SETTINGS_KEY);
   return data[SETTINGS_KEY] || {};
 }
 
 export async function saveSettings(settings) {
-  await new Promise((resolve) => {
-    storage.set({ [SETTINGS_KEY]: settings }, resolve);
-  });
+  await writeStorage(storage, { [SETTINGS_KEY]: settings });
   return settings;
 }
 
 export async function getState(key) {
-  const data = await new Promise((resolve) => {
-    storage.get(key, (res) => resolve(res));
-  });
+  const data = await readStorage(storage, key);
   return data[key];
 }
 
 export async function setState(key, value) {
-  await new Promise((resolve) => {
-    storage.set({ [key]: value }, resolve);
-  });
+  await writeStorage(storage, { [key]: value });
   return value;
 }

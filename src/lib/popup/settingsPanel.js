@@ -254,10 +254,29 @@ export function initSettingsPanel({
     }, 1600);
   }
 
+  async function copyTextToClipboard(value) {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return;
+    }
+    const textArea = document.createElement("textarea");
+    textArea.value = value;
+    textArea.setAttribute("readonly", "true");
+    textArea.style.position = "absolute";
+    textArea.style.left = "-9999px";
+    document.body.appendChild(textArea);
+    textArea.select();
+    const success = document.execCommand("copy");
+    textArea.remove();
+    if (!success) {
+      throw new Error("Copy failed");
+    }
+  }
+
   async function copyBitcoinValue(target) {
     const value = target.getAttribute("data-copy-value") || target.textContent || "";
     if (!value) return;
-    await navigator.clipboard.writeText(value);
+    await copyTextToClipboard(value);
     showBitcoinToast("Copied to clipboard");
   }
 
@@ -285,17 +304,23 @@ export function initSettingsPanel({
 
   if (exportButton) {
     exportButton.addEventListener("click", async () => {
-      const profiles = await getProfiles();
-    const data = JSON.stringify(profiles, null, 2);
-    const blob = new Blob([data], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `camkeeper-profiles_${formatBackupTimestamp(new Date())}.json`;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(url);
+      try {
+        const profiles = await getProfiles();
+        const data = JSON.stringify(profiles, null, 2);
+        const blob = new Blob([data], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = `camkeeper-profiles_${formatBackupTimestamp(new Date())}.json`;
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+        URL.revokeObjectURL(url);
+        showBackupFeedback("Backup exported.");
+      } catch (error) {
+        console.error("Export failed:", error);
+        showBackupFeedback("Export failed.");
+      }
     });
   }
 
@@ -312,12 +337,16 @@ export function initSettingsPanel({
         const text = await file.text();
         const data = JSON.parse(text);
         if (!Array.isArray(data)) throw new Error("Invalid data");
-        const imported = data.map((item) => sanitizeProfile(item));
+        const imported = data
+          .filter((item) => item && typeof item === "object")
+          .map((item) => sanitizeProfile(item));
+        if (!imported.length) throw new Error("No profiles found");
         await saveProfiles(imported);
         showBackupFeedback("Import complete.");
         if (onProfilesChanged) await onProfilesChanged();
       } catch (error) {
         console.error("Import failed:", error);
+        showBackupFeedback("Import failed. Check the JSON file.");
       }
     };
 
@@ -422,6 +451,7 @@ export function initSettingsPanel({
         await copyBitcoinValue(value);
       } catch (error) {
         console.error("Copy failed:", error);
+        showBitcoinToast("Copy failed.");
       }
     });
   });
