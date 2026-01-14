@@ -236,7 +236,7 @@ export function initSettingsPanel({
       2,
     );
     const fileName = `camkeeper-profiles-${new Date().toISOString().split("T")[0]}.json`;
-    if (!navigator.clipboard?.writeText) {
+    try {
       const blob = new Blob([payload], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
@@ -247,11 +247,15 @@ export function initSettingsPanel({
       link.remove();
       URL.revokeObjectURL(url);
       showBackupFeedback(`Exported ${profiles.length} profile${profiles.length === 1 ? "" : "s"}.`);
-      return;
+    } catch (error) {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(payload);
+        const profileLabel = `${profiles.length} profile${profiles.length === 1 ? "" : "s"}`;
+        showBackupFeedback(`Copied ${profileLabel} to clipboard.`);
+        return;
+      }
+      showBackupFeedback("Export failed. Please try again.");
     }
-    await navigator.clipboard.writeText(payload);
-    const profileLabel = `${profiles.length} profile${profiles.length === 1 ? "" : "s"}`;
-    showBackupFeedback(`Copied ${profileLabel} to clipboard.`);
   }
 
   async function handleImport() {
@@ -321,6 +325,7 @@ export function initSettingsPanel({
 
   function openBitcoinModal() {
     if (!bitcoinModal) return;
+    bitcoinModal.classList.remove("hidden");
     bitcoinModal.classList.add("open");
     bitcoinModal.setAttribute("aria-hidden", "false");
   }
@@ -328,6 +333,7 @@ export function initSettingsPanel({
   function closeBitcoinModal() {
     if (!bitcoinModal) return;
     bitcoinModal.classList.remove("open");
+    bitcoinModal.classList.add("hidden");
     bitcoinModal.setAttribute("aria-hidden", "true");
   }
 
@@ -396,19 +402,17 @@ export function initSettingsPanel({
     {
       element: addLivestreamSiteButton,
       event: "click",
-      handler: async () => {
+      handler: () => {
         if (!livestreamSitesList) return;
-        const sites = buildSites(collectLivestreamSites());
         const defaultSite = {
           host: "",
           label: "",
           abbr: "",
           color: "#64748b",
         };
-        livestreamSitesList.appendChild(createSiteRow({}, defaultSite));
-        await persistSettings();
-        await loadSettings();
-        showSettingsFeedback("Settings saved successfully.");
+        const row = createSiteRow({}, defaultSite);
+        livestreamSitesList.appendChild(row);
+        row.querySelector('[data-field="host"]')?.focus();
       },
     },
     {
