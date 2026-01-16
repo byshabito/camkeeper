@@ -22,9 +22,8 @@ Linting:
 - If you add one, document the command here.
 
 Testing:
-- No automated test runner is configured.
-- Single-test command: not applicable.
-- If you add tests, document how to run them here.
+- Run all tests: `bun test`.
+- Single-test command: `bun test tests/domain/urls.test.js`.
 
 Manual dev install:
 - Chrome: `chrome://extensions` → Developer mode → Load unpacked → repo root.
