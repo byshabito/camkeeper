@@ -394,6 +394,7 @@ export function initPopupController({ elements }) {
   });
 
   formController.updateViewState(viewState);
+  detailController.updateViewState(viewState);
   listController = createListControllerInstance();
 
   async function loadSocialIcons() {

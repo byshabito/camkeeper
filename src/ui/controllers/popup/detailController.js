@@ -25,9 +25,11 @@ export function createDetailController({
   onOpenEditor,
   toggleProfilePin,
 }) {
+  let currentViewState = viewState;
+
   function bindHandlers() {
     if (detailBackButton) {
-      detailBackButton.addEventListener("click", () => viewState.go("list"));
+      detailBackButton.addEventListener("click", () => currentViewState?.go("list"));
     }
 
     if (detailEditButton) {
@@ -47,7 +49,12 @@ export function createDetailController({
     }
   }
 
+  function updateViewState(nextViewState) {
+    currentViewState = nextViewState;
+  }
+
   return {
     bindHandlers,
+    updateViewState,
   };
 }
