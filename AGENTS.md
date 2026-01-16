@@ -12,7 +12,8 @@
 
 ## Build, Lint, and Test Commands
 
-- Release build: `./build-release.sh <version>`
+Release build:
+- `./build-release.sh <version>`
 - Example: `./build-release.sh 1.0.0`
 - Requirements: `bash`, `python`, and `zip` available on PATH.
 - The script updates manifest versions and stamps `RELEASE_TIMESTAMP` in options UI.
@@ -22,8 +23,10 @@ Linting:
 - If you add one, document the command here.
 
 Testing:
+- Install test deps: `bun install`.
 - Run all tests: `bun test`.
 - Single-test command: `bun test tests/domain/urls.test.js`.
+- Tests live in `tests/` and use Bun + `fast-check`.
 
 Manual dev install:
 - Chrome: `chrome://extensions` → Developer mode → Load unpacked → repo root.
@@ -47,6 +50,7 @@ Manual dev install:
 - Include the `.js` extension in relative imports.
 - Group imports: external first (if any), then internal relative imports.
 - Prefer named exports to default exports.
+- Avoid circular dependencies; keep domains layered (`domain` → `repo` → UI).
 
 ### Naming Conventions
 
@@ -77,6 +81,7 @@ Manual dev install:
 - Keep domain logic inside `src/lib/domain/` where possible.
 - UI and entry points should call repos or domain helpers, not raw storage.
 - Keep configuration defaults in domain modules.
+- Avoid mutating shared state outside dedicated stores/controllers.
 
 ### UI and DOM Conventions
 
@@ -118,8 +123,10 @@ Manual dev install:
 
 ## Testing Guidelines
 
-- No framework is configured; no coverage requirements are enforced.
-- If you add tests, keep them lightweight and document execution.
+- Tests are in `tests/` and run with Bun.
+- Property-based tests use `fast-check`.
+- Prefer unit tests for domain logic and small helpers.
+- Keep tests deterministic; avoid network calls.
 - Include manual verification steps in PRs.
 
 ## Build and Release Notes
