@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.3
+
+- Add comprehensive unit and property test coverage across domain, repo, UI, and background logic
+
 ## v1.0.2
 
 - Preserve folders when attaching to an exisiting profile
