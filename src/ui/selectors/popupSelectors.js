@@ -80,8 +80,9 @@ export function getFolderStats(profiles, preferredOrder) {
 }
 
 export function matchesFolder(profile, selectedFolderKey) {
-  if (!selectedFolderKey) return true;
-  return normalizeText(profile.folder) === selectedFolderKey;
+  const selectedKey = normalizeText(selectedFolderKey);
+  if (!selectedKey) return true;
+  return normalizeText(profile.folder) === selectedKey;
 }
 
 export function selectProfiles(profiles, { query, folderKey, sortKey }) {
