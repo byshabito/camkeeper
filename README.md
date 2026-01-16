@@ -8,6 +8,10 @@
   <img src="docs/screenshots/details.jpg" width="800" />
 </div>
 <br/>
+<div align="center">
+  <img src="docs/screenshots/overview.jpg" width="800" />
+</div>
+<br/>
 
 CamKeeper is a browser extension that helps you organize and manage creator profiles you save across multiple platforms.
 
