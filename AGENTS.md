@@ -4,8 +4,12 @@
 
 - `src/` contains the extension source.
 - `src/entries/` holds entry points for `background/`, `popup/`, and `options/`.
-- `src/lib/` provides shared utilities, domain logic (`domain/`), and repos (`repo/`).
-- `src/lib/db.js` is the single storage wrapper for `chrome.storage`.
+- `src/background/` hosts the service worker logic.
+- `src/domain/` contains domain models, selectors, and validation helpers.
+- `src/repo/` contains storage repositories backed by `src/repo/db.js`.
+- `src/ui/` contains UI controllers, components, selectors, and state.
+- `src/useCases/` contains cross-layer workflows and orchestration helpers.
+- `src/repo/db.js` is the single storage wrapper for `chrome.storage`.
 - `icons/` stores extension icons used by the manifest.
 - `manifest.json` and `manifest.firefox.json` define Chrome/Firefox builds.
 - `dist/` is created by the release build script and should not be edited.
@@ -77,8 +81,8 @@ Manual dev install:
 
 ### State, Storage, and Domain Boundaries
 
-- Persisted data should go through `src/lib/db.js` or repo helpers.
-- Keep domain logic inside `src/lib/domain/` where possible.
+- Persisted data should go through `src/repo/db.js` or repo helpers.
+- Keep domain logic inside `src/domain/` where possible.
 - UI and entry points should call repos or domain helpers, not raw storage.
 - Keep configuration defaults in domain modules.
 - Avoid mutating shared state outside dedicated stores/controllers.
@@ -150,6 +154,6 @@ Manual dev install:
 ## Notes
 
 - Background entry point: `src/entries/background/index.js` (module service worker).
-- Popup entry point: `src/entries/popup/index.js`.
-- Options entry point: `src/entries/options/index.js`.
+- Popup entry point: `src/entries/popup/script.js`.
+- Options entry point: `src/entries/options/script.js`.
 - Release metadata is injected by `./build-release.sh`.
