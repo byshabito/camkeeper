@@ -3,6 +3,7 @@
 ## v1.0.3
 
 - Add comprehensive unit and property test coverage across domain, repo, UI, and background logic
+- Refactor popup UI into modular controllers and domain/use-case layers
 
 ## v1.0.2
 
