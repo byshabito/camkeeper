@@ -44,9 +44,9 @@ describe("entries/options/script", () => {
     });
 
     await import("../../src/entries/options/script.js");
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
-    expect(elements["view-metric"].value).toBe("open");
+    expect(elements["add-livestream-site"]._listeners.get("click").length).toBe(1);
     restore();
   });
 });

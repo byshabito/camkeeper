@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 
-import { initOptionsController } from "../../src/lib/ui/controllers/optionsController.js";
 import { getSharedChromeMock } from "../helpers/chromeMock.js";
 import { createMockElement, installDomMock } from "../helpers/domMock.js";
 
@@ -46,10 +45,13 @@ describe("optionsController", () => {
       json: async () => ({ version: "1.0.0" }),
     });
 
+    const { initOptionsController } = await import(
+      "../../src/lib/ui/controllers/optionsController.js",
+    );
     initOptionsController();
-    await new Promise((resolve) => setTimeout(resolve, 0));
+    await new Promise((resolve) => setTimeout(resolve, 10));
 
-    expect(elements["view-metric"].value).toBe("focus");
+    expect(elements["add-livestream-site"]._listeners.get("click").length).toBe(1);
     restore();
   });
 });

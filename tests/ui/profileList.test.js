@@ -44,4 +44,29 @@ describe("profileList", () => {
     expect(toggled).toContain("pin:one");
     restore();
   });
+
+  test("shows empty state when list empty", () => {
+    const { restore } = installDomMock();
+    const profileList = createMockElement("ul");
+    const emptyState = createMockElement("div");
+    const selection = {
+      isActive: () => false,
+      isSelected: () => false,
+      toggleSelection: () => {},
+    };
+
+    renderProfileList({
+      profiles: [],
+      elements: { profileList, emptyState },
+      selection,
+      getPinIconSvg: () => "",
+      onPinToggle: async () => {},
+      onOpenDetail: () => {},
+      emptyMessage: "No profiles",
+    });
+
+    expect(emptyState.textContent).toBe("No profiles");
+    expect(emptyState.classList.contains("hidden")).toBe(false);
+    restore();
+  });
 });

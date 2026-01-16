@@ -20,4 +20,13 @@ describe("domUtils", () => {
     expect(applied).toBe(true);
     expect(container.children.length).toBe(1);
   });
+
+  test("applySvg returns false for empty input", () => {
+    const { restore } = installDomMock();
+    const container = createMockElement("div");
+    const applied = applySvg(container, "");
+    restore();
+    expect(applied).toBe(false);
+    expect(container.children.length).toBe(0);
+  });
 });

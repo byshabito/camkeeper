@@ -40,4 +40,21 @@ describe("folderManager", () => {
     expect(reordered[0]).toEqual(["fav", "fav"]);
     restore();
   });
+
+  test("shows empty state when no folders", () => {
+    const { restore } = installDomMock();
+    const folderList = createMockElement("div");
+    const folderEmpty = createMockElement("div");
+
+    renderFolderManager({
+      folders: [],
+      elements: { folderList, folderEmpty },
+      onRename: () => {},
+      onDelete: () => {},
+      onReorder: () => {},
+    });
+
+    expect(folderEmpty.classList.contains("hidden")).toBe(false);
+    restore();
+  });
 });
