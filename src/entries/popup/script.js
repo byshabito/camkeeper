@@ -16,7 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { initPopupController } from "../../lib/ui/controllers/popupController.js";
+import { initPopupController } from "../../ui/controllers/popupController.js";
 
 const elements = {
   listView: document.getElementById("list-view"),

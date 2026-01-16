@@ -9,8 +9,8 @@ import {
   getFormData,
   renderFolderSelect,
   showFormError,
-} from "../../src/lib/ui/components/profileForm.js";
-import { buildSites } from "../../src/lib/domain/sites.js";
+} from "../../src/ui/components/profileForm.js";
+import { buildSites } from "../../src/domain/sites.js";
 import { createMockElement, installDomMock } from "../helpers/domMock.js";
 
 const sites = buildSites(["twitch.tv"]);

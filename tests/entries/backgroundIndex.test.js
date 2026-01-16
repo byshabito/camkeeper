@@ -7,7 +7,7 @@ const chromeMock = getSharedChromeMock();
 
 describe("entries/background/index", () => {
   test("initializes background listeners", async () => {
-    ({ STORAGE_KEY } = await import("../../src/lib/db.js"));
+    ({ STORAGE_KEY } = await import("../../src/repo/db.js"));
     chromeMock.storage.local._store[STORAGE_KEY] = [];
     chromeMock.tabs = {
       query: async () => [{ id: 1, url: "https://twitch.tv/alpha" }],

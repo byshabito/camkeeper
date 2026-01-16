@@ -70,6 +70,9 @@ export function createMockElement(tagName = "div") {
     dispatchEvent(event) {
       const handlers = element._listeners.get(event.type) || [];
       handlers.forEach((handler) => handler(event));
+      if (event.type === "click" && typeof element.onclick === "function") {
+        element.onclick(event);
+      }
     },
     querySelector(selector) {
       return querySelector(element, selector, true);

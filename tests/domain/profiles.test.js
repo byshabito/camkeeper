@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { mergeProfiles, matchQuery, findDuplicateProfile } from "../../src/lib/domain/profiles.js";
+import { mergeProfiles, matchQuery, findDuplicateProfile } from "../../src/domain/profiles.js";
 
 describe("profiles", () => {
   test("matchQuery searches across fields", () => {

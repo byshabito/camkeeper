@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import fc from "fast-check";
 
-import { getDayStartMs, updateViewHistory } from "../../src/lib/domain/visits.js";
+import { getDayStartMs, updateViewHistory } from "../../src/domain/visits.js";
 
 describe("visits", () => {
   test("getDayStartMs returns midnight", () => {

@@ -15,7 +15,7 @@ function createElements(ids) {
 
 describe("popupController", () => {
   test("initializes with minimal DOM", async () => {
-    ({ STORAGE_KEY } = await import("../../src/lib/db.js"));
+    ({ STORAGE_KEY } = await import("../../src/repo/db.js"));
     chromeMock.storage.local._store[STORAGE_KEY] = [];
     chromeMock.tabs = { query: (_query, callback) => callback([]) };
     chromeMock.runtime.openOptionsPage = () => {};
@@ -118,7 +118,7 @@ describe("popupController", () => {
     });
 
     const { initPopupController } = await import(
-      "../../src/lib/ui/controllers/popupController.js",
+      "../../src/ui/controllers/popupController.js",
     );
     initPopupController({
       elements: {

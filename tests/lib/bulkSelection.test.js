@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { createBulkSelection } from "../../src/lib/bulkSelection.js";
+import { createBulkSelection } from "../../src/ui/bulkSelection.js";
 
 function createClassList() {
   const classes = new Set(["hidden"]);

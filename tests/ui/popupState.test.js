@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { createPopupState } from "../../src/lib/ui/state/popupState.js";
+import { createPopupState } from "../../src/ui/state/popupState.js";
 
 describe("popupState", () => {
   test("stores and retrieves values", () => {

@@ -4,7 +4,7 @@ import {
   createListControlHandlers,
   createSearchHoverHandlers,
   renderFolderFilter,
-} from "../../src/lib/ui/components/listControls.js";
+} from "../../src/ui/components/listControls.js";
 import { createMockElement, installDomMock } from "../helpers/domMock.js";
 
 describe("listControls", () => {

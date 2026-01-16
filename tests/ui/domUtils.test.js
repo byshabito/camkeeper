@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { applySvg, clearContainer } from "../../src/lib/ui/components/domUtils.js";
+import { applySvg, clearContainer } from "../../src/ui/components/domUtils.js";
 import { createMockElement, installDomMock } from "../helpers/domMock.js";
 
 describe("domUtils", () => {

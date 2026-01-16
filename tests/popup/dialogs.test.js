@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { createPopupDialogs } from "../../src/lib/popup/dialogs.js";
+import { createPopupDialogs } from "../../src/ui/popup/dialogs.js";
 import { createMockElement, installDomMock } from "../helpers/domMock.js";
 
 function createConfirmElements() {

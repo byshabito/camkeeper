@@ -4,8 +4,8 @@ import { getSharedChromeMock } from "../helpers/chromeMock.js";
 
 const chromeMock = getSharedChromeMock();
 
-const repo = await import("../../src/lib/repo/settings.js");
-const { SETTINGS_KEY } = await import("../../src/lib/db.js");
+const repo = await import("../../src/repo/settings.js");
+const { SETTINGS_KEY } = await import("../../src/repo/db.js");
 
 beforeEach(() => {
   chromeMock.storage.local.clear();

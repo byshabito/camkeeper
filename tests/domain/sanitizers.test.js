@@ -1,17 +1,17 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import fc from "fast-check";
 
-import { getSites, setSitesFromSettings } from "../../src/lib/domain/sites.js";
+import { getSiteRegistry, setSiteRegistry } from "../../src/domain/siteRegistry.js";
 import {
   migrateLegacyCams,
   sanitizeCams,
   sanitizeProfile,
   sanitizeSocials,
-} from "../../src/lib/domain/sanitizers.js";
+} from "../../src/domain/sanitizers.js";
 
 describe("sanitizers", () => {
   beforeEach(() => {
-    setSitesFromSettings(["twitch.tv", "youtube.com"]);
+    setSiteRegistry(["twitch.tv", "youtube.com"]);
   });
 
   test("sanitizeCams merges and filters cams", () => {
@@ -19,7 +19,7 @@ describe("sanitizers", () => {
       { site: "twitch.tv", username: "Alpha", viewMs: 1000, lastViewedAt: 10 },
       { site: "twitch.tv", username: "alpha", viewMs: 500, lastViewedAt: 30 },
       { site: "invalid.com", username: "nope" },
-    ]);
+    ], { sites: getSiteRegistry() });
     expect(result).toHaveLength(1);
     expect(result[0].viewMs).toBe(1500);
     expect(result[0].lastViewedAt).toBe(30);
@@ -38,7 +38,7 @@ describe("sanitizers", () => {
     const profile = sanitizeProfile({
       cams: [{ site: "twitch.tv", username: "Alpha" }],
       tags: [" One ", "One"],
-    });
+    }, { sites: getSiteRegistry() });
     expect(profile.name).toBe("alpha");
     expect(profile.tags).toEqual(["One"]);
   });
@@ -46,13 +46,13 @@ describe("sanitizers", () => {
   test("migrateLegacyCams maps legacy structures", () => {
     const migrated = migrateLegacyCams([
       { name: "Old", site: [["twitch.tv", "Alpha"]], tags: ["Test"] },
-    ]);
+    ], { sites: getSiteRegistry() });
     expect(migrated).toHaveLength(1);
     expect(migrated[0].cams[0]).toMatchObject({ site: "twitch.tv", username: "alpha" });
   });
 
   test("sanitizeCams property: outputs valid entries", () => {
-    const knownSites = Object.keys(getSites());
+    const knownSites = Object.keys(getSiteRegistry());
     const siteArb = fc.oneof(
       fc.constant(knownSites[0]),
       fc.constant(knownSites[1]),
@@ -70,7 +70,7 @@ describe("sanitizers", () => {
           }),
         ),
         (cams) => {
-          const sanitized = sanitizeCams(cams);
+          const sanitized = sanitizeCams(cams, { sites: getSiteRegistry() });
           const seenKeys = new Set();
           sanitized.forEach((cam) => {
             expect(knownSites.includes(cam.site)).toBe(true);

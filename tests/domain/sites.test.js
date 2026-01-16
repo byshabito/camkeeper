@@ -6,7 +6,7 @@ import {
   normalizeHost,
   normalizeLivestreamHost,
   normalizeLivestreamSiteEntries,
-} from "../../src/lib/domain/sites.js";
+} from "../../src/domain/sites.js";
 
 describe("sites", () => {
   test("normalizeHost removes common prefixes", () => {

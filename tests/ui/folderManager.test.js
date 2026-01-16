@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { renderFolderManager } from "../../src/lib/ui/components/folderManager.js";
+import { renderFolderManager } from "../../src/ui/components/folderManager.js";
 import { createMockElement, installDomMock } from "../helpers/domMock.js";
 
 describe("folderManager", () => {

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { setSettingsToggleState, setViewVisibility } from "../../src/lib/ui/components/viewVisibility.js";
+import { setSettingsToggleState, setViewVisibility } from "../../src/ui/components/viewVisibility.js";
 
 function createClassList() {
   const classes = new Set();

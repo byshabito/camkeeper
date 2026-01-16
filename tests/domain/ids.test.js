@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { createId } from "../../src/lib/domain/ids.js";
+import { createId } from "../../src/domain/ids.js";
 
 describe("ids", () => {
   test("createId returns a unique string", () => {

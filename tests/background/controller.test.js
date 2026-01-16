@@ -8,7 +8,7 @@ let queryCalls = 0;
 const chromeMock = getSharedChromeMock();
 
 beforeEach(async () => {
-  ({ STORAGE_KEY, SETTINGS_KEY } = await import("../../src/lib/db.js"));
+  ({ STORAGE_KEY, SETTINGS_KEY } = await import("../../src/repo/db.js"));
   chromeMock.storage.local.clear();
   chromeMock.storage.sync.clear();
   chromeMock.storage.local._store[STORAGE_KEY] = [];
@@ -46,7 +46,7 @@ describe("background/controller", () => {
     const originalTimeout = globalThis.setTimeout;
     globalThis.setTimeout = (handler) => handler();
 
-    const { initBackground } = await import("../../src/lib/background/controller.js");
+    const { initBackground } = await import("../../src/background/controller.js");
     initBackground();
     await new Promise((resolve) => setTimeout(resolve, 10));
     chromeMock._command("quick-add-profile");
@@ -58,7 +58,7 @@ describe("background/controller", () => {
   });
 
   test("storage change triggers settings reload", async () => {
-    const { initBackground } = await import("../../src/lib/background/controller.js");
+    const { initBackground } = await import("../../src/background/controller.js");
     initBackground();
     chromeMock.storage.local._store[SETTINGS_KEY] = { viewMetric: "open" };
     await chromeMock._onStorageChanged({

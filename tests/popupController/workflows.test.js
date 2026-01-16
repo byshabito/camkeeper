@@ -106,7 +106,7 @@ function setupPopupElements() {
 }
 
 beforeEach(async () => {
-  ({ SETTINGS_KEY, STORAGE_KEY } = await import("../../src/lib/db.js"));
+  ({ SETTINGS_KEY, STORAGE_KEY } = await import("../../src/repo/db.js"));
   chromeMock.storage.local.clear();
   chromeMock.storage.sync.clear();
   chromeMock.storage.local._store[SETTINGS_KEY] = {
@@ -132,7 +132,7 @@ beforeEach(async () => {
 describe("popupController workflows", () => {
   test("add button queries active tab", async () => {
     const { initPopupController } = await import(
-      "../../src/lib/ui/controllers/popupController.js",
+      "../../src/ui/controllers/popupController.js",
     );
     const elements = setupPopupElements();
     const { restore } = installDomMock(elements.domElements);
@@ -150,6 +150,7 @@ describe("popupController workflows", () => {
     initPopupController({ elements: elements.controllerElements });
     await new Promise((resolve) => setTimeout(resolve, 20));
     elements.controllerElements.addButton.dispatchEvent({ type: "click" });
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(queryCalls).toBeGreaterThan(0);
     restore();
@@ -157,7 +158,7 @@ describe("popupController workflows", () => {
 
   test("embedded settings toggle shows settings view", async () => {
     const { initPopupController } = await import(
-      "../../src/lib/ui/controllers/popupController.js",
+      "../../src/ui/controllers/popupController.js",
     );
     const elements = setupPopupElements();
     elements.controllerElements.settingsView.classList.add("hidden");
@@ -184,7 +185,7 @@ describe("popupController workflows", () => {
 
   test("folder manager button switches view", async () => {
     const { initPopupController } = await import(
-      "../../src/lib/ui/controllers/popupController.js",
+      "../../src/ui/controllers/popupController.js",
     );
     const elements = setupPopupElements();
     elements.controllerElements.folderView.classList.add("hidden");

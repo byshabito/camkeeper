@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import fc from "fast-check";
 
-import { applySettingsPatch, normalizeSettings, SETTINGS_DEFAULTS } from "../../src/lib/domain/settings.js";
+import { applySettingsPatch, normalizeSettings, SETTINGS_DEFAULTS } from "../../src/domain/settings.js";
 
 describe("settings", () => {
   test("normalizeSettings falls back to defaults", () => {

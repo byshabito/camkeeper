@@ -49,7 +49,7 @@ describe("settingsPanel", () => {
     });
 
     const { initSettingsPanel } = await import(
-      "../../src/lib/ui/components/settingsPanel.js",
+      "../../src/ui/components/settingsPanel.js",
     );
     initSettingsPanel({ elements, allowFileImport: false });
     await new Promise((resolve) => setTimeout(resolve, 30));
@@ -89,7 +89,7 @@ describe("settingsPanel", () => {
     });
 
     const { initSettingsPanel } = await import(
-      "../../src/lib/ui/components/settingsPanel.js",
+      "../../src/ui/components/settingsPanel.js",
     );
     elements.importInput.value = "chosen.json";
     initSettingsPanel({ elements, allowFileImport: true });
@@ -138,7 +138,7 @@ describe("settingsPanel", () => {
     };
 
     const { initSettingsPanel } = await import(
-      "../../src/lib/ui/components/settingsPanel.js",
+      "../../src/ui/components/settingsPanel.js",
     );
     initSettingsPanel({ elements, allowFileImport: false });
     elements.exportButton.dispatchEvent({ type: "click" });

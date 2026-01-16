@@ -16,6 +16,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { initOptionsController } from "../../lib/ui/controllers/optionsController.js";
+import { initOptionsController } from "../../ui/controllers/optionsController.js";
 
 initOptionsController();

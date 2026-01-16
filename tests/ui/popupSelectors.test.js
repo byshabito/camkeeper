@@ -8,9 +8,9 @@ import {
   selectFolderOptionsViewModel,
   selectProfileListViewModel,
   truncateText,
-} from "../../src/lib/ui/selectors/popupSelectors.js";
+} from "../../src/ui/selectors/popupSelectors.js";
 
-import { buildSites } from "../../src/lib/domain/sites.js";
+import { buildSites } from "../../src/domain/sites.js";
 
 const sites = buildSites(["twitch.tv"]);
 

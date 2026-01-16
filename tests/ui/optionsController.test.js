@@ -46,7 +46,7 @@ describe("optionsController", () => {
     });
 
     const { initOptionsController } = await import(
-      "../../src/lib/ui/controllers/optionsController.js",
+      "../../src/ui/controllers/optionsController.js",
     );
     initOptionsController();
     await new Promise((resolve) => setTimeout(resolve, 10));

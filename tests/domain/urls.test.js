@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, test } from "bun:test";
 import fc from "fast-check";
 
-import { setSitesFromSettings } from "../../src/lib/domain/sites.js";
+import { setSiteRegistry } from "../../src/domain/siteRegistry.js";
 import {
   buildSocialUrl,
   normalizeWebsiteHandle,
@@ -9,11 +9,11 @@ import {
   parseSocialInput,
   parseSocialUrl,
   parseUrl,
-} from "../../src/lib/domain/urls.js";
+} from "../../src/domain/urls.js";
 
 describe("urls", () => {
   beforeEach(() => {
-    setSitesFromSettings(["twitch.tv", "youtube.com"]);
+    setSiteRegistry(["twitch.tv", "youtube.com"]);
   });
 
   test("normalizeWebsiteHandle handles URLs and strings", () => {
@@ -22,15 +22,16 @@ describe("urls", () => {
   });
 
   test("parseUrl extracts site and username", () => {
-    expect(parseUrl("https://twitch.tv/Foo")).toEqual({
+    const sites = { "twitch.tv": {}, "youtube.com": {} };
+    expect(parseUrl("https://twitch.tv/Foo", sites)).toEqual({
       site: "twitch.tv",
       username: "foo",
     });
-    expect(parseUrl("https://www.youtube.com/@Creator")).toEqual({
+    expect(parseUrl("https://www.youtube.com/@Creator", sites)).toEqual({
       site: "youtube.com",
       username: "creator",
     });
-    expect(parseUrl("https://www.youtube.com/channel/ABC")).toEqual({
+    expect(parseUrl("https://www.youtube.com/channel/ABC", sites)).toEqual({
       site: "youtube.com",
       username: "channel/abc",
     });
@@ -71,11 +72,12 @@ describe("urls", () => {
   });
 
   test("parseCamInput handles urls and raw handles", () => {
-    expect(parseCamInput("https://twitch.tv/Foo")).toEqual({
+    const sites = { "twitch.tv": {}, "youtube.com": {} };
+    expect(parseCamInput("https://twitch.tv/Foo", sites)).toEqual({
       site: "twitch.tv",
       username: "foo",
     });
-    expect(parseCamInput("@Creator")).toEqual({
+    expect(parseCamInput("@Creator", sites)).toEqual({
       site: null,
       username: "creator",
     });

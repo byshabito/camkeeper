@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { createViewStateMachine } from "../../src/lib/ui/state/viewState.js";
+import { createViewStateMachine } from "../../src/ui/state/viewState.js";
 
 function createClassList() {
   const classes = new Set();

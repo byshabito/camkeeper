@@ -5,7 +5,7 @@ import {
   sortBySelection,
   totalViewTime,
   totalViewTimeInWindow,
-} from "../../src/lib/sort.js";
+} from "../../src/ui/sort.js";
 
 describe("sort", () => {
   test("totalViewTime sums cam viewMs", () => {

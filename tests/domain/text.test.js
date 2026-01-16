@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import fc from "fast-check";
 
-import { normalizeText, splitTags } from "../../src/lib/domain/text.js";
+import { normalizeText, splitTags } from "../../src/domain/text.js";
 
 describe("text", () => {
   test("normalizeText trims and lowercases", () => {

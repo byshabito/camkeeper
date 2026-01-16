@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { renderProfileList } from "../../src/lib/ui/components/profileList.js";
+import { renderProfileList } from "../../src/ui/components/profileList.js";
 import { createMockElement, installDomMock } from "../helpers/domMock.js";
 
 describe("profileList", () => {

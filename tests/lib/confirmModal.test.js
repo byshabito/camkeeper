@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 
-import { initConfirmModal } from "../../src/lib/confirmModal.js";
+import { initConfirmModal } from "../../src/ui/confirmModal.js";
 
 function createElement() {
   return {
