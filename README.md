@@ -79,7 +79,7 @@ Shortcuts can be customized in the browser's extension settings.
 --->
 
 <details>
-<summary>Manual installation (development / testing)</summary>
+<summary>Manual installation</summary>
 
 #### Chrome / Chromium
 
@@ -91,13 +91,13 @@ Shortcuts can be customized in the browser's extension settings.
 
 #### Firefox
 
-1. Download `camkeeper-{{version}}-firefox.xpi` from [Releases](https://github.com/byshabito/camkeeper/releases/latest)
+1. Download `camkeeper-{{version}}-firefox.zip` from [Releases](https://github.com/byshabito/camkeeper/releases/latest)
 2. Open `about:addons`
 3. Go to **Extensions**
 4. Click the gear icon and select **Install Add-on From File…**
-5. Select the `.xpi` file
+5. Select the `.zip` file
 
-**Note**: Some Firefox builds (e.g. Developer Edition, Nightly, or unsigned add-on setups) may require the following `about:config` settings for Manifest V3 extensions:
+**Note**: You may require the following `about:config` settings for Manifest V3 extensions:
 
 - `xpinstall.signatures.required = false`
 - `extensions.manifestV3.enabled = true`
