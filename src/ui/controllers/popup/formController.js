@@ -74,9 +74,9 @@ export function createFormController({
         const lastView = state.getValue("lastView");
         const currentProfile = state.getValue("currentProfile");
         if (lastView === "detail" && currentProfile) {
-          viewState.go("detail", currentProfile);
+          currentViewState?.go("detail", currentProfile);
         } else {
-          viewState.go("list");
+          currentViewState?.go("list");
         }
       });
     }
@@ -91,7 +91,7 @@ export function createFormController({
         if (!confirmed) return;
         await deleteProfileById(editingId);
         state.set({ editingId: null, currentProfile: null });
-        viewState.go("list");
+        currentViewState?.go("list");
       });
     }
 
@@ -157,7 +157,7 @@ export function createFormController({
           showFormError(formError, result.error);
           return;
         }
-        viewState.go("detail", result.savedProfile);
+        currentViewState?.go("detail", result.savedProfile);
       });
     }
   }
