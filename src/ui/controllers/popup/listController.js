@@ -140,7 +140,7 @@ export function createListController({
 
       if (match) {
         viewState.go("detail", match);
-        return;
+        return true;
       }
     }
     const socialParsed = tab?.url ? parseSocialUrl(tab.url) : null;
@@ -154,10 +154,11 @@ export function createListController({
       );
       if (socialMatch) {
         viewState.go("detail", socialMatch);
-        return;
+        return true;
       }
     }
     onOpenEditor?.({ seedCams: parsed ? [{ site: parsed.site, username: parsed.username }] : [] });
+    return false;
   }
 
   return {

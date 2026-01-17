@@ -562,7 +562,11 @@ export function initPopupController({ elements }) {
     if (initialTab === "settings" || isEmbedded) {
       viewState.go("settings");
     } else {
-      listController.showInitialView();
+      const profiles = await fetchProfiles();
+      const openedDetail = await listController.addFromCurrentTab(profiles);
+      if (!openedDetail) {
+        listController.showInitialView();
+      }
     }
   };
 
