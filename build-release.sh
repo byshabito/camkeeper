@@ -7,10 +7,28 @@ if [[ -z "$VERSION" ]]; then
   exit 1
 fi
 
+VERSION="${VERSION#v}"
 if [[ ! "$VERSION" =~ ^[0-9]+(\.[0-9]+){1,2}$ ]]; then
   echo "Version must be numeric (e.g., 0.5.2)"
   exit 1
 fi
+
+require_tool() {
+  local tool="$1"
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    echo "Missing required tool: $tool"
+    exit 1
+  fi
+}
+
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON_BIN="python3"
+else
+  PYTHON_BIN="python"
+fi
+
+require_tool "$PYTHON_BIN"
+require_tool zip
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DIST_DIR="${ROOT_DIR}/dist"
@@ -29,7 +47,7 @@ fi
 
 update_manifest_version() {
   local manifest_path="$1"
-  python - "$manifest_path" "$VERSION" <<'PY'
+  "$PYTHON_BIN" - "$manifest_path" "$VERSION" <<'PY'
 import json
 import sys
 
@@ -54,7 +72,7 @@ RELEASE_TIMESTAMP="$(date -Iseconds)"
 
 update_options_metadata() {
   local options_path="$1"
-  python - "$options_path" "$RELEASE_TIMESTAMP" <<'PY'
+  "$PYTHON_BIN" - "$options_path" "$RELEASE_TIMESTAMP" <<'PY'
 import re
 import sys
 
@@ -75,25 +93,38 @@ with open(path, "w", encoding="utf-8") as f:
 PY
 }
 
-update_options_metadata "${ROOT_DIR}/src/lib/ui/components/settingsPanel.js"
+update_options_metadata "${ROOT_DIR}/src/ui/components/settingsPanel.js"
 
 mkdir -p "${DIST_DIR}"
 rm -rf "${TMP_CHROME}" "${TMP_FIREFOX}"
 mkdir -p "${TMP_CHROME}" "${TMP_FIREFOX}"
 
-cp -R "${ROOT_DIR}/src" "${ROOT_DIR}/icons" "${ROOT_DIR}/README.md" \
-  "${ROOT_DIR}/LICENSE" "${ROOT_DIR}/CHANGELOG.md" "${ROOT_DIR}/PRIVACY.md" \
-  "${ROOT_DIR}/manifest.json" "${TMP_CHROME}/"
+copy_release_assets() {
+  local target="$1"
+  cp -R "${ROOT_DIR}/src" "${ROOT_DIR}/icons" "${ROOT_DIR}/README.md" \
+    "${ROOT_DIR}/LICENSE" "${ROOT_DIR}/CHANGELOG.md" "${ROOT_DIR}/PRIVACY.md" \
+    "$target"
+}
 
-cp -R "${ROOT_DIR}/src" "${ROOT_DIR}/icons" "${ROOT_DIR}/README.md" \
-  "${ROOT_DIR}/LICENSE" "${ROOT_DIR}/CHANGELOG.md" "${ROOT_DIR}/PRIVACY.md" \
-  "${TMP_FIREFOX}/"
+copy_release_assets "${TMP_CHROME}/"
+cp "${ROOT_DIR}/manifest.json" "${TMP_CHROME}/manifest.json"
+
+copy_release_assets "${TMP_FIREFOX}/"
 cp "${ROOT_DIR}/manifest.firefox.json" "${TMP_FIREFOX}/manifest.json"
 
-(cd "${TMP_CHROME}" && zip -r "../camkeeper-v${VERSION}-chrome.zip" manifest.json src icons README.md LICENSE CHANGELOG.md PRIVACY.md)
-(cd "${TMP_FIREFOX}" && zip -r "../camkeeper-v${VERSION}-firefox.zip" manifest.json src icons README.md LICENSE CHANGELOG.md PRIVACY.md)
+(
+  cd "${TMP_CHROME}" \
+    && zip -r "../camkeeper-v${VERSION}-chrome.zip" \
+      manifest.json src icons README.md LICENSE CHANGELOG.md PRIVACY.md
+)
+(
+  cd "${TMP_FIREFOX}" \
+    && zip -r "../camkeeper-v${VERSION}-firefox.zip" \
+      manifest.json src icons README.md LICENSE CHANGELOG.md PRIVACY.md
+)
 
 rm -rf "${TMP_CHROME}" "${TMP_FIREFOX}"
+
 echo "Built:"
 echo "  ${DIST_DIR}/camkeeper-v${VERSION}-chrome.zip"
 echo "  ${DIST_DIR}/camkeeper-v${VERSION}-firefox.zip"
