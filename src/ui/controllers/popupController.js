@@ -556,6 +556,7 @@ export function initPopupController({ elements }) {
   const start = async () => {
     bindEventHandlers();
     await refreshSites();
+    listController = createListControllerInstance();
     await Promise.all([loadSocialIcons(), loadPlatformIcons()]);
     await applyListPreferences();
     if (initialTab === "settings" || isEmbedded) {
