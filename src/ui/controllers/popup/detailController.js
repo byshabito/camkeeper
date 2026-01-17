@@ -44,7 +44,7 @@ export function createDetailController({
         const currentProfile = state.getValue("currentProfile");
         if (!currentProfile) return;
         const { updatedProfile } = await toggleProfilePin(currentProfile.id);
-        if (updatedProfile) viewState.go("detail", updatedProfile);
+        if (updatedProfile) currentViewState?.go("detail", updatedProfile);
       });
     }
   }
