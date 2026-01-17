@@ -85,6 +85,7 @@ Manual dev install:
 - Keep domain logic inside `src/domain/` where possible.
 - UI and entry points should call repos or domain helpers, not raw storage.
 - Keep configuration defaults in domain modules.
+- Design for testability with a functional core and imperative shell; keep pure business logic separate from IO.
 - Avoid mutating shared state outside dedicated stores/controllers.
 
 ### UI and DOM Conventions
