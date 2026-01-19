@@ -2,6 +2,7 @@
   <img src="/icons/icon-256.png" width="256" height="256" />
   <h1>CamKeeper</h1>
   <strong>Cross-site creator profile manager</strong>
+  <span><a src="https://addons.mozilla.org/firefox/addon/camkeeper/">Firefox</a></span>
 </div>
 <br/>
 <div align="center">
@@ -68,15 +69,9 @@ Shortcuts can be customized in the browser's extension settings.
 
 ## Installation
 
-<!--- Uncomment when listed
-### Chrome / Chromium
+<!-- - [Add to Chrome]()-->
+- [Add to Firefox](https://addons.mozilla.org/firefox/addon/camkeeper/)
 
-- Install from the Chrome Web Store
-
-### Firefox
-
-- Install from Firefox Add-ons (AMO)
---->
 
 <details>
 <summary>Manual installation</summary>
