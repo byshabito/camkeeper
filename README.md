@@ -1,13 +1,15 @@
 <div align="center">
   <img src="/icons/icon-256.png" width="256" height="256" />
   <h1>CamKeeper</h1>
-  <strong>Cross-site creator profile manager</strong>
   <p>
-      <a href="https://addons.mozilla.org/firefox/addon/camkeeper/">Firefox</a>
+    <strong>Cross-site creator profile manager</strong>
   </p>
   <p>
-  <img alt="Mozilla Add-on Downloads" src="https://img.shields.io/amo/dw/camkeeper?style=flat&logo=firefoxbrowser&color=%23FF7139">
-  <img alt="Mozilla Add-on Stars" src="https://img.shields.io/amo/stars/camkeeper?style=flat&logo=firefoxbrowser&color=%23FF7139">
+    <a href="https://addons.mozilla.org/firefox/addon/camkeeper/">Firefox</a>
+  </p>
+  <p>
+    <img alt="Mozilla Add-on Downloads" src="https://img.shields.io/amo/dw/camkeeper?style=flat&logo=firefoxbrowser&color=%23FF7139">
+    <img alt="Mozilla Add-on Stars" src="https://img.shields.io/amo/stars/camkeeper?style=flat&logo=firefoxbrowser&color=%23FF7139">
   </p>
 </div>
 <br/>
@@ -72,8 +74,8 @@ Shortcuts can be customized in the browser's extension settings.
 ## Installation
 
 <!-- - [Add to Chrome]()-->
-- [Add to Firefox](https://addons.mozilla.org/firefox/addon/camkeeper/)
 
+- [Add to Firefox](https://addons.mozilla.org/firefox/addon/camkeeper/)
 
 <details>
 <summary>Manual installation</summary>
@@ -101,6 +103,7 @@ Shortcuts can be customized in the browser's extension settings.
 - `extensions.backgroundServiceWorker.enabled = true`
 
 These changes are not required on standard Firefox release builds when installing a signed add-on.
+
 </details>
 
 ## Data & privacy
