@@ -2,9 +2,13 @@
   <img src="/icons/icon-256.png" width="256" height="256" />
   <h1>CamKeeper</h1>
   <strong>Cross-site creator profile manager</strong>
-  <div>
+  <p>
       <a href="https://addons.mozilla.org/firefox/addon/camkeeper/">Firefox</a>
-  </div>
+  </p>
+  <p>
+  <img alt="Mozilla Add-on Downloads" src="https://img.shields.io/amo/dw/camkeeper?style=flat&logo=firefoxbrowser&color=%23FF7139">
+  <img alt="Mozilla Add-on Stars" src="https://img.shields.io/amo/stars/camkeeper?style=flat&logo=firefoxbrowser&color=%23FF7139">
+  </p>
 </div>
 <br/>
 <div align="center">
