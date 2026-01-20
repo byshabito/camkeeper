@@ -78,8 +78,7 @@ Shortcuts can be customized in the browser's extension settings.
 
 ## Installation
 
-<!-- - [Add to Chrome]()-->
-
+- [Add to Chrome](https://chromewebstore.google.com/detail/camkeeper/plgibmbnfodgifhdggcnbihloihiafep/)
 - [Add to Firefox](https://addons.mozilla.org/firefox/addon/camkeeper/)
 
 <details>
