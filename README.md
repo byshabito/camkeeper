@@ -5,17 +5,15 @@
     <strong>Cross-site creator profile manager</strong>
   </p>
   <p>
-    <a href="https://addons.mozilla.org/firefox/addon/camkeeper/">Firefox</a>
+    <a href="https://addons.mozilla.org/firefox/addon/camkeeper/">Firefox Add-Ons</a>
     • <a href="https://chromewebstore.google.com/detail/camkeeper/plgibmbnfodgifhdggcnbihloihiafep/">Chrome Web Store</a>
   </p>
-  <!---
   <p>
     <img alt="Mozilla Add-on Users" src="https://img.shields.io/amo/users/camkeeper?style=flat&logo=firefoxbrowser&color=%23FF7139">
-    <img alt="Mozilla Add-on Stars" src="https://img.shields.io/amo/stars/camkeeper?style=flat&logo=firefoxbrowser&color=%23FF7139">
+    <img alt="Mozilla Add-on Stars" src="https://img.shields.io/amo/stars/camkeeper?style=flat&logo=firefoxbrowser&color=%23FF7139"><br/>
     <img alt="Chrome Web Store Users" src="https://img.shields.io/chrome-web-store/users/plgibmbnfodgifhdggcnbihloihiafep?style=flat&logo=chromewebstore&color=%234285F4">
     <img alt="Chrome Web Store Stars" src="https://img.shields.io/chrome-web-store/stars/plgibmbnfodgifhdggcnbihloihiafep?style=flat&logo=chromewebstore&color=%234285F4">
   </p>
-  --->
 </div>
 <br/>
 <div align="center">
@@ -77,6 +75,8 @@ No accounts. No cloud services. All data remains on your device.
 Shortcuts can be customized in the browser's extension settings.
 
 ## Installation
+
+Get it from the official Chrome or Firefox stores:
 
 - [Add to Chrome](https://chromewebstore.google.com/detail/camkeeper/plgibmbnfodgifhdggcnbihloihiafep/)
 - [Add to Firefox](https://addons.mozilla.org/firefox/addon/camkeeper/)
