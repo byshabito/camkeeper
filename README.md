@@ -8,12 +8,14 @@
     <a href="https://addons.mozilla.org/firefox/addon/camkeeper/">Firefox Add-Ons</a>
     • <a href="https://chromewebstore.google.com/detail/camkeeper/plgibmbnfodgifhdggcnbihloihiafep/">Chrome Web Store</a>
   </p>
+  <!---
   <p>
     <img alt="Mozilla Add-on Users" src="https://img.shields.io/amo/users/camkeeper?style=flat&logo=firefoxbrowser&color=%23FF7139">
     <img alt="Mozilla Add-on Stars" src="https://img.shields.io/amo/stars/camkeeper?style=flat&logo=firefoxbrowser&color=%23FF7139"><br/>
     <img alt="Chrome Web Store Users" src="https://img.shields.io/chrome-web-store/users/plgibmbnfodgifhdggcnbihloihiafep?style=flat&logo=chromewebstore&color=%234285F4">
     <img alt="Chrome Web Store Stars" src="https://img.shields.io/chrome-web-store/stars/plgibmbnfodgifhdggcnbihloihiafep?style=flat&logo=chromewebstore&color=%234285F4">
   </p>
+  --->
 </div>
 <br/>
 <div align="center">
