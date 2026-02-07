@@ -6,6 +6,9 @@
 - `src/entries/` holds entry points for `background/`, `popup/`, and `options/`.
 - `src/background/` hosts the service worker logic.
 - `src/domain/` contains domain models, validation helpers, and use-case orchestration.
+- `src/domain/useCases/` contains application workflows consumed by UI/background.
+- `src/domain/services/` contains domain-facing storage orchestration helpers.
+- `src/domain/appService.js` is the primary facade for UI/background calls into domain.
 - `src/repo/` contains storage repositories backed by `src/repo/db.js`.
 - `src/ui/` contains UI controllers, components, selectors, and state.
 - `src/repo/db.js` is the single storage wrapper for `chrome.storage`.
@@ -24,6 +27,10 @@ Release build:
 Linting:
 - No linting tool is configured.
 - If you add one, document the command here.
+
+Testing:
+- No automated test suite is currently maintained in this repository.
+- Validate changes with targeted manual checks in popup, options, and background flows.
 
 Manual dev install:
 - Chrome: `chrome://extensions` → Developer mode → Load unpacked → repo root.
@@ -77,6 +84,7 @@ Manual dev install:
 - Persisted data should go through `src/repo/db.js` or repo helpers.
 - Keep domain logic inside `src/domain/` where possible.
 - UI and background entry points should call domain helpers, not repos directly.
+- Keep `src/repo/` storage-only; do not import domain modules into repo modules.
 - Keep configuration defaults in domain modules.
 - Keep pure business logic separate from IO and browser-specific adapters.
 - Avoid mutating shared state outside dedicated stores/controllers.
@@ -110,6 +118,7 @@ Manual dev install:
 - Keep user data local; avoid network calls without approval.
 - Sanitize imported JSON and fallback to defaults on errors.
 - Keep export/import flows resilient to missing fields.
+- Preserve unknown livestream-site cams in storage/import; hide them in UI until that site is configured.
 
 ### Assets and Manifests
 
