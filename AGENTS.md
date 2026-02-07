@@ -16,7 +16,7 @@
 - `manifest.json` and `manifest.firefox.json` define Chrome/Firefox builds.
 - `dist/` is created by the release build script and should not be edited.
 
-## Build and Lint Commands
+## Build, Lint, and Test Commands
 
 Release build:
 - `./build-release.sh <version>`
@@ -28,9 +28,17 @@ Linting:
 - No linting tool is configured.
 - If you add one, document the command here.
 
+Local syntax check (recommended before release/PR):
+- `node --check src/entries/popup/script.js`
+- Repeat for changed files, or run a small script to check all `src/**/*.js` files.
+
 Testing:
 - No automated test suite is currently maintained in this repository.
 - Validate changes with targeted manual checks in popup, options, and background flows.
+- Single-test command: currently not available because there is no active test runner.
+- If tests are reintroduced with Bun, use:
+  - Run all tests: `bun test`
+  - Run one test file: `bun test tests/path/to/file.test.js`
 
 Manual dev install:
 - Chrome: `chrome://extensions` → Developer mode → Load unpacked → repo root.
