@@ -30,7 +30,7 @@ import {
 } from "../../domain/appService.js";
 import { sanitizeProfile } from "../../domain/sanitizers.js";
 
-const RELEASE_TIMESTAMP = "2026-01-16T12:11:51+01:00";
+const RELEASE_TIMESTAMP = "2026-02-07T11:13:13+01:00";
 const DEVELOPER_NAME = "Shabito";
 const DEVELOPER_URL = "https://github.com/byshabito";
 const SOURCE_URL = "https://github.com/byshabito/camkeeper";
