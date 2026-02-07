@@ -207,19 +207,27 @@ export function selectFormViewModel({
   editingId,
   defaultSiteKey,
 }) {
+  const sites = getSiteRegistry();
+  const knownCams = (profile?.cams || []).filter((cam) => Boolean(sites?.[cam.site]));
   const formProfile = profile || {};
-  const cams = formProfile?.cams?.length
-    ? formProfile.cams
+  const cams = knownCams.length
+    ? knownCams
     : seedCams?.length
       ? seedCams
       : [{ site: defaultSiteKey, username: "" }];
   const socials = formProfile?.socials?.length ? formProfile.socials : [{}];
 
   const canAttach = !editingId && seedCams?.length && profiles?.length;
+  const sortedAttachProfiles = [...(profiles || [])].sort((a, b) => {
+    const left = Number.isFinite(a?.updatedAt) ? a.updatedAt : 0;
+    const right = Number.isFinite(b?.updatedAt) ? b.updatedAt : 0;
+    if (right !== left) return right - left;
+    return (a?.name || "Unnamed").localeCompare(b?.name || "Unnamed");
+  });
   const attachOptions = canAttach
     ? [
         { value: "", label: "Create new profile" },
-        ...profiles.map((item) => ({
+        ...sortedAttachProfiles.map((item) => ({
           value: item.id,
           label: item.name || "Unnamed",
         })),

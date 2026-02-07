@@ -83,7 +83,10 @@ export function mergeProfiles(base, incoming, { sites = getSiteRegistry() } = {}
     folder: incoming.folder || base.folder,
     notes: mergeNotes(base.notes, incoming.notes),
     tags: uniqBy([...(base.tags || []), ...(incoming.tags || [])], (tag) => normalizeText(tag)),
-    cams: sanitizeCams([...(base.cams || []), ...(incoming.cams || [])], { sites }),
+    cams: sanitizeCams([...(base.cams || []), ...(incoming.cams || [])], {
+      sites,
+      allowUnknownSites: true,
+    }),
     socials: sanitizeSocials([...(base.socials || []), ...(incoming.socials || [])], {
       parseSocialUrl,
     }),
@@ -91,5 +94,5 @@ export function mergeProfiles(base, incoming, { sites = getSiteRegistry() } = {}
     updatedAt: Date.now(),
   };
 
-  return sanitizeProfile(merged, { sites });
+  return sanitizeProfile(merged, { sites, allowUnknownSites: true });
 }

@@ -40,7 +40,7 @@ export async function saveProfileForm({ editingId, attachSelectedId, formData })
     folder: formData.folder,
     notes: formData.notes.trim(),
     updatedAt: Date.now(),
-  }, { sites });
+  }, { sites, allowUnknownSites: true });
   if (!profile.id) {
     profile.id = createId();
   }
@@ -52,7 +52,7 @@ export async function saveProfileForm({ editingId, attachSelectedId, formData })
   if (editingId) {
     updated = updated.map((item) => {
       if (item.id !== editingId) return item;
-      const mergedCams = mergeCamStats(item.cams || [], profile.cams || []);
+      const mergedCams = mergeCamStats(item.cams || [], profile.cams || [], sites);
       return sanitizeProfile({
         ...item,
         ...profile,
@@ -61,7 +61,7 @@ export async function saveProfileForm({ editingId, attachSelectedId, formData })
         pinned: item.pinned,
         createdAt: item.createdAt,
         updatedAt: Date.now(),
-      }, { sites });
+      }, { sites, allowUnknownSites: true });
     });
   } else if (attachSelectedId) {
     updated = updated.map((item) => {
@@ -87,14 +87,14 @@ export async function saveProfileForm({ editingId, attachSelectedId, formData })
   return { profiles: updated, savedProfile, targetId };
 }
 
-function mergeCamStats(existingCams, updatedCams) {
+function mergeCamStats(existingCams, updatedCams, sites) {
   const existingMap = new Map(
     (existingCams || []).map((cam) => [
       `${normalizeText(cam.site)}:${normalizeText(cam.username)}`,
       cam,
     ]),
   );
-  return (updatedCams || []).map((cam) => {
+  const knownCams = (updatedCams || []).map((cam) => {
     const key = `${normalizeText(cam.site)}:${normalizeText(cam.username)}`;
     const existing = existingMap.get(key);
     if (!existing) return cam;
@@ -105,4 +105,13 @@ function mergeCamStats(existingCams, updatedCams) {
       viewHistory: Array.isArray(existing.viewHistory) ? existing.viewHistory : [],
     };
   });
+  const incomingKeys = new Set(
+    (updatedCams || []).map((cam) => `${normalizeText(cam.site)}:${normalizeText(cam.username)}`),
+  );
+  const hiddenCams = (existingCams || []).filter((cam) => {
+    if (sites?.[normalizeText(cam.site)]) return false;
+    const key = `${normalizeText(cam.site)}:${normalizeText(cam.username)}`;
+    return !incomingKeys.has(key);
+  });
+  return [...knownCams, ...hiddenCams];
 }

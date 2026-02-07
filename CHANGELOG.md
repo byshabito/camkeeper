@@ -5,6 +5,8 @@
 - Simplify architecture into three clear layers: UI/background -> domain -> repo
 - Move use-case orchestration into `src/domain/useCases` and add a unified domain app service facade
 - Refactor storage repositories to be storage-only and remove test suite/test-only dependencies
+- Sort the "add to existing profile" dropdown by most recently updated profiles first
+- Preserve imported cams from unknown livestream sites in storage and hide them in UI until the site is configured
 
 ## v1.0.2
 

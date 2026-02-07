@@ -235,7 +235,10 @@ export function initSettingsPanel({
       return;
     }
     const payload = JSON.stringify(
-      profiles.map((profile) => sanitizeProfile(profile, { sites: getSiteRegistry() })),
+      profiles.map((profile) => sanitizeProfile(profile, {
+        sites: getSiteRegistry(),
+        allowUnknownSites: true,
+      })),
       null,
       2,
     );
@@ -281,7 +284,10 @@ export function initSettingsPanel({
     }
     const existing = await getProfiles();
     const sanitized = parsed
-      .map((profile) => sanitizeProfile(profile, { sites: getSiteRegistry() }))
+      .map((profile) => sanitizeProfile(profile, {
+        sites: getSiteRegistry(),
+        allowUnknownSites: true,
+      }))
       .filter((profile) => profile.cams.length || profile.socials.length);
     const byId = new Map(existing.map((profile) => [profile.id, profile]));
     sanitized.forEach((profile) => {

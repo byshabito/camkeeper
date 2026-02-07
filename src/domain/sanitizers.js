@@ -73,7 +73,7 @@ function sanitizeViewHistory(viewHistory) {
   return normalized;
 }
 
-export function sanitizeCams(cams, { sites = {} } = {}) {
+export function sanitizeCams(cams, { sites = {}, allowUnknownSites = false } = {}) {
   const cleaned = (cams || [])
     .map((cam) => ({
       site: normalizeText(cam.site),
@@ -90,7 +90,11 @@ export function sanitizeCams(cams, { sites = {} } = {}) {
           : null,
       viewHistory: sanitizeViewHistory(cam.viewHistory),
     }))
-    .filter((cam) => cam.site && cam.username && sites[cam.site]);
+    .filter((cam) => {
+      if (!cam.site || !cam.username) return false;
+      if (allowUnknownSites) return true;
+      return Boolean(sites[cam.site]);
+    });
 
   const merged = new Map();
   cleaned.forEach((cam) => {
@@ -141,8 +145,18 @@ export function sanitizeSocials(socials, { parseSocialUrl: parseSocialUrlOverrid
   return uniqBy(normalized, (social) => `${social.platform}:${normalizeText(social.handle)}`);
 }
 
-export function sanitizeProfile(raw, { sites = {}, parseSocialUrl: parseSocialUrlOverride } = {}) {
-  const cams = sanitizeCams(raw.cams || raw.platforms || raw.sites || [], { sites });
+export function sanitizeProfile(
+  raw,
+  {
+    sites = {},
+    parseSocialUrl: parseSocialUrlOverride,
+    allowUnknownSites = false,
+  } = {},
+) {
+  const cams = sanitizeCams(raw.cams || raw.platforms || raw.sites || [], {
+    sites,
+    allowUnknownSites,
+  });
   const socials = sanitizeSocials(raw.socials || [], { parseSocialUrl: parseSocialUrlOverride });
   const tags = Array.isArray(raw.tags)
     ? raw.tags.map((tag) => (tag || "").trim()).filter(Boolean)

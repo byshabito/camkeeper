@@ -33,6 +33,7 @@ export function migrateProfilesFromStorage({
   legacyKeys,
   now = Date.now,
   sites = getSiteRegistry(),
+  allowUnknownSites = true,
 }) {
   const { profiles, shouldPersist } = extractProfilesFromStorage({
     data,
@@ -43,7 +44,7 @@ export function migrateProfilesFromStorage({
   const nowValue = now();
   let updated = false;
   const normalized = profiles.map((profile) => {
-    const cleaned = sanitizeProfile(profile, { sites });
+    const cleaned = sanitizeProfile(profile, { sites, allowUnknownSites });
     const { profile: next, changed } = applyProfileMetadata(cleaned, nowValue);
     if (changed) updated = true;
     return next;
@@ -53,20 +54,20 @@ export function migrateProfilesFromStorage({
 
 export function normalizeProfileForStorage(
   profile,
-  { now = Date.now, sites = getSiteRegistry() } = {},
+  { now = Date.now, sites = getSiteRegistry(), allowUnknownSites = true } = {},
 ) {
-  const cleaned = sanitizeProfile(profile, { sites });
+  const cleaned = sanitizeProfile(profile, { sites, allowUnknownSites });
   const { profile: normalized } = applyProfileMetadata(cleaned, now());
   return normalized;
 }
 
 export function normalizeProfilesForStorage(
   profiles,
-  { now = Date.now, sites = getSiteRegistry() } = {},
+  { now = Date.now, sites = getSiteRegistry(), allowUnknownSites = true } = {},
 ) {
   const nowValue = now();
   return (profiles || []).map((profile) => {
-    const cleaned = sanitizeProfile(profile, { sites });
+    const cleaned = sanitizeProfile(profile, { sites, allowUnknownSites });
     const { profile: normalized } = applyProfileMetadata(cleaned, nowValue);
     return normalized;
   });
