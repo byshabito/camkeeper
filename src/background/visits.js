@@ -24,9 +24,8 @@ import {
   LEGACY_ACTIVE_VIEW_SESSION_STATE_KEY,
   parseVisitUrl,
 } from "../domain/visitSessions.js";
-import { getState, setState } from "../repo/state.js";
+import { getState, recordProfileView, setState } from "../domain/appService.js";
 import { ACTIVE_VIEW_SESSIONS_STATE_KEY } from "../domain/stateKeys.js";
-import { recordProfileView } from "../repo/profiles.js";
 
 export function initVisitTracking(state, logDebug) {
   let mode = "focus";
@@ -198,7 +197,7 @@ export function initVisitTracking(state, logDebug) {
     if (mode === "open") {
       await loadSessionsFromStorage();
       if (changeInfo.url && activeSessions.has(tabId)) {
-        const parsed = parseUrl(changeInfo.url, getSiteRegistry());
+        const parsed = parseVisitUrl(changeInfo.url, getSiteRegistry());
         const current = activeSessions.get(tabId);
         if (!parsed || parsed.site !== current.site || parsed.username !== current.username) {
           await endSessionForTab(tabId, "tab_navigate");

@@ -16,15 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { getSettings } from "../repo/settings.js";
+import { getState as loadState, setState as persistState } from "../../repo/state.js";
 
-export async function loadListPreferences({ sortOptions, defaultSort }) {
-  const settings = await getSettings();
-  const preferred = settings.lastSort;
-  const sortKey = sortOptions.has(preferred) ? preferred : defaultSort;
-  return {
-    sortKey,
-    folderFilter: settings.lastFolderFilter || "",
-    folderOrder: Array.isArray(settings.lastFolderOrder) ? settings.lastFolderOrder : [],
-  };
+export async function getState(key) {
+  return loadState(key);
+}
+
+export async function setState(key, value) {
+  return persistState(key, value);
 }

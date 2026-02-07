@@ -16,9 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { getSiteRegistry } from "../domain/siteRegistry.js";
-import { mergeProfiles } from "../domain/profiles.js";
-import { getProfiles, saveProfiles } from "../repo/profiles.js";
+import { getSiteRegistry } from "../siteRegistry.js";
+import { mergeProfiles } from "../profiles.js";
+import { getProfiles, saveProfiles } from "../services/profilesStore.js";
 
 export async function mergeProfilesByIds(ids) {
   if (ids.length < 2) return { profiles: await getProfiles(), merged: null };

@@ -19,11 +19,9 @@
 import {
   getProfiles as loadProfiles,
   saveProfiles as persistProfiles,
-} from "../../repo/profiles.js";
-import {
   getSettings as loadSettings,
   updateSettings as persistSettingsPatch,
-} from "../../repo/settings.js";
+} from "../../domain/appService.js";
 
 export async function getProfiles() {
   return loadProfiles();

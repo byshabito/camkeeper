@@ -17,6 +17,7 @@
  */
 
 export * from "./ids.js";
+export * from "./appService.js";
 export * from "./migrations/profiles.js";
 export * from "./profileViews.js";
 export * from "./profiles.js";

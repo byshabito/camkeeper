@@ -16,11 +16,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { SETTINGS_KEY } from "../repo/db.js";
 import { SETTINGS_DEFAULTS } from "../domain/settings.js";
-import { getSiteRegistry, setSiteRegistry } from "../domain/siteRegistry.js";
-import { quickAddProfile } from "../useCases/quickAddProfile.js";
-import { getSettings } from "../repo/settings.js";
+import {
+  getSettings,
+  getSiteRegistry,
+  isSettingsStorageChange,
+  quickAddProfile,
+  setSiteRegistry,
+} from "../domain/appService.js";
 import { initVisitTracking } from "./visits.js";
 
 export function initBackground() {
@@ -56,8 +59,7 @@ export function initBackground() {
   }
 
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area !== "local") return;
-    if (changes[SETTINGS_KEY]) {
+    if (isSettingsStorageChange({ area, changes })) {
       loadSettings();
     }
   });

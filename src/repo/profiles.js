@@ -20,74 +20,26 @@ import {
   saveProfile as persistProfile,
   saveProfiles as persistProfiles,
   deleteProfile as removeProfile,
-  readLocal,
-  readSync,
-  STORAGE_KEY,
+  getProfile as loadProfile,
+  getProfiles as loadProfiles,
 } from "./db.js";
-import {
-  LEGACY_PROFILE_KEYS,
-  migrateProfilesFromStorage,
-  normalizeProfileForStorage,
-  normalizeProfilesForStorage,
-} from "../domain/migrations/profiles.js";
-import { applyProfileView } from "../domain/profileViews.js";
 
 export async function getProfiles() {
-  const keys = [STORAGE_KEY, ...LEGACY_PROFILE_KEYS];
-  const data = await readLocal(keys);
-  let { profiles, shouldPersist } = migrateProfilesFromStorage({
-    data,
-    storageKey: STORAGE_KEY,
-    legacyKeys: LEGACY_PROFILE_KEYS,
-  });
-
-  if (!profiles.length) {
-    const syncData = await readSync(keys);
-    const syncResult = migrateProfilesFromStorage({
-      data: syncData,
-      storageKey: STORAGE_KEY,
-      legacyKeys: LEGACY_PROFILE_KEYS,
-    });
-    profiles = syncResult.profiles;
-    shouldPersist = syncResult.shouldPersist || shouldPersist;
-  }
-
-  if (profiles.length && shouldPersist) {
-    await saveProfiles(profiles);
-  }
-
-  return profiles;
+  return loadProfiles();
 }
 
 export async function getProfile(id) {
-  const profiles = await getProfiles();
-  return profiles.find((profile) => profile.id === id) || null;
+  return loadProfile(id);
 }
 
 export async function saveProfile(profile) {
-  const normalized = normalizeProfileForStorage(profile);
-  return persistProfile(normalized);
+  return persistProfile(profile);
 }
 
 export async function saveProfiles(profiles) {
-  const normalized = normalizeProfilesForStorage(profiles);
-  return persistProfiles(normalized);
+  return persistProfiles(profiles);
 }
 
 export async function deleteProfile(id) {
   return removeProfile(id);
-}
-
-export async function recordProfileView({ site, username, endedAt, durationMs }) {
-  const profiles = await getProfiles();
-  const result = applyProfileView({
-    profiles,
-    site,
-    username,
-    endedAt,
-    durationMs,
-  });
-  if (!result.updated) return false;
-  await saveProfiles(result.profiles);
-  return true;
 }

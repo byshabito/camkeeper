@@ -16,12 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { createId } from "../domain/ids.js";
-import { mergeProfiles, findDuplicateProfile } from "../domain/profiles.js";
-import { getSiteRegistry } from "../domain/siteRegistry.js";
-import { sanitizeCams, sanitizeProfile, sanitizeSocials } from "../domain/sanitizers.js";
-import { splitTags, normalizeText } from "../domain/text.js";
-import { getProfiles, saveProfiles } from "../repo/profiles.js";
+import { createId } from "../ids.js";
+import { mergeProfiles, findDuplicateProfile } from "../profiles.js";
+import { getSiteRegistry } from "../siteRegistry.js";
+import { sanitizeCams, sanitizeProfile, sanitizeSocials } from "../sanitizers.js";
+import { splitTags, normalizeText } from "../text.js";
+import { getProfiles, saveProfiles } from "../services/profilesStore.js";
 
 export async function saveProfileForm({ editingId, attachSelectedId, formData }) {
   const sites = getSiteRegistry();

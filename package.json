@@ -1,8 +1,5 @@
 {
   "name": "camkeeper",
   "private": true,
-  "type": "module",
-  "devDependencies": {
-    "fast-check": "^3.17.0"
-  }
+  "type": "module"
 }

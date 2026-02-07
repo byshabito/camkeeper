@@ -16,23 +16,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {
-  getSettings as loadSettings,
-  saveSettings as persistSettings,
-} from "./db.js";
-
-export async function getSettings() {
-  return loadSettings();
-}
-
-export async function saveSettings(settings) {
-  await persistSettings(settings);
-  return settings;
-}
-
-export async function updateSettings(patch) {
-  const current = await loadSettings();
-  const next = typeof patch === "function" ? patch(current) : { ...current, ...patch };
-  await persistSettings(next);
-  return next;
-}
+export * from "./loadListPreferences.js";
+export * from "./mergeProfiles.js";
+export * from "./quickAddProfile.js";
+export * from "./saveProfileForm.js";

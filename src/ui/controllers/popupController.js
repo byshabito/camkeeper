@@ -21,7 +21,7 @@ import { buildSocialUrl, parseCamInput, parseSocialInput } from "../../domain/ur
 import { normalizeText } from "../../domain/text.js";
 import { SOCIAL_OPTIONS } from "../../domain/socialOptions.js";
 import { SETTINGS_DEFAULTS } from "../../domain/settings.js";
-import { getSettings } from "../../repo/settings.js";
+import { getSettings } from "../../domain/appService.js";
 import { createBulkSelection } from "../bulkSelection.js";
 import { createPopupDialogs } from "../popup/dialogs.js";
 import { createListControlHandlers, createSearchHoverHandlers } from "../components/listControls.js";

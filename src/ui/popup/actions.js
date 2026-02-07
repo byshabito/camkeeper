@@ -17,11 +17,13 @@
  */
 
 import { getProfiles, saveProfiles, updateSettings } from "./store.js";
-import { getState } from "../../repo/state.js";
+import {
+  getState,
+  loadListPreferences,
+  mergeProfilesByIds,
+  saveProfileForm,
+} from "../../domain/appService.js";
 import { ACTIVE_VIEW_SESSIONS_STATE_KEY } from "../../domain/stateKeys.js";
-import { loadListPreferences } from "../../useCases/loadListPreferences.js";
-import { mergeProfilesByIds } from "../../useCases/mergeProfiles.js";
-import { saveProfileForm } from "../../useCases/saveProfileForm.js";
 
 export async function fetchProfiles() {
   return getProfiles();

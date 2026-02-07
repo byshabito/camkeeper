@@ -16,12 +16,12 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { sanitizeProfile } from "../domain/sanitizers.js";
-import { getSiteRegistry } from "../domain/siteRegistry.js";
-import { findDuplicateProfile } from "../domain/profiles.js";
-import { parseUrl } from "../domain/urls.js";
-import { buildFallbackSites, matchLegacyUrl } from "../domain/urlsLegacy.js";
-import { getProfiles, saveProfiles } from "../repo/profiles.js";
+import { sanitizeProfile } from "../sanitizers.js";
+import { getSiteRegistry } from "../siteRegistry.js";
+import { findDuplicateProfile } from "../profiles.js";
+import { parseUrl } from "../urls.js";
+import { buildFallbackSites, matchLegacyUrl } from "../urlsLegacy.js";
+import { getProfiles, saveProfiles } from "../services/profilesStore.js";
 
 function filterSitesByParsedUrl(url, sites) {
   if (!url) return {};
@@ -29,7 +29,6 @@ function filterSitesByParsedUrl(url, sites) {
   if (!parsed) return {};
   return { [parsed.site]: sites[parsed.site] };
 }
-
 
 export async function quickAddProfile({ tab, sites = getSiteRegistry(), now = Date.now } = {}) {
   const profiles = await getProfiles();

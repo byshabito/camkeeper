@@ -5,16 +5,15 @@
 - `src/` contains the extension source.
 - `src/entries/` holds entry points for `background/`, `popup/`, and `options/`.
 - `src/background/` hosts the service worker logic.
-- `src/domain/` contains domain models, selectors, and validation helpers.
+- `src/domain/` contains domain models, validation helpers, and use-case orchestration.
 - `src/repo/` contains storage repositories backed by `src/repo/db.js`.
 - `src/ui/` contains UI controllers, components, selectors, and state.
-- `src/useCases/` contains cross-layer workflows and orchestration helpers.
 - `src/repo/db.js` is the single storage wrapper for `chrome.storage`.
 - `icons/` stores extension icons used by the manifest.
 - `manifest.json` and `manifest.firefox.json` define Chrome/Firefox builds.
 - `dist/` is created by the release build script and should not be edited.
 
-## Build, Lint, and Test Commands
+## Build and Lint Commands
 
 Release build:
 - `./build-release.sh <version>`
@@ -25,12 +24,6 @@ Release build:
 Linting:
 - No linting tool is configured.
 - If you add one, document the command here.
-
-Testing:
-- Install test deps: `bun install`.
-- Run all tests: `bun test`.
-- Single-test command: `bun test tests/domain/urls.test.js`.
-- Tests live in `tests/` and use Bun + `fast-check`.
 
 Manual dev install:
 - Chrome: `chrome://extensions` → Developer mode → Load unpacked → repo root.
@@ -54,7 +47,7 @@ Manual dev install:
 - Include the `.js` extension in relative imports.
 - Group imports: external first (if any), then internal relative imports.
 - Prefer named exports to default exports.
-- Avoid circular dependencies; keep domains layered (`domain` → `repo` → UI).
+- Avoid circular dependencies; keep layers directional (`UI/background` → `domain` → `repo`).
 
 ### Naming Conventions
 
@@ -83,9 +76,9 @@ Manual dev install:
 
 - Persisted data should go through `src/repo/db.js` or repo helpers.
 - Keep domain logic inside `src/domain/` where possible.
-- UI and entry points should call repos or domain helpers, not raw storage.
+- UI and background entry points should call domain helpers, not repos directly.
 - Keep configuration defaults in domain modules.
-- Design for testability with a functional core and imperative shell; keep pure business logic separate from IO.
+- Keep pure business logic separate from IO and browser-specific adapters.
 - Avoid mutating shared state outside dedicated stores/controllers.
 
 ### UI and DOM Conventions
@@ -125,14 +118,6 @@ Manual dev install:
 - Keep permissions minimal and aligned across browsers.
 - Avoid adding third-party libraries unless necessary.
 - Ensure new assets are referenced by HTML or manifests.
-
-## Testing Guidelines
-
-- Tests are in `tests/` and run with Bun.
-- Property-based tests use `fast-check`.
-- Prefer unit tests for domain logic and small helpers.
-- Keep tests deterministic; avoid network calls.
-- Include manual verification steps in PRs.
 
 ## Build and Release Notes
 

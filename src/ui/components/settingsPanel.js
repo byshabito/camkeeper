@@ -22,9 +22,12 @@ import {
   normalizeLivestreamHost,
   normalizeLivestreamSiteEntries,
 } from "../../domain/sites.js";
-
-import { getProfiles, saveProfiles } from "../../repo/profiles.js";
-import { getSettings, updateSettings } from "../../repo/settings.js";
+import {
+  getProfiles,
+  saveProfiles,
+  getSettings,
+  updateSettings,
+} from "../../domain/appService.js";
 import { sanitizeProfile } from "../../domain/sanitizers.js";
 
 const RELEASE_TIMESTAMP = "2026-01-16T12:11:51+01:00";
