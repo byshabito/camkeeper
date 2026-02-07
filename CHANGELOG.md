@@ -2,8 +2,9 @@
 
 ## v1.0.3
 
-- Add comprehensive unit and property test coverage across domain, repo, UI, and background logic
-- Refactor popup UI into modular controllers and domain/use-case layers
+- Simplify architecture into three clear layers: UI/background -> domain -> repo
+- Move use-case orchestration into `src/domain/useCases` and add a unified domain app service facade
+- Refactor storage repositories to be storage-only and remove test suite/test-only dependencies
 
 ## v1.0.2
 
