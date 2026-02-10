@@ -14,6 +14,13 @@ For direct support, reach out via email:
 
 - [contact@shabito.net](mailto:contact@shabito.net)
 
+## Support the project
+
+If CamKeeper is useful to you and you want to support development:
+
+- [Buy Me a Coffee](https://www.buymeacoffee.com/shabito)
+- Bitcoin Lightning address: `shabito@walletofsatoshi.com`
+
 ## Tips for faster help
 
 When reporting a problem, include:

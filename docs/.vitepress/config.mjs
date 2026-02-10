@@ -22,8 +22,8 @@ export default defineConfig({
     },
     nav: [
       { text: "Home", link: "/" },
-      { text: "Privacy", link: "/privacy" },
-      { text: "Support", link: "/support" },
+      { text: "Privacy", link: "/privacy/" },
+      { text: "Support", link: "/support/" },
       { text: "GitHub", link: "https://github.com/byshabito/camkeeper" },
     ],
     sidebar: [
@@ -31,8 +31,8 @@ export default defineConfig({
         text: "Documentation",
         items: [
           { text: "Overview", link: "/" },
-          { text: "Privacy", link: "/privacy" },
-          { text: "Support", link: "/support" },
+          { text: "Privacy", link: "/privacy/" },
+          { text: "Support", link: "/support/" },
         ],
       },
     ],

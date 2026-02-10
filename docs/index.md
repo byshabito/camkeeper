@@ -53,6 +53,6 @@ You can customize shortcuts in your browser extension settings.
 CamKeeper stores profile data and settings in browser extension storage on your device.
 It does not send your profile data to external servers.
 
-Read the full policy here: [Privacy Policy](/privacy)
+Read the full policy here: [Privacy Policy](/privacy/)
 
-Need help? Visit [Support](/support)
+Need help? Visit [Support](/support/)
