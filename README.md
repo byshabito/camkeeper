@@ -7,6 +7,7 @@
   <p>
     <a href="https://addons.mozilla.org/firefox/addon/camkeeper/">Firefox Add-Ons</a>
     • <a href="https://chromewebstore.google.com/detail/camkeeper/plgibmbnfodgifhdggcnbihloihiafep/">Chrome Web Store</a>
+    • <a href="https://byshabito.github.io/camkeeper/">Documentation</a>
   </p>
   <!---
   <p>
