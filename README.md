@@ -26,7 +26,7 @@ CamKeeper is a browser extension that helps you organize and manage creator prof
 
 It allows you to create a single local profile that can reference multiple usernames or pages on different platforms, making it easier to keep notes, links, and metadata in one place.
 
-No accounts. No cloud services. All data remains on your device.
+No account is required. CamKeeper works fully local and offline by default, with optional encrypted Nostr sync if you choose to enable it.
 
 ## Features
 
@@ -54,11 +54,18 @@ No accounts. No cloud services. All data remains on your device.
 - Local tracking of view time for saved livestream pages
 - All activity data is stored only in the browser
 
+### Optional encrypted Nostr sync
+
+- Optional Nostr sync is disabled by default
+- Uses encrypted NIP-78 payloads and local private key signing
+- Uses user-configured relays only; no CamKeeper backend service
+- Manual sync flow is available from Options
+
 ### Privacy-first design
 
-- Local-only storage (no accounts, no sync)
+- Local-first storage with optional sync disabled by default
 - No analytics, tracking, or telemetry
-- No external servers or third-party services
+- No CamKeeper-managed servers or third-party tracking services
 - Optional JSON export/import for backup or migration
 
 ## Usage
@@ -113,8 +120,9 @@ These changes are not required on standard Firefox release builds when installin
 
 ## Data & privacy
 
-- All data is stored locally in the browser
-- No data is transmitted or shared
+- All profile data is stored locally in the browser by default
+- If optional Nostr sync is enabled, encrypted payloads are sent to user-configured relays
+- Relay operators can still observe network metadata (for example IP, public key, and timing)
 - Data can be exported or imported at any time
 
 See [PRIVACY](/PRIVACY.md) for full details.
@@ -122,3 +130,7 @@ See [PRIVACY](/PRIVACY.md) for full details.
 ## License
 
 [GPL-3.0-or-later](/LICENSE)
+
+## Third-party notices
+
+See [THIRD_PARTY_NOTICES](/THIRD_PARTY_NOTICES.md).

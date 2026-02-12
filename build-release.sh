@@ -103,6 +103,7 @@ copy_release_assets() {
   local target="$1"
   cp -R "${ROOT_DIR}/src" "${ROOT_DIR}/icons" "${ROOT_DIR}/README.md" \
     "${ROOT_DIR}/LICENSE" "${ROOT_DIR}/CHANGELOG.md" "${ROOT_DIR}/PRIVACY.md" \
+    "${ROOT_DIR}/THIRD_PARTY_NOTICES.md" \
     "$target"
 }
 
@@ -115,12 +116,12 @@ cp "${ROOT_DIR}/manifest.firefox.json" "${TMP_FIREFOX}/manifest.json"
 (
   cd "${TMP_CHROME}" \
     && zip -r "../camkeeper-v${VERSION}-chrome.zip" \
-      manifest.json src icons README.md LICENSE CHANGELOG.md PRIVACY.md
+      manifest.json src icons README.md LICENSE CHANGELOG.md PRIVACY.md THIRD_PARTY_NOTICES.md
 )
 (
   cd "${TMP_FIREFOX}" \
     && zip -r "../camkeeper-v${VERSION}-firefox.zip" \
-      manifest.json src icons README.md LICENSE CHANGELOG.md PRIVACY.md
+      manifest.json src icons README.md LICENSE CHANGELOG.md PRIVACY.md THIRD_PARTY_NOTICES.md
 )
 
 rm -rf "${TMP_CHROME}" "${TMP_FIREFOX}"

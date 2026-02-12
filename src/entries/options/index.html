@@ -130,6 +130,84 @@
         </div>
       </section>
 
+      <section class="panel">
+        <header class="panel-header">
+          <h2>Nostr Sync (Optional)</h2>
+          <div class="panel-actions">
+            <span
+              id="nostr-sync-feedback"
+              class="settings-feedback"
+              role="status"
+              aria-live="polite"
+            ></span>
+          </div>
+        </header>
+        <div class="export no-divider">
+          <div>
+            <h3>Enable sync</h3>
+            <p>When enabled, profiles can be synchronized via Nostr relays. Local mode always remains available.</p>
+          </div>
+          <div class="actions">
+            <label class="toggle" for="nostr-sync-enabled">
+              <input id="nostr-sync-enabled" type="checkbox" />
+              <span>Enabled</span>
+            </label>
+          </div>
+        </div>
+        <div class="export">
+          <div>
+            <h3>Relays</h3>
+            <p>Enter one relay per line. Only <code>wss://</code> relays are accepted.</p>
+          </div>
+          <div class="actions nostr-actions">
+            <textarea
+              id="nostr-sync-relays"
+              class="nostr-relays"
+              placeholder="wss://relay.damus.io"
+              rows="4"
+            ></textarea>
+            <button id="nostr-sync-save-config" class="ghost" type="button">Save relays</button>
+          </div>
+        </div>
+        <div class="export">
+          <div>
+            <h3>Private key</h3>
+            <p>Stored locally on this device only. Accepts <code>nsec</code> or 32-byte hex key.</p>
+          </div>
+          <div class="actions nostr-actions">
+            <div class="nostr-secret-row">
+              <input
+                id="nostr-sync-secret"
+                type="password"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="nsec1..."
+              />
+              <label class="toggle" for="nostr-sync-show-secret">
+                <input id="nostr-sync-show-secret" type="checkbox" />
+                <span>Show</span>
+              </label>
+            </div>
+            <div class="actions nostr-inline-actions">
+              <button id="nostr-sync-save-secret" class="ghost" type="button">Save key</button>
+              <button id="nostr-sync-generate-secret" class="ghost" type="button">Generate key</button>
+              <button id="nostr-sync-clear-secret" class="ghost" type="button">Clear key</button>
+            </div>
+            <p id="nostr-sync-secret-state" class="nostr-hint"></p>
+          </div>
+        </div>
+        <div class="export">
+          <div>
+            <h3>Manual sync</h3>
+            <p>Runs one pull/merge/push cycle now. This does not affect local usage if relays fail.</p>
+          </div>
+          <div class="actions nostr-actions">
+            <button id="nostr-sync-now" class="ghost" type="button">Sync now</button>
+            <p id="nostr-sync-status" class="nostr-status" role="status" aria-live="polite"></p>
+          </div>
+        </div>
+      </section>
+
       <section class="panel meta-panel">
         <header class="panel-header">
           <h2>About</h2>

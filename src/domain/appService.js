@@ -44,6 +44,17 @@ import {
   mergeProfilesByIds as mergeProfilesByIdsUseCase,
   saveProfileForm as saveProfileFormUseCase,
   loadListPreferences as loadListPreferencesUseCase,
+  getNostrSyncConfig as getNostrSyncConfigUseCase,
+  updateNostrSyncConfig as updateNostrSyncConfigUseCase,
+  getNostrSyncSecret as getNostrSyncSecretUseCase,
+  hasNostrSyncSecret as hasNostrSyncSecretUseCase,
+  setNostrSyncSecret as setNostrSyncSecretUseCase,
+  generateNostrSyncSecret as generateNostrSyncSecretUseCase,
+  clearNostrSyncSecret as clearNostrSyncSecretUseCase,
+  getNostrSyncStatus as getNostrSyncStatusUseCase,
+  setNostrSyncStatus as setNostrSyncStatusUseCase,
+  clearNostrSyncStatus as clearNostrSyncStatusUseCase,
+  syncNostrNow as syncNostrNowUseCase,
 } from "./useCases/index.js";
 
 export async function getProfiles() {
@@ -116,6 +127,50 @@ export async function saveProfileForm(input) {
 
 export async function loadListPreferences(input) {
   return loadListPreferencesUseCase(input);
+}
+
+export async function getNostrSyncConfig() {
+  return getNostrSyncConfigUseCase();
+}
+
+export async function updateNostrSyncConfig(patch) {
+  return updateNostrSyncConfigUseCase(patch);
+}
+
+export async function getNostrSyncSecret() {
+  return getNostrSyncSecretUseCase();
+}
+
+export async function hasNostrSyncSecret() {
+  return hasNostrSyncSecretUseCase();
+}
+
+export async function setNostrSyncSecret(value) {
+  return setNostrSyncSecretUseCase(value);
+}
+
+export async function generateNostrSyncSecret() {
+  return generateNostrSyncSecretUseCase();
+}
+
+export async function clearNostrSyncSecret() {
+  return clearNostrSyncSecretUseCase();
+}
+
+export async function getNostrSyncStatus() {
+  return getNostrSyncStatusUseCase();
+}
+
+export async function setNostrSyncStatus(status) {
+  return setNostrSyncStatusUseCase(status);
+}
+
+export async function clearNostrSyncStatus() {
+  return clearNostrSyncStatusUseCase();
+}
+
+export async function syncNostrNow(input) {
+  return syncNostrNowUseCase(input);
 }
 
 export function isSettingsStorageChange({ area, changes }) {

@@ -18,5 +18,7 @@
 
 export * from "./loadListPreferences.js";
 export * from "./mergeProfiles.js";
+export * from "./nostrSyncSettings.js";
 export * from "./quickAddProfile.js";
 export * from "./saveProfileForm.js";
+export * from "./syncNostrNow.js";

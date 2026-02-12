@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.1.0
+
+- Add optional Nostr sync based on NIP-78 with encrypted payloads and privacy-preserving opaque coordinates
+- Add manual "Sync now" workflow with pull/merge/push conflict handling and profile tombstones for deletions
+- Add Nostr Sync settings in Options (enable toggle, relay list, local key save/clear, sync status)
+- Prefill Nostr sync with three relay defaults and add one-click local key generation
+- Keep local-first behavior and offline functionality unchanged when sync is disabled or relays fail
+- Vendor audited Nostr cryptography dependencies and add third-party notice documentation
+
 ## v1.0.3
 
 - Simplify architecture into three clear layers: UI/background -> domain -> repo

@@ -1,11 +1,11 @@
 # Privacy Policy
 
-Last updated: 2026-01-11
+Last updated: 2026-02-12
 
 ## Overview
 This extension does not collect or sell personal data. It stores profile data and settings locally in your browser.
 
-All functionality runs locally in the user's browser unless explicitly stated otherwise.
+All core functionality runs locally in the user's browser. Optional Nostr sync is disabled by default and only runs when explicitly enabled by the user.
 
 ## Data Access
 The extension accesses the following data solely to provide its core functionality:
@@ -14,10 +14,18 @@ The extension accesses the following data solely to provide its core functionali
 - Tab URLs (to track view sessions in the background service worker for user-configured sites)
 - Browser extension storage (to store profiles, folders, view history, and settings)
 
-This data is:
+If optional Nostr sync is enabled, the extension also accesses:
+
+- User-provided relay URLs
+- A locally stored Nostr private key (`nsec` or equivalent hex form)
+- Encrypted sync payloads for profile/settings data
+
+Core local data is:
 - accessed only by the extension when it is running
 - not transmitted to external servers
 - not shared with third parties
+
+When optional Nostr sync is enabled, encrypted sync payloads are transmitted to user-configured relays.
 
 ## Permissions
 The extension requests the following permissions:
@@ -34,9 +42,20 @@ Only the minimum permissions required for the extension to function are requeste
 ## Data Storage
 - Profile data, view history, and settings are stored persistently in the browser’s extension storage.
 - All stored data remains local and can be removed by clearing extension data or uninstalling the extension.
+- If Nostr sync is enabled, the private key used for sync is stored locally in extension storage on that device.
+
+## Optional Nostr Sync
+
+- Nostr sync is opt-in and disabled by default.
+- Sync uses encrypted payloads over Nostr events (NIP-78 usage).
+- Local usage/offline usage remains fully available whether sync is enabled or not.
+- Sync secret material is never included in JSON backup export/import.
+- Relay operators and network intermediaries may still observe transport metadata such as IP address, public key, and timing.
 
 ## Third-Party Services
 This extension does not use third-party analytics, tracking, or advertising services.
+
+If optional Nostr sync is enabled, the extension connects to relays explicitly configured by the user.
 
 ## Changes
 This privacy policy may be updated if the extension's functionality changes.  

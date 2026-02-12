@@ -17,3 +17,7 @@
  */
 
 export const ACTIVE_VIEW_SESSIONS_STATE_KEY = "camkeeper_active_view_sessions_v1";
+export const NOSTR_SYNC_NSEC_STATE_KEY = "camkeeper_nostr_sync_nsec_v1";
+export const NOSTR_SYNC_STATUS_STATE_KEY = "camkeeper_nostr_sync_status_v1";
+export const NOSTR_SYNC_PROFILE_SHADOW_STATE_KEY = "camkeeper_nostr_sync_profile_shadow_v1";
+export const NOSTR_SYNC_PROFILE_TOMBSTONES_STATE_KEY = "camkeeper_nostr_sync_profile_tombstones_v1";

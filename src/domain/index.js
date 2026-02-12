@@ -19,6 +19,7 @@
 export * from "./ids.js";
 export * from "./appService.js";
 export * from "./migrations/profiles.js";
+export * from "./nostrSync.js";
 export * from "./profileViews.js";
 export * from "./profiles.js";
 export * from "./visitSessions.js";

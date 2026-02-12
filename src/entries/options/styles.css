@@ -402,6 +402,11 @@ body.embedded .settings-scope {
   .site-row button {
     grid-column: span 2;
   }
+
+  .settings-scope .nostr-secret-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
 .settings-scope .export.no-divider {
@@ -448,4 +453,56 @@ body.embedded .settings-scope {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
+}
+
+.settings-scope .nostr-actions {
+  width: 100%;
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+.settings-scope .nostr-relays {
+  width: 100%;
+  min-height: 88px;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #14181c;
+  color: var(--text);
+  padding: 8px 10px;
+  font: inherit;
+}
+
+.settings-scope .nostr-secret-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings-scope .nostr-secret-row input[type="password"],
+.settings-scope .nostr-secret-row input[type="text"] {
+  flex: 1;
+}
+
+.settings-scope .nostr-inline-actions {
+  justify-content: flex-start;
+}
+
+.settings-scope .nostr-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.settings-scope .nostr-status {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #14181c;
+  color: var(--text);
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.35;
+  white-space: pre-line;
 }

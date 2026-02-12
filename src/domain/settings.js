@@ -17,6 +17,7 @@
  */
 
 import { DEFAULT_LIVESTREAM_SITES, normalizeLivestreamSiteEntries } from "./sites.js";
+import { normalizeNostrSyncSettings } from "./nostrSync.js";
 
 export const SETTINGS_DEFAULTS = Object.freeze({
   viewMetric: "open",
@@ -24,6 +25,7 @@ export const SETTINGS_DEFAULTS = Object.freeze({
   lastFolderFilter: "",
   lastFolderOrder: [],
   livestreamSites: DEFAULT_LIVESTREAM_SITES.map((item) => ({ ...item })),
+  nostrSync: normalizeNostrSyncSettings(),
 });
 
 export function normalizeSettings(raw) {
@@ -44,6 +46,7 @@ export function normalizeSettings(raw) {
       ? source.lastFolderOrder.filter((item) => typeof item === "string")
       : SETTINGS_DEFAULTS.lastFolderOrder,
     livestreamSites: normalizeLivestreamSiteEntries(source.livestreamSites),
+    nostrSync: normalizeNostrSyncSettings(source.nostrSync),
   };
 }
 

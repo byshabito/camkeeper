@@ -27,10 +27,18 @@ import {
   saveProfiles,
   getSettings,
   updateSettings,
+  getNostrSyncConfig,
+  updateNostrSyncConfig,
+  getNostrSyncSecret,
+  setNostrSyncSecret,
+  generateNostrSyncSecret,
+  clearNostrSyncSecret,
+  getNostrSyncStatus,
+  syncNostrNow,
 } from "../../domain/appService.js";
 import { sanitizeProfile } from "../../domain/sanitizers.js";
 
-const RELEASE_TIMESTAMP = "2026-02-07T11:13:13+01:00";
+const RELEASE_TIMESTAMP = "2026-02-12T12:54:06+01:00";
 const DEVELOPER_NAME = "Shabito";
 const DEVELOPER_URL = "https://github.com/byshabito";
 const SOURCE_URL = "https://github.com/byshabito/camkeeper";
@@ -51,6 +59,18 @@ export function initSettingsPanel({
     addLivestreamSiteButton,
     settingsFeedback,
     backupFeedback,
+    nostrSyncFeedback,
+    nostrSyncEnabled,
+    nostrSyncRelays,
+    nostrSyncSaveConfigButton,
+    nostrSyncSecretInput,
+    nostrSyncShowSecret,
+    nostrSyncSaveSecretButton,
+    nostrSyncGenerateSecretButton,
+    nostrSyncClearSecretButton,
+    nostrSyncSecretState,
+    nostrSyncNowButton,
+    nostrSyncStatus,
     bitcoinDonateButton,
     bitcoinModal,
     bitcoinModalCloseBottom,
@@ -85,7 +105,12 @@ export function initSettingsPanel({
 
   const showSettingsFeedback = createFeedbackToast(settingsFeedback);
   const showBackupFeedback = createFeedbackToast(backupFeedback || settingsFeedback);
+  const showNostrFeedback = createFeedbackToast(nostrSyncFeedback || settingsFeedback);
   let bitcoinToastTimeout = null;
+  let nostrConfig = null;
+  let nostrStatus = null;
+  let nostrSecretStored = false;
+  let nostrSyncInProgress = false;
 
   function formatReleaseTimestamp(timestamp) {
     const date = new Date(timestamp);
@@ -103,6 +128,111 @@ export function initSettingsPanel({
     )} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}${suffix}`;
   }
 
+  function formatStatusTimestamp(timestamp) {
+    if (!Number.isFinite(timestamp)) return "Never";
+    const date = new Date(timestamp);
+    if (Number.isNaN(date.getTime())) return "Never";
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+  }
+
+  function parseRelayLines(value) {
+    return String(value || "")
+      .split(/\r?\n/)
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  function refreshNostrControls() {
+    const syncEnabled = Boolean(nostrConfig?.enabled);
+    if (nostrSyncEnabled) {
+      nostrSyncEnabled.checked = syncEnabled;
+      nostrSyncEnabled.disabled = nostrSyncInProgress;
+    }
+    if (nostrSyncSaveConfigButton) {
+      nostrSyncSaveConfigButton.disabled = nostrSyncInProgress;
+    }
+    if (nostrSyncSaveSecretButton) {
+      nostrSyncSaveSecretButton.disabled = nostrSyncInProgress;
+    }
+    if (nostrSyncGenerateSecretButton) {
+      nostrSyncGenerateSecretButton.disabled = nostrSyncInProgress;
+    }
+    if (nostrSyncClearSecretButton) {
+      nostrSyncClearSecretButton.disabled = nostrSyncInProgress || !nostrSecretStored;
+    }
+    if (nostrSyncNowButton) {
+      nostrSyncNowButton.disabled = nostrSyncInProgress || !syncEnabled;
+      nostrSyncNowButton.textContent = nostrSyncInProgress ? "Syncing..." : "Sync now";
+    }
+  }
+
+  function renderNostrStatusText() {
+    if (nostrSyncSecretState) {
+      nostrSyncSecretState.textContent = nostrSecretStored
+        ? "Private key is stored locally on this device."
+        : "No private key stored.";
+    }
+    if (!nostrSyncStatus) return;
+    if (!nostrStatus) {
+      nostrSyncStatus.textContent = "No sync attempts yet.";
+      return;
+    }
+    const relayCount = Array.isArray(nostrConfig?.relays) ? nostrConfig.relays.length : 0;
+    const lines = [
+      `Enabled: ${nostrConfig?.enabled ? "Yes" : "No"} | Relays: ${relayCount} | Key stored: ${nostrSecretStored ? "Yes" : "No"}`,
+      `Last attempt: ${formatStatusTimestamp(nostrStatus.lastAttemptAt)}`,
+      `Last success: ${formatStatusTimestamp(nostrStatus.lastSuccessAt)}`,
+      `Last sync: pulled ${nostrStatus.pulledCount || 0}, pushed ${nostrStatus.pushedCount || 0}`,
+    ];
+    if (nostrStatus.lastError) {
+      lines.push(`Last error: ${nostrStatus.lastError}`);
+    }
+    nostrSyncStatus.textContent = lines.join("\n");
+  }
+
+  async function refreshNostrSecretField() {
+    const storedSecret = await getNostrSyncSecret();
+    nostrSecretStored = Boolean(storedSecret);
+    if (nostrSyncSecretInput) {
+      nostrSyncSecretInput.value = storedSecret || "";
+      nostrSyncSecretInput.type = nostrSyncShowSecret?.checked ? "text" : "password";
+    }
+  }
+
+  async function loadNostrSyncSettings() {
+    if (!nostrSyncEnabled) return;
+    const [config, status] = await Promise.all([
+      getNostrSyncConfig(),
+      getNostrSyncStatus(),
+    ]);
+    nostrConfig = config;
+    nostrStatus = status;
+    if (nostrSyncRelays) {
+      nostrSyncRelays.value = (config.relays || []).join("\n");
+    }
+    await refreshNostrSecretField();
+    refreshNostrControls();
+    renderNostrStatusText();
+  }
+
+  async function saveNostrConfigPatch(patch, successMessage) {
+    try {
+      nostrConfig = await updateNostrSyncConfig(patch);
+      if (nostrSyncRelays) {
+        nostrSyncRelays.value = (nostrConfig.relays || []).join("\n");
+      }
+      refreshNostrControls();
+      renderNostrStatusText();
+      if (successMessage) {
+        showNostrFeedback(successMessage);
+      }
+    } catch (error) {
+      refreshNostrControls();
+      renderNostrStatusText();
+      showNostrFeedback("Failed to save Nostr sync settings.");
+    }
+  }
+
   async function loadSettings() {
     const settings = await getSettings();
     setSiteRegistry(settings.livestreamSites || []);
@@ -111,6 +241,11 @@ export function initSettingsPanel({
     }
     if (livestreamSitesList) {
       renderLivestreamSiteRows(settings.livestreamSites || []);
+    }
+    try {
+      await loadNostrSyncSettings();
+    } catch (error) {
+      showNostrFeedback("Could not load Nostr sync settings.");
     }
   }
 
@@ -434,6 +569,118 @@ export function initSettingsPanel({
       },
     },
     {
+      element: nostrSyncEnabled,
+      event: "change",
+      handler: async () => {
+        await saveNostrConfigPatch(
+          { enabled: Boolean(nostrSyncEnabled?.checked) },
+          "Nostr sync preference saved.",
+        );
+      },
+    },
+    {
+      element: nostrSyncSaveConfigButton,
+      event: "click",
+      handler: async () => {
+        const relays = parseRelayLines(nostrSyncRelays?.value || "");
+        await saveNostrConfigPatch(
+          { relays },
+          `Saved ${relays.length} relay${relays.length === 1 ? "" : "s"}.`,
+        );
+      },
+    },
+    {
+      element: nostrSyncShowSecret,
+      event: "change",
+      handler: () => {
+        if (!nostrSyncSecretInput) return;
+        nostrSyncSecretInput.type = nostrSyncShowSecret?.checked ? "text" : "password";
+      },
+    },
+    {
+      element: nostrSyncSaveSecretButton,
+      event: "click",
+      handler: async () => {
+        const secret = (nostrSyncSecretInput?.value || "").trim();
+        if (!secret) {
+          showNostrFeedback("Enter an nsec or hex private key first.");
+          return;
+        }
+        try {
+          await setNostrSyncSecret(secret);
+          await refreshNostrSecretField();
+          refreshNostrControls();
+          renderNostrStatusText();
+          showNostrFeedback("Private key saved locally.");
+        } catch (error) {
+          showNostrFeedback("Could not save private key. Check its format.");
+        }
+      },
+    },
+    {
+      element: nostrSyncGenerateSecretButton,
+      event: "click",
+      handler: async () => {
+        if (nostrSecretStored) {
+          const confirmed = window.confirm(
+            "A local Nostr key is already stored. Generate and replace it? This cannot be undone.",
+          );
+          if (!confirmed) return;
+        }
+        try {
+          await generateNostrSyncSecret();
+          await refreshNostrSecretField();
+          refreshNostrControls();
+          renderNostrStatusText();
+          showNostrFeedback("New private key generated and stored locally (masked in field).");
+        } catch (error) {
+          showNostrFeedback("Could not generate a new private key.");
+        }
+      },
+    },
+    {
+      element: nostrSyncClearSecretButton,
+      event: "click",
+      handler: async () => {
+        try {
+          await clearNostrSyncSecret();
+          await refreshNostrSecretField();
+          refreshNostrControls();
+          renderNostrStatusText();
+          showNostrFeedback("Stored private key cleared.");
+        } catch (error) {
+          showNostrFeedback("Failed to clear private key.");
+        }
+      },
+    },
+    {
+      element: nostrSyncNowButton,
+      event: "click",
+      handler: async () => {
+        if (nostrSyncInProgress) return;
+        nostrSyncInProgress = true;
+        refreshNostrControls();
+        try {
+          const result = await syncNostrNow();
+          nostrStatus = result?.status || (await getNostrSyncStatus());
+          await refreshNostrSecretField();
+          renderNostrStatusText();
+          if (result?.ok) {
+            showNostrFeedback(`Sync completed. Pulled ${result.pulledCount || 0}, pushed ${result.pushedCount || 0}.`);
+          } else {
+            showNostrFeedback(result?.error || "Sync finished with issues.");
+          }
+        } catch (error) {
+          nostrStatus = await getNostrSyncStatus();
+          renderNostrStatusText();
+          showNostrFeedback("Sync failed. Local data is unchanged.");
+        } finally {
+          nostrSyncInProgress = false;
+          refreshNostrControls();
+        }
+      },
+    },
+    {
       element: bitcoinDonateButton,
       event: "click",
       handler: openBitcoinModal,
@@ -453,6 +700,8 @@ export function initSettingsPanel({
     if (event.target === bitcoinModal) closeBitcoinModal();
   });
 
+  refreshNostrControls();
+  renderNostrStatusText();
   loadSettings();
   refreshMeta();
 }
