@@ -67,18 +67,42 @@ function normalizeRelayUrl(value) {
   }
 }
 
-export function normalizeNostrRelays(rawRelays) {
+export function analyzeNostrRelays(rawRelays) {
   const source = Array.isArray(rawRelays) ? rawRelays : [];
   const unique = new Set();
   const relays = [];
+  let invalidCount = 0;
+  let duplicateCount = 0;
+
   source.forEach((entry) => {
     const value = typeof entry === "string" ? entry : entry?.url;
     const normalized = normalizeRelayUrl(value);
-    if (!normalized || unique.has(normalized)) return;
+    if (!normalized) {
+      invalidCount += 1;
+      return;
+    }
+    if (unique.has(normalized)) {
+      duplicateCount += 1;
+      return;
+    }
     unique.add(normalized);
     relays.push(normalized);
   });
-  return relays.slice(0, MAX_NOSTR_RELAYS);
+
+  const truncatedCount = relays.length > MAX_NOSTR_RELAYS ? relays.length - MAX_NOSTR_RELAYS : 0;
+
+  return {
+    relays: relays.slice(0, MAX_NOSTR_RELAYS),
+    inputCount: source.length,
+    acceptedCount: Math.min(relays.length, MAX_NOSTR_RELAYS),
+    invalidCount,
+    duplicateCount,
+    truncatedCount,
+  };
+}
+
+export function normalizeNostrRelays(rawRelays) {
+  return analyzeNostrRelays(rawRelays).relays;
 }
 
 export function normalizeNostrSyncSettings(raw) {

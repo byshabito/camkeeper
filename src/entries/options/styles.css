@@ -407,6 +407,33 @@ body.embedded .settings-scope {
     flex-direction: column;
     align-items: stretch;
   }
+
+  .settings-scope .nostr-inline-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .settings-scope .nostr-inline-actions button {
+    width: 100%;
+  }
+
+  .settings-scope .nostr-enable-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .settings-scope .nostr-enable-controls {
+    justify-content: space-between;
+  }
+
+  .settings-scope .nostr-manual-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .settings-scope .nostr-manual-header button {
+    align-self: flex-end;
+  }
 }
 
 .settings-scope .export.no-divider {
@@ -462,6 +489,88 @@ body.embedded .settings-scope {
   justify-content: flex-start;
 }
 
+.settings-scope .nostr-block {
+  gap: 10px;
+}
+
+.settings-scope .nostr-block > div {
+  width: 100%;
+}
+
+.settings-scope .nostr-block .actions {
+  justify-content: flex-start;
+}
+
+.settings-scope .nostr-manual-header {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.settings-scope .nostr-manual-header > div {
+  min-width: 0;
+}
+
+.settings-scope .nostr-manual-header button {
+  align-self: flex-start;
+}
+
+.settings-scope .nostr-title-state {
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.settings-scope .nostr-title-state.is-enabled {
+  color: #9ee7b0;
+}
+
+.settings-scope .nostr-title-state.is-disabled {
+  color: var(--muted);
+}
+
+.settings-scope .nostr-ready {
+  margin: 0;
+  font-size: 12px;
+}
+
+.settings-scope .nostr-enable-row {
+  align-items: flex-start;
+}
+
+.settings-scope .nostr-enable-controls {
+  width: auto;
+  display: inline-flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings-scope .nostr-ready-warning {
+  color: #f2b8b5;
+}
+
+.settings-scope .nostr-ready-ok {
+  color: #9ee7b0;
+}
+
+.settings-scope .nostr-inline-message {
+  margin: 0;
+  min-height: 14px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.settings-scope .nostr-inline-message.is-warning,
+.settings-scope .nostr-inline-message.is-error {
+  color: #f2b8b5;
+}
+
+.settings-scope .nostr-inline-message.is-success {
+  color: #9ee7b0;
+}
+
 .settings-scope .nostr-relays {
   width: 100%;
   min-height: 88px;
@@ -478,6 +587,7 @@ body.embedded .settings-scope {
   display: flex;
   align-items: center;
   gap: 10px;
+  width: 100%;
 }
 
 .settings-scope .nostr-secret-row input[type="password"],
@@ -487,6 +597,24 @@ body.embedded .settings-scope {
 
 .settings-scope .nostr-inline-actions {
   justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.settings-scope .nostr-action-right {
+  align-self: flex-end;
+}
+
+.settings-scope .nostr-manual-actions {
+  gap: 0;
+}
+
+.settings-scope #nostr-sync-now:disabled,
+.settings-scope #nostr-sync-now:disabled:hover {
+  background: #1a1f24;
+  border-color: var(--border);
+  color: var(--muted);
+  filter: none;
+  opacity: 0.78;
 }
 
 .settings-scope .nostr-hint {
@@ -497,11 +625,8 @@ body.embedded .settings-scope {
 
 .settings-scope .nostr-status {
   margin: 0;
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: #14181c;
-  color: var(--text);
-  padding: 8px 10px;
+  color: var(--muted);
+  padding: 0;
   font-size: 12px;
   line-height: 1.35;
   white-space: pre-line;

@@ -132,7 +132,7 @@
 
       <section class="panel">
         <header class="panel-header">
-          <h2>Nostr Sync (Optional)</h2>
+          <h2>Nostr Sync <span id="nostr-sync-title-state" class="nostr-title-state is-disabled">(Disabled)</span></h2>
           <div class="panel-actions">
             <span
               id="nostr-sync-feedback"
@@ -142,22 +142,22 @@
             ></span>
           </div>
         </header>
-        <div class="export no-divider">
+        <div class="export no-divider nostr-enable-row">
           <div>
             <h3>Enable sync</h3>
-            <p>When enabled, profiles can be synchronized via Nostr relays. Local mode always remains available.</p>
+            <p>When enabled, profiles sync through your configured Nostr relays. Local mode always remains available.</p>
+            <p id="nostr-sync-ready" class="nostr-ready">Sync setup incomplete.</p>
           </div>
-          <div class="actions">
+          <div class="actions nostr-enable-controls">
             <label class="toggle" for="nostr-sync-enabled">
-              <input id="nostr-sync-enabled" type="checkbox" />
-              <span>Enabled</span>
+              <input id="nostr-sync-enabled" type="checkbox" aria-label="Enable sync" />
             </label>
           </div>
         </div>
-        <div class="export">
+        <div class="export stacked nostr-block">
           <div>
             <h3>Relays</h3>
-            <p>Enter one relay per line. Only <code>wss://</code> relays are accepted.</p>
+            <p id="nostr-sync-relays-help">One relay per line. Only <code>wss://</code> relays are accepted.</p>
           </div>
           <div class="actions nostr-actions">
             <textarea
@@ -165,14 +165,15 @@
               class="nostr-relays"
               placeholder="wss://relay.damus.io"
               rows="4"
+              aria-describedby="nostr-sync-relays-help"
             ></textarea>
-            <button id="nostr-sync-save-config" class="ghost" type="button">Save relays</button>
+            <button id="nostr-sync-save-config" class="ghost nostr-action-right" type="button">Save relays</button>
           </div>
         </div>
-        <div class="export">
+        <div class="export stacked nostr-block">
           <div>
             <h3>Private key</h3>
-            <p>Stored locally on this device only. Accepts <code>nsec</code> or 32-byte hex key.</p>
+            <p id="nostr-sync-secret-help">Stored locally on this device only. Accepts <code>nsec</code> or 32-byte hex key. Never share your <code>nsec</code> with anyone, including support.</p>
           </div>
           <div class="actions nostr-actions">
             <div class="nostr-secret-row">
@@ -182,6 +183,7 @@
                 autocomplete="off"
                 spellcheck="false"
                 placeholder="nsec1..."
+                aria-describedby="nostr-sync-secret-help nostr-sync-secret-state"
               />
               <label class="toggle" for="nostr-sync-show-secret">
                 <input id="nostr-sync-show-secret" type="checkbox" />
@@ -191,18 +193,20 @@
             <div class="actions nostr-inline-actions">
               <button id="nostr-sync-save-secret" class="ghost" type="button">Save key</button>
               <button id="nostr-sync-generate-secret" class="ghost" type="button">Generate key</button>
-              <button id="nostr-sync-clear-secret" class="ghost" type="button">Clear key</button>
+              <button id="nostr-sync-clear-secret" class="danger" type="button">Clear key</button>
             </div>
             <p id="nostr-sync-secret-state" class="nostr-hint"></p>
           </div>
         </div>
-        <div class="export">
-          <div>
-            <h3>Manual sync</h3>
-            <p>Runs one pull/merge/push cycle now. This does not affect local usage if relays fail.</p>
+        <div class="export stacked nostr-block">
+          <div class="nostr-manual-header">
+            <div>
+              <h3>Manual sync</h3>
+              <p>Runs one pull/merge/push cycle now. Local usage is unaffected if relays fail.</p>
+            </div>
+            <button id="nostr-sync-now" class="primary" type="button">Sync now</button>
           </div>
-          <div class="actions nostr-actions">
-            <button id="nostr-sync-now" class="ghost" type="button">Sync now</button>
+          <div class="actions nostr-actions nostr-manual-actions">
             <p id="nostr-sync-status" class="nostr-status" role="status" aria-live="polite"></p>
           </div>
         </div>

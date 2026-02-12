@@ -22,6 +22,7 @@ import {
   normalizeLivestreamHost,
   normalizeLivestreamSiteEntries,
 } from "../../domain/sites.js";
+import { analyzeNostrRelays } from "../../domain/nostrSync.js";
 import {
   getProfiles,
   saveProfiles,
@@ -71,6 +72,9 @@ export function initSettingsPanel({
     nostrSyncSecretState,
     nostrSyncNowButton,
     nostrSyncStatus,
+    nostrSyncInlineMessage,
+    nostrSyncReady,
+    nostrSyncTitleState,
     bitcoinDonateButton,
     bitcoinModal,
     bitcoinModalCloseBottom,
@@ -111,6 +115,7 @@ export function initSettingsPanel({
   let nostrStatus = null;
   let nostrSecretStored = false;
   let nostrSyncInProgress = false;
+  let lastPublishFailures = [];
 
   function formatReleaseTimestamp(timestamp) {
     const date = new Date(timestamp);
@@ -142,10 +147,90 @@ export function initSettingsPanel({
       .filter(Boolean);
   }
 
+  function setNostrInlineMessage(message, tone = "") {
+    if (!nostrSyncInlineMessage) return;
+    nostrSyncInlineMessage.textContent = message || "";
+    nostrSyncInlineMessage.classList.remove("is-success", "is-warning", "is-error");
+    if (tone === "success" || tone === "warning" || tone === "error") {
+      nostrSyncInlineMessage.classList.add(`is-${tone}`);
+    }
+  }
+
+  function getNostrReadiness() {
+    const relayCount = Array.isArray(nostrConfig?.relays) ? nostrConfig.relays.length : 0;
+    const enabled = Boolean(nostrConfig?.enabled);
+    const keyStored = Boolean(nostrSecretStored);
+    const ready = enabled && relayCount > 0 && keyStored;
+    let hint = "Sync setup incomplete.";
+    if (ready) {
+      hint = "Ready to sync.";
+    } else if (!enabled) {
+      hint = "Turn on sync when setup is complete.";
+    } else if (!relayCount) {
+      hint = "Add at least one valid relay.";
+    } else if (!keyStored) {
+      hint = "Save a private key to continue.";
+    }
+    return {
+      ready,
+      relayCount,
+      enabled,
+      keyStored,
+      hint,
+    };
+  }
+
+  function formatSyncResult(pulledCount, pushedCount) {
+    return `Pulled ${pulledCount || 0}, pushed ${pushedCount || 0}`;
+  }
+
+  function formatPublishFailures(value, maxItems = 3) {
+    const failures = Array.isArray(value) ? value : [];
+    if (!failures.length) return "";
+    const preview = failures.slice(0, maxItems).map((item) => {
+      const type = String(item?.type || "event");
+      const profileId = String(item?.profileId || "");
+      const suffix = profileId ? ` ${profileId.slice(0, 8)}...` : "";
+      return `${type}${suffix}`;
+    });
+    const overflow = failures.length - preview.length;
+    return overflow > 0 ? `${preview.join(", ")} (+${overflow} more)` : preview.join(", ");
+  }
+
+  function describeRelaySaveResult(analysis) {
+    if (!analysis.inputCount) {
+      return {
+        message: "Relay list cleared.",
+        tone: "success",
+      };
+    }
+    if (!analysis.acceptedCount) {
+      return {
+        message: "No valid relays found. Use one relay per line with wss://",
+        tone: "warning",
+      };
+    }
+    const skipped = [];
+    if (analysis.invalidCount) {
+      skipped.push(`${analysis.invalidCount} invalid`);
+    }
+    if (analysis.duplicateCount) {
+      skipped.push(`${analysis.duplicateCount} duplicate`);
+    }
+    if (analysis.truncatedCount) {
+      skipped.push(`${analysis.truncatedCount} over limit`);
+    }
+    const base = `Saved ${analysis.acceptedCount} relay${analysis.acceptedCount === 1 ? "" : "s"}.`;
+    return {
+      message: skipped.length ? `${base} Skipped ${skipped.join(" and ")}.` : base,
+      tone: skipped.length ? "warning" : "success",
+    };
+  }
+
   function refreshNostrControls() {
-    const syncEnabled = Boolean(nostrConfig?.enabled);
+    const readiness = getNostrReadiness();
     if (nostrSyncEnabled) {
-      nostrSyncEnabled.checked = syncEnabled;
+      nostrSyncEnabled.checked = readiness.enabled;
       nostrSyncEnabled.disabled = nostrSyncInProgress;
     }
     if (nostrSyncSaveConfigButton) {
@@ -161,33 +246,49 @@ export function initSettingsPanel({
       nostrSyncClearSecretButton.disabled = nostrSyncInProgress || !nostrSecretStored;
     }
     if (nostrSyncNowButton) {
-      nostrSyncNowButton.disabled = nostrSyncInProgress || !syncEnabled;
+      nostrSyncNowButton.disabled = nostrSyncInProgress || !readiness.ready;
       nostrSyncNowButton.textContent = nostrSyncInProgress ? "Syncing..." : "Sync now";
     }
   }
 
   function renderNostrStatusText() {
+    const readiness = getNostrReadiness();
     if (nostrSyncSecretState) {
       nostrSyncSecretState.textContent = nostrSecretStored
         ? "Private key is stored locally on this device."
         : "No private key stored.";
     }
-    if (!nostrSyncStatus) return;
-    if (!nostrStatus) {
-      nostrSyncStatus.textContent = "No sync attempts yet.";
-      return;
+    if (nostrSyncReady) {
+      nostrSyncReady.textContent = readiness.hint;
+      nostrSyncReady.classList.toggle("nostr-ready-ok", readiness.ready);
+      nostrSyncReady.classList.toggle("nostr-ready-warning", !readiness.ready);
     }
-    const relayCount = Array.isArray(nostrConfig?.relays) ? nostrConfig.relays.length : 0;
-    const lines = [
-      `Enabled: ${nostrConfig?.enabled ? "Yes" : "No"} | Relays: ${relayCount} | Key stored: ${nostrSecretStored ? "Yes" : "No"}`,
-      `Last attempt: ${formatStatusTimestamp(nostrStatus.lastAttemptAt)}`,
-      `Last success: ${formatStatusTimestamp(nostrStatus.lastSuccessAt)}`,
-      `Last sync: pulled ${nostrStatus.pulledCount || 0}, pushed ${nostrStatus.pushedCount || 0}`,
-    ];
-    if (nostrStatus.lastError) {
-      lines.push(`Last error: ${nostrStatus.lastError}`);
+    if (nostrSyncTitleState) {
+      nostrSyncTitleState.textContent = readiness.enabled ? "" : "(Disabled)";
+      nostrSyncTitleState.classList.toggle("is-enabled", readiness.enabled);
+      nostrSyncTitleState.classList.toggle("is-disabled", !readiness.enabled);
     }
-    nostrSyncStatus.textContent = lines.join("\n");
+
+    if (nostrSyncStatus) {
+      if (!nostrStatus) {
+        nostrSyncStatus.textContent = "No sync attempts yet.";
+        return;
+      }
+      const lines = [
+        `${readiness.enabled ? "Enabled" : "Disabled"} | ${readiness.relayCount} relay${readiness.relayCount === 1 ? "" : "s"} | Key ${readiness.keyStored ? "saved" : "missing"} | ${formatSyncResult(nostrStatus.pulledCount, nostrStatus.pushedCount)} | Last attempt: ${formatStatusTimestamp(nostrStatus.lastAttemptAt)}`,
+      ];
+      if (Number.isFinite(nostrStatus.lastSuccessAt)) {
+        lines.push(`Last success: ${formatStatusTimestamp(nostrStatus.lastSuccessAt)}`);
+      }
+      const failureText = formatPublishFailures(lastPublishFailures);
+      if (failureText) {
+        lines.push(`Failed events: ${failureText}`);
+      }
+      if (nostrStatus.lastError) {
+        lines.push(`Last error: ${nostrStatus.lastError}`);
+      }
+      nostrSyncStatus.textContent = lines.join("\n");
+    }
   }
 
   async function refreshNostrSecretField() {
@@ -207,15 +308,17 @@ export function initSettingsPanel({
     ]);
     nostrConfig = config;
     nostrStatus = status;
+    lastPublishFailures = [];
     if (nostrSyncRelays) {
       nostrSyncRelays.value = (config.relays || []).join("\n");
     }
     await refreshNostrSecretField();
     refreshNostrControls();
     renderNostrStatusText();
+    setNostrInlineMessage("");
   }
 
-  async function saveNostrConfigPatch(patch, successMessage) {
+  async function saveNostrConfigPatch(patch, successMessage, { inlineTone = "" } = {}) {
     try {
       nostrConfig = await updateNostrSyncConfig(patch);
       if (nostrSyncRelays) {
@@ -225,11 +328,15 @@ export function initSettingsPanel({
       renderNostrStatusText();
       if (successMessage) {
         showNostrFeedback(successMessage);
+        setNostrInlineMessage(successMessage, inlineTone);
       }
+      return true;
     } catch (error) {
       refreshNostrControls();
       renderNostrStatusText();
       showNostrFeedback("Failed to save Nostr sync settings.");
+      setNostrInlineMessage("Failed to save Nostr sync settings.", "error");
+      return false;
     }
   }
 
@@ -575,6 +682,7 @@ export function initSettingsPanel({
         await saveNostrConfigPatch(
           { enabled: Boolean(nostrSyncEnabled?.checked) },
           "Nostr sync preference saved.",
+          { inlineTone: "success" },
         );
       },
     },
@@ -582,10 +690,13 @@ export function initSettingsPanel({
       element: nostrSyncSaveConfigButton,
       event: "click",
       handler: async () => {
-        const relays = parseRelayLines(nostrSyncRelays?.value || "");
+        const relayLines = parseRelayLines(nostrSyncRelays?.value || "");
+        const relayAnalysis = analyzeNostrRelays(relayLines);
+        const relayResult = describeRelaySaveResult(relayAnalysis);
         await saveNostrConfigPatch(
-          { relays },
-          `Saved ${relays.length} relay${relays.length === 1 ? "" : "s"}.`,
+          { relays: relayAnalysis.relays },
+          relayResult.message,
+          { inlineTone: relayResult.tone },
         );
       },
     },
@@ -604,6 +715,7 @@ export function initSettingsPanel({
         const secret = (nostrSyncSecretInput?.value || "").trim();
         if (!secret) {
           showNostrFeedback("Enter an nsec or hex private key first.");
+          setNostrInlineMessage("Enter an nsec or hex private key first.", "warning");
           return;
         }
         try {
@@ -612,8 +724,10 @@ export function initSettingsPanel({
           refreshNostrControls();
           renderNostrStatusText();
           showNostrFeedback("Private key saved locally.");
+          setNostrInlineMessage("Private key saved locally.", "success");
         } catch (error) {
-          showNostrFeedback("Could not save private key. Check its format.");
+          showNostrFeedback("Could not save private key. Expected nsec1... or 64-char hex.");
+          setNostrInlineMessage("Could not save private key. Expected nsec1... or 64-char hex.", "error");
         }
       },
     },
@@ -633,8 +747,10 @@ export function initSettingsPanel({
           refreshNostrControls();
           renderNostrStatusText();
           showNostrFeedback("New private key generated and stored locally (masked in field).");
+          setNostrInlineMessage("New private key generated and stored locally (masked in field).", "success");
         } catch (error) {
           showNostrFeedback("Could not generate a new private key.");
+          setNostrInlineMessage("Could not generate a new private key.", "error");
         }
       },
     },
@@ -642,14 +758,22 @@ export function initSettingsPanel({
       element: nostrSyncClearSecretButton,
       event: "click",
       handler: async () => {
+        if (nostrSecretStored) {
+          const confirmed = window.confirm(
+            "Clear the stored private key on this device? Sync will stop until a key is saved again.",
+          );
+          if (!confirmed) return;
+        }
         try {
           await clearNostrSyncSecret();
           await refreshNostrSecretField();
           refreshNostrControls();
           renderNostrStatusText();
           showNostrFeedback("Stored private key cleared.");
+          setNostrInlineMessage("Stored private key cleared.", "warning");
         } catch (error) {
           showNostrFeedback("Failed to clear private key.");
+          setNostrInlineMessage("Failed to clear private key.", "error");
         }
       },
     },
@@ -658,22 +782,38 @@ export function initSettingsPanel({
       event: "click",
       handler: async () => {
         if (nostrSyncInProgress) return;
+        const readiness = getNostrReadiness();
+        if (!readiness.ready) {
+          const message = "Sync requires enabled toggle, at least one relay, and a saved private key.";
+          showNostrFeedback(message);
+          setNostrInlineMessage(message, "warning");
+          return;
+        }
         nostrSyncInProgress = true;
         refreshNostrControls();
         try {
           const result = await syncNostrNow();
           nostrStatus = result?.status || (await getNostrSyncStatus());
+          lastPublishFailures = Array.isArray(result?.publishFailures) ? result.publishFailures : [];
           await refreshNostrSecretField();
           renderNostrStatusText();
           if (result?.ok) {
             showNostrFeedback(`Sync completed. Pulled ${result.pulledCount || 0}, pushed ${result.pushedCount || 0}.`);
+            setNostrInlineMessage("Sync completed successfully.", "success");
           } else {
-            showNostrFeedback(result?.error || "Sync finished with issues.");
+            const failureCount = lastPublishFailures.length;
+            const issueMessage = failureCount
+              ? `Sync completed with issues. ${failureCount} event${failureCount === 1 ? "" : "s"} failed to publish.`
+              : (result?.error || "Sync finished with issues.");
+            showNostrFeedback(issueMessage);
+            setNostrInlineMessage(issueMessage, "warning");
           }
         } catch (error) {
           nostrStatus = await getNostrSyncStatus();
+          lastPublishFailures = [];
           renderNostrStatusText();
           showNostrFeedback("Sync failed. Local data is unchanged.");
+          setNostrInlineMessage("Sync failed. Local data is unchanged.", "error");
         } finally {
           nostrSyncInProgress = false;
           refreshNostrControls();
