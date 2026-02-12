@@ -13,6 +13,8 @@
 - Improve relay save feedback and private key UX with detailed validation messages and clear-key confirmation
 - Replace the Settings About block with a compact footnote row and quick links to docs, changelog, privacy, and support
 - Remove build-time metadata from Settings and stop release-script timestamp stamping in favor of version-only packaging updates
+- Localize the Buy Me a Coffee badge asset so the options page no longer fetches a remote CDN image
+- Remove unused `src/assets/camkeeper-logo.png` to keep the packaged extension lean
 
 ## v1.0.3
 

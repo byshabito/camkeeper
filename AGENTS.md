@@ -23,6 +23,7 @@
 ## Build, Lint, and Test Commands
 Install dependencies (docs tooling):
 - `bun install`
+- Note: `package.json` currently includes docs scripts only (no app build/lint/test scripts).
 
 Docs:
 - Dev server: `bun run docs:dev`
@@ -46,6 +47,7 @@ Syntax checks (recommended before PR):
 Testing:
 - No active automated test suite is configured right now.
 - Single-test command is unavailable until a runner is added.
+- `npm test` / `bun test` are expected to fail unless tests are introduced.
 - If Bun tests are added later:
   - Run all tests: `bun test`
   - Run one test file: `bun test tests/path/to/file.test.js`
