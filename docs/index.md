@@ -59,6 +59,8 @@ When enabled, encrypted payloads are sent only to relays you configure.
 Nostr is an open protocol that uses relays to exchange signed events.
 CamKeeper uses Nostr only as an optional sync transport for encrypted profile data between your devices.
 
+If you are new to Nostr, read: [Nostr Basics for CamKeeper Users](/nostr/)
+
 ## Keep your `nsec` private
 
 - `nsec` is your private key

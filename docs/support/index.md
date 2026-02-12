@@ -37,3 +37,5 @@ For Nostr sync issues, also include:
 - Sync status output (pulled/pushed counts and last error)
 
 Never share your private key (`nsec`) with anyone, including CamKeeper maintainers/support.
+
+New to Nostr? Start here: [Nostr Basics for CamKeeper Users](/nostr/)
