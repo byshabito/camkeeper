@@ -32,7 +32,7 @@ features:
 CamKeeper helps you manage creator profiles across sites from one extension popup.
 You can save profiles, attach multiple site identities, track local view time for configured livestream sites, and quickly find people again later.
 
-![CamKeeper profile details](./screenshots/details.jpg)
+![CamKeeper profile details](./screenshots/details.png)
 
 ## Quick start
 
