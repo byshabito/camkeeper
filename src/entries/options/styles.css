@@ -112,16 +112,16 @@ body.embedded .settings-scope {
   height: 36px;
 }
 
-.settings-scope .donation p {
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-}
-
 .settings-scope .donation-badge {
   height: 36px;
   width: auto;
   display: block;
+}
+
+.settings-scope .donation p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
 }
 
 .settings-scope .donation-bitcoin {
