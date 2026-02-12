@@ -23,6 +23,7 @@ export default defineConfig({
     nav: [
       { text: "Home", link: "/" },
       { text: "Nostr", link: "/nostr/" },
+      { text: "Changelog", link: "/changelog/" },
       { text: "Privacy", link: "/privacy/" },
       { text: "Support", link: "/support/" },
       { text: "GitHub", link: "https://github.com/byshabito/camkeeper" },
@@ -33,6 +34,7 @@ export default defineConfig({
         items: [
           { text: "Overview", link: "/" },
           { text: "Nostr basics", link: "/nostr/" },
+          { text: "Changelog", link: "/changelog/" },
           { text: "Privacy", link: "/privacy/" },
           { text: "Support", link: "/support/" },
         ],

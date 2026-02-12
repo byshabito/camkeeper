@@ -71,3 +71,5 @@ If you are new to Nostr, read: [Nostr Basics for CamKeeper Users](/nostr/)
 Read the full policy here: [Privacy Policy](/privacy/)
 
 Need help? Visit [Support](/support/)
+
+Release history: [Changelog](/changelog/)
