@@ -1,11 +1,12 @@
 # Privacy Policy
 
-Last updated: 2026-02-10
+Last updated: 2026-02-12
 
 ## Overview
 
 CamKeeper is built to run locally in your browser.
 It does not collect, sell, or share personal data.
+Core features remain fully local and offline-capable.
 
 ## Data access
 
@@ -14,6 +15,12 @@ CamKeeper accesses the minimum browser data required for core features:
 - Current tab URL, so you can save or attach the active page to a profile.
 - Tab URLs and tab activity events, so the background service worker can track local view sessions for configured livestream sites.
 - Extension storage data, so profiles, settings, folder order, and view history persist across sessions.
+
+If you enable optional Nostr sync, CamKeeper also accesses:
+
+- User-configured relay URLs.
+- A locally stored Nostr private key (`nsec` or equivalent hex key).
+- Encrypted sync payloads used for profile/settings synchronization.
 
 This data is used only by the extension while it runs in your browser.
 
@@ -35,6 +42,7 @@ No extra permissions are requested beyond what is needed for these features.
 - Data is stored locally in your browser via extension storage.
 - Data stays on your device unless you explicitly export it.
 - You can delete data by clearing extension data or uninstalling CamKeeper.
+- If Nostr sync is enabled, your Nostr key is stored locally in extension storage on that device.
 
 ## Export and import
 
@@ -44,12 +52,22 @@ No extra permissions are requested beyond what is needed for these features.
 
 ## Network usage
 
-CamKeeper does not send profile data, notes, tags, or settings to external services.
+By default, CamKeeper does not send profile data, notes, tags, or settings to external services.
+If optional Nostr sync is enabled, CamKeeper sends encrypted sync payloads to relays you configured.
 The extension has no analytics, telemetry, or advertising integrations.
+
+## Optional Nostr sync
+
+- Nostr sync is opt-in and disabled by default.
+- Sync payloads are encrypted and signed.
+- Local usage and offline usage remain available whether sync is enabled or not.
+- Backup export/import does not include your Nostr private key.
+- Relay operators and network intermediaries may still observe metadata such as IP address, public key, and timing.
 
 ## Third-party services
 
 CamKeeper does not use third-party trackers or ad networks.
+If optional sync is enabled, it connects to relays explicitly configured by you.
 
 ## Changes to this policy
 

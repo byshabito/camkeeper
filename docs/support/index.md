@@ -29,3 +29,9 @@ When reporting a problem, include:
 - CamKeeper version
 - Steps to reproduce
 - Expected vs actual behavior
+
+For Nostr sync issues, also include:
+
+- Whether sync is enabled
+- Relay list you configured (omit private key)
+- Sync status output (pulled/pushed counts and last error)
