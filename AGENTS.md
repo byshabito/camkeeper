@@ -33,7 +33,7 @@ Release packaging:
 - `./build-release.sh <version>`
 - Example: `./build-release.sh 1.1.0`
 - Requires: `bash`, `python3` (or `python`), and `zip`.
-- Updates both manifests and stamps `RELEASE_TIMESTAMP`.
+- Updates both manifest versions.
 
 Linting:
 - No dedicated linter is currently configured.

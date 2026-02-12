@@ -79,7 +79,6 @@ const elements = {
   bitcoinModalCloseBottom: document.getElementById("bitcoin-modal-close-bottom"),
   bitcoinToast: document.getElementById("bitcoin-toast"),
   metaVersion: document.getElementById("meta-version"),
-  metaRelease: document.getElementById("meta-release"),
   metaDeveloper: document.getElementById("meta-developer"),
   metaSource: document.getElementById("meta-source"),
   metaLicense: document.getElementById("meta-license"),

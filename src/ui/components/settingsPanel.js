@@ -39,9 +39,10 @@ import {
 } from "../../domain/appService.js";
 import { sanitizeProfile } from "../../domain/sanitizers.js";
 
-const RELEASE_TIMESTAMP = "2026-02-12T13:46:20+01:00";
-const DEVELOPER_NAME = "Shabito";
-const DEVELOPER_URL = "https://github.com/byshabito";
+const DOCS_URL = "https://shabito.net/camkeeper/";
+const CHANGELOG_URL = "https://shabito.net/camkeeper/changelog/";
+const PRIVACY_URL = "https://shabito.net/camkeeper/privacy/";
+const SUPPORT_URL = "https://shabito.net/camkeeper/support/";
 const SOURCE_URL = "https://github.com/byshabito/camkeeper";
 const LICENSE_URL = "https://www.gnu.org/licenses/gpl-3.0.en.html";
 
@@ -80,8 +81,10 @@ export function initSettingsPanel({
     bitcoinModalCloseBottom,
     bitcoinToast,
     metaVersion,
-    metaRelease,
-    metaDeveloper,
+    metaDocs,
+    metaChangelog,
+    metaPrivacy,
+    metaSupport,
     metaSource,
     metaLicense,
   } = elements || {};
@@ -116,22 +119,6 @@ export function initSettingsPanel({
   let nostrSecretStored = false;
   let nostrSyncInProgress = false;
   let lastPublishFailures = [];
-
-  function formatReleaseTimestamp(timestamp) {
-    const date = new Date(timestamp);
-    if (Number.isNaN(date.getTime())) return timestamp;
-    const pad = (value) => String(value).padStart(2, "0");
-    const timeZoneName = new Intl.DateTimeFormat(undefined, {
-      timeZone: "UTC",
-      timeZoneName: "short",
-    })
-      .formatToParts(date)
-      .find((part) => part.type === "timeZoneName")?.value;
-    const suffix = timeZoneName ? ` ${timeZoneName}` : "";
-    return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(
-      date.getUTCDate(),
-    )} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}${suffix}`;
-  }
 
   function formatStatusTimestamp(timestamp) {
     if (!Number.isFinite(timestamp)) return "Never";
@@ -552,15 +539,24 @@ export function initSettingsPanel({
   }
 
   async function refreshMeta() {
-    if (metaRelease) {
-      metaRelease.textContent = formatReleaseTimestamp(RELEASE_TIMESTAMP);
+    if (metaDocs) {
+      metaDocs.textContent = "Docs";
+      metaDocs.href = DOCS_URL;
     }
-    if (metaDeveloper) {
-      metaDeveloper.textContent = DEVELOPER_NAME;
-      metaDeveloper.href = DEVELOPER_URL;
+    if (metaChangelog) {
+      metaChangelog.textContent = "Changelog";
+      metaChangelog.href = CHANGELOG_URL;
+    }
+    if (metaPrivacy) {
+      metaPrivacy.textContent = "Privacy";
+      metaPrivacy.href = PRIVACY_URL;
+    }
+    if (metaSupport) {
+      metaSupport.textContent = "Support";
+      metaSupport.href = SUPPORT_URL;
     }
     if (metaSource) {
-      metaSource.textContent = "GitHub";
+      metaSource.textContent = "Open-sourced";
       metaSource.href = SOURCE_URL;
     }
     if (metaLicense) {

@@ -48,8 +48,10 @@ export function initOptionsController() {
     bitcoinModalCloseBottom: document.getElementById("bitcoin-modal-close-bottom"),
     bitcoinToast: document.getElementById("bitcoin-toast"),
     metaVersion: document.getElementById("meta-version"),
-    metaRelease: document.getElementById("meta-release"),
-    metaDeveloper: document.getElementById("meta-developer"),
+    metaDocs: document.getElementById("meta-docs"),
+    metaChangelog: document.getElementById("meta-changelog"),
+    metaPrivacy: document.getElementById("meta-privacy"),
+    metaSupport: document.getElementById("meta-support"),
     metaSource: document.getElementById("meta-source"),
     metaLicense: document.getElementById("meta-license"),
   };

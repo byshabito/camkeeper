@@ -11,6 +11,8 @@
 - Refine Nostr Sync settings layout with cleaner alignment, compact manual sync actions, and clearer status placement
 - Disable and visually dim "Sync now" until setup is complete (enabled toggle, relay configured, and local key saved)
 - Improve relay save feedback and private key UX with detailed validation messages and clear-key confirmation
+- Replace the Settings About block with a compact footnote row and quick links to docs, changelog, privacy, and support
+- Remove build-time metadata from Settings and stop release-script timestamp stamping in favor of version-only packaging updates
 
 ## v1.0.3
 
