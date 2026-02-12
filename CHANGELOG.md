@@ -8,6 +8,9 @@
 - Prefill Nostr sync with three relay defaults and add one-click local key generation
 - Keep local-first behavior and offline functionality unchanged when sync is disabled or relays fail
 - Vendor audited Nostr cryptography dependencies and add third-party notice documentation
+- Refine Nostr Sync settings layout with cleaner alignment, compact manual sync actions, and clearer status placement
+- Disable and visually dim "Sync now" until setup is complete (enabled toggle, relay configured, and local key saved)
+- Improve relay save feedback and private key UX with detailed validation messages and clear-key confirmation
 
 ## v1.0.3
 
