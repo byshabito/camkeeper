@@ -2,9 +2,10 @@
   "name": "CamKeeper",
   "description": "Cross-site creator profile manager",
   "version": "1.1.0",
+  "homepage_url": "https://shabito.net/camkeeper/",
   "developer": {
     "name": "Shabito",
-    "url": "https://github.com/byshabito/camkeeper"
+    "url": "https://github.com/byshabito/"
   },
   "manifest_version": 3,
   "permissions": [
