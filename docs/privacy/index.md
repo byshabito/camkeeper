@@ -58,11 +58,13 @@ The extension has no analytics, telemetry, or advertising integrations.
 
 ## Optional Nostr sync
 
+- Nostr is an open relay-based protocol for signed events.
 - Nostr sync is opt-in and disabled by default.
 - Sync payloads are encrypted and signed.
 - Local usage and offline usage remain available whether sync is enabled or not.
 - Backup export/import does not include your Nostr private key.
 - Relay operators and network intermediaries may still observe metadata such as IP address, public key, and timing.
+- Your private key (`nsec`) must remain secret and should never be shared with anyone, including project maintainers or support.
 
 ## Third-party services
 

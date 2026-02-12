@@ -35,3 +35,5 @@ For Nostr sync issues, also include:
 - Whether sync is enabled
 - Relay list you configured (omit private key)
 - Sync status output (pulled/pushed counts and last error)
+
+Never share your private key (`nsec`) with anyone, including CamKeeper maintainers/support.

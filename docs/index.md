@@ -54,6 +54,18 @@ CamKeeper stores profile data and settings in browser extension storage on your 
 Optional Nostr sync is disabled by default and can be enabled in Settings if you want multi-device sync.
 When enabled, encrypted payloads are sent only to relays you configure.
 
+## What is Nostr?
+
+Nostr is an open protocol that uses relays to exchange signed events.
+CamKeeper uses Nostr only as an optional sync transport for encrypted profile data between your devices.
+
+## Keep your `nsec` private
+
+- `nsec` is your private key
+- Never share it with anyone
+- Never post it in bug reports, screenshots, or chat messages
+- CamKeeper support/maintainers should never ask for it, and you should never share it even with them
+
 Read the full policy here: [Privacy Policy](/privacy/)
 
 Need help? Visit [Support](/support/)

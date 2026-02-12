@@ -61,6 +61,18 @@ No account is required. CamKeeper works fully local and offline by default, with
 - Uses user-configured relays only; no CamKeeper backend service
 - Manual sync flow is available from Options
 
+#### What is Nostr?
+
+Nostr is an open relay-based protocol for publishing and reading signed events.
+In CamKeeper, it is used only as an optional transport layer to sync encrypted profile data across your devices.
+
+#### Important key safety (`nsec`)
+
+- Your `nsec` is your private key and controls your Nostr identity
+- Never share it with anyone
+- Do not send it in issues, screenshots, logs, email, or chat
+- CamKeeper maintainers and support should never ask for it, and you should never share it even with them
+
 ### Privacy-first design
 
 - Local-first storage with optional sync disabled by default
@@ -123,6 +135,7 @@ These changes are not required on standard Firefox release builds when installin
 - All profile data is stored locally in the browser by default
 - If optional Nostr sync is enabled, encrypted payloads are sent to user-configured relays
 - Relay operators can still observe network metadata (for example IP, public key, and timing)
+- Your private key (`nsec`) must stay secret and must never be shared with anyone
 - Data can be exported or imported at any time
 
 See [PRIVACY](/PRIVACY.md) for full details.
