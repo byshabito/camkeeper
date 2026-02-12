@@ -1,162 +1,148 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
-
-- `src/` contains the extension source.
-- `src/entries/` holds entry points for `background/`, `popup/`, and `options/`.
-- `src/background/` hosts the service worker logic.
-- `src/domain/` contains domain models, validation helpers, and use-case orchestration.
-- `src/domain/useCases/` contains application workflows consumed by UI/background.
-- `src/domain/services/` contains domain-facing storage orchestration helpers.
-- `src/domain/appService.js` is the primary facade for UI/background calls into domain.
-- `src/repo/` contains storage repositories backed by `src/repo/db.js`.
-- `src/ui/` contains UI controllers, components, selectors, and state.
-- `src/repo/db.js` is the single storage wrapper for `chrome.storage`.
-- `icons/` stores extension icons used by the manifest.
-- `manifest.json` and `manifest.firefox.json` define Chrome/Firefox builds.
-- `dist/` is created by the release build script and should not be edited.
+## Project Structure and Module Organization
+- `src/` contains extension source code.
+- `src/entries/` contains entry points for `background/`, `popup/`, and `options/`.
+- `src/background/` contains service-worker orchestration and visit tracking.
+- `src/domain/` contains business logic, sanitizers, models, and use-cases.
+- `src/domain/useCases/` contains workflows consumed by UI/background.
+- `src/domain/services/` contains domain-facing store adapters.
+- `src/domain/appService.js` is the main facade for entry/UI modules.
+- `src/repo/` contains storage and Nostr transport adapters.
+- `src/repo/db.js` is the central `chrome.storage` wrapper.
+- `src/ui/` contains controllers, components, selectors, and state modules.
+- `src/styles/common.css` holds shared CSS variables/utilities.
+- `icons/` contains assets referenced by manifests.
+- `manifest.json` and `manifest.firefox.json` define browser packages.
+- `docs/` contains the VitePress docs site.
+- `dist/` is release output from `build-release.sh`; do not edit manually.
+- `src/vendor/` stores vendored dependencies; keep notices in sync.
 
 ## Build, Lint, and Test Commands
-
-Release build:
+Dependency install:
+- `bun install`
+Docs:
+- Dev server: `bun run docs:dev`
+- Build docs: `bun run docs:build`
+- Preview docs: `bun run docs:preview`
+Release packaging:
 - `./build-release.sh <version>`
-- Example: `./build-release.sh 1.0.0`
-- Requirements: `bash`, `python`, and `zip` available on PATH.
-- The script updates manifest versions and stamps `RELEASE_TIMESTAMP` in options UI.
-
+- Example: `./build-release.sh 1.1.0`
+- Requires `bash`, `python3` (or `python`), and `zip`.
+- Updates both manifests and stamps `RELEASE_TIMESTAMP` in options metadata.
 Linting:
-- No linting tool is configured.
-- If you add one, document the command here.
-
-Local syntax check (recommended before release/PR):
-- `node --check src/entries/popup/script.js`
-- Repeat for changed files, or run a small script to check all `src/**/*.js` files.
-
+- No dedicated linter is configured.
+- Do not introduce lint tooling without explicit project agreement.
+Syntax checks (recommended before PR):
+- Single file: `node --check src/entries/popup/script.js`
+- Repeat for each changed JS file.
 Testing:
-- No automated test suite is currently maintained in this repository.
-- Validate changes with targeted manual checks in popup, options, and background flows.
-- Single-test command: currently not available because there is no active test runner.
-- If tests are reintroduced with Bun, use:
+- No active automated test suite currently exists.
+- Single-test command is unavailable while no test runner is configured.
+- If tests are reintroduced with Bun:
   - Run all tests: `bun test`
   - Run one test file: `bun test tests/path/to/file.test.js`
+Manual verification (required for feature work):
+- Popup: create/edit/delete/merge profiles and verify search/sort/folders.
+- Options: import/export, site settings, persistence, and validation feedback.
+- Background: page detection and visit/session tracking behavior.
+- Nostr sync (if touched): enable/disable, relays, key handling, manual sync.
 
-Manual dev install:
-- Chrome: `chrome://extensions` → Developer mode → Load unpacked → repo root.
-- Firefox: `about:debugging#/runtime/this-firefox` → Load Temporary Add-on → `manifest.firefox.json`.
-
-## Coding Style Guide
-
+## Code Style Guidelines
 ### Formatting
-
-- Indentation: 2 spaces in JS/CSS/HTML.
-- Semicolons are required.
+- Use 2-space indentation in JS/CSS/HTML/JSON.
+- Use semicolons.
 - Use double quotes for strings.
-- Prefer trailing commas in multiline objects/arrays.
-- Keep lines readable; split long argument lists across lines.
-- Keep existing GPL header blocks at the top of JS files.
-
+- Prefer trailing commas in multiline arrays/objects.
+- Keep long expressions readable by splitting lines.
+- Preserve the existing GPL header block at top of JS files.
 ### Imports and Modules
-
-- Use ES modules (`import`/`export`), not CommonJS.
-- Keep import statements at the top of the file.
-- Include the `.js` extension in relative imports.
-- Group imports: external first (if any), then internal relative imports.
-- Prefer named exports to default exports.
-- Avoid circular dependencies; keep layers directional (`UI/background` → `domain` → `repo`).
-
-### Naming Conventions
-
-- Variables/functions: `lowerCamelCase`.
+- Use ES modules only (`import` / `export`).
+- Keep imports at the top of files.
+- Include `.js` extension in relative imports.
+- Group imports consistently (external first, then internal).
+- Prefer named exports over default exports.
+- Avoid circular dependencies.
+- Keep architecture direction clear: UI/background -> domain -> repo.
+### Naming
+- Variables and functions: `lowerCamelCase`.
 - Constants: `SCREAMING_SNAKE_CASE`.
-- Files/directories: `lowerCamelCase` or `kebab-case` to match existing folders.
-- Event handlers: `handleX` or `onX` prefixes.
-- Avoid single-letter variables except for trivial indices.
-
-### Types and Data Shapes
-
-- The project is plain JavaScript (no TypeScript).
-- Use clear object shapes and keep domain models consistent.
-- If needed, add JSDoc for complex objects or public APIs.
-- Do not introduce new build steps without agreement.
-
-### Error Handling and Defensive Coding
-
+- Files/directories: follow current style (`lowerCamelCase` or `kebab-case`).
+- Event handlers: prefer `handleX` or `onX`.
+- Avoid one-letter names except simple loop counters.
+### Types and Data Contracts
+- Project is plain JavaScript (no TypeScript).
+- Keep object shapes explicit and stable across modules.
+- Add JSDoc only for non-obvious contracts/public APIs.
+- Reuse domain sanitizers/normalizers instead of ad-hoc cleanup.
+- Do not add new transpile/build steps without agreement.
+### Error Handling and Async
 - Prefer early returns for invalid state.
-- Guard `chrome.*` APIs with optional chaining or feature checks.
-- When parsing JSON, catch errors and return safe defaults.
-- Avoid throwing in background/popup UI flows unless surfaced to the user.
-- Keep async operations `await`ed and handle fallbacks gracefully.
-
-### State, Storage, and Domain Boundaries
-
-- Persisted data should go through `src/repo/db.js` or repo helpers.
-- Keep domain logic inside `src/domain/` where possible.
-- UI and background entry points should call domain helpers, not repos directly.
-- Keep `src/repo/` storage-only; do not import domain modules into repo modules.
-- Keep configuration defaults in domain modules.
-- Keep pure business logic separate from IO and browser-specific adapters.
-- Avoid mutating shared state outside dedicated stores/controllers.
-
-### UI and DOM Conventions
-
-- Keep DOM queries scoped and cached when reused.
-- Prefer `textContent` over `innerHTML` unless necessary.
-- Use `classList` for toggling styles.
-- Keep CSS selectors simple and stable.
-- Preserve focus order and keyboard navigation.
-
-### CSS and Theming
-
-- Use the CSS variables in `src/styles/common.css` for colors.
-- Keep shared styles in `src/styles/common.css`.
+- Guard `chrome.*` APIs with feature checks/optional chaining.
+- Wrap JSON parsing and fall back safely.
+- Avoid throwing in popup/background user flows unless surfaced clearly.
+- `await` async operations and provide fallback behavior.
+- Log useful warnings only; never log secrets.
+### Architecture Boundaries
+- Keep business logic inside `src/domain/`.
+- UI/background should call use-cases through `src/domain/appService.js`.
+- Persist via repo modules (`src/repo/*`), not direct ad-hoc storage.
+- Keep `src/repo/` focused on IO/storage adapters.
+- Keep pure logic separate from browser-specific side effects.
+- Avoid mutating shared state outside dedicated state/store modules.
+### UI and DOM
+- Cache/reuse DOM references when repeatedly accessed.
+- Prefer `textContent` over `innerHTML` unless HTML is intentional/safe.
+- Use `classList` for style/visibility toggles.
+- Keep selectors stable and simple.
+- Preserve keyboard navigation and focus behavior.
+### CSS and Visual Consistency
+- Use shared variables/utilities from `src/styles/common.css`.
 - Keep entry-specific styles in each entry `styles.css`.
-- Reuse existing button, chip, and card classes when possible.
-
-### Browser Extension Conventions
-
-- Background entry is a module service worker; avoid window-specific APIs.
+- Reuse existing button/chip/card styles before adding new patterns.
+- Keep visual changes consistent with existing extension language.
+### Browser Extension and Privacy
+- Background entry is a module service worker; avoid window-only APIs there.
 - Use `chrome.runtime` messaging for cross-entry communication.
-- Validate `chrome.tabs` results before dereferencing URLs.
-- Keep permission changes aligned across both manifests.
-- Avoid long-lived timers in the background unless required.
+- Validate `chrome.tabs` results before using URLs/tab data.
+- Keep permission changes minimal and aligned across both manifests.
+- Do not add analytics, telemetry, or tracking.
+- Preserve local-first/offline-first behavior.
+- For Nostr sync changes: keep sync optional and disabled by default.
+- Never log, export, import, or share private keys (`nsec`).
+### Assets, Manifests, and Releases
+- Store assets in `icons/` or entry folders.
+- Update both manifests when changing permissions, commands, or assets.
+- Keep browser metadata aligned unless intentionally browser-specific.
+- Never edit `dist/` artifacts manually.
+- Ensure release bundles include `LICENSE`, `README.md`, `CHANGELOG.md`, `PRIVACY.md`, and `THIRD_PARTY_NOTICES.md`.
 
-### Data and Privacy Expectations
+## Commit and Pull Request Guidance
+- Use conventional prefixes: `feat`, `fix`, `docs`, `refactor`, `style`, `test`, `perf`, `build`, `ci`, `revert`.
+- Keep commit messages concise and intent-focused.
+- PRs should include changed scope, rationale, and manual verification steps.
+- Include screenshots for UI-facing changes when practical.
 
-- Do not add analytics, telemetry, or third-party tracking.
-- Keep user data local; avoid network calls without approval.
-- Sanitize imported JSON and fallback to defaults on errors.
-- Keep export/import flows resilient to missing fields.
-- Preserve unknown livestream-site cams in storage/import; hide them in UI until that site is configured.
+## Cursor and Copilot Rules
+- No Cursor rules found:
+  - `.cursor/rules/` does not exist.
+  - `.cursorrules` does not exist.
+- No Copilot instructions found:
+  - `.github/copilot-instructions.md` does not exist.
+- If these files are added later, mirror their actionable rules here.
 
-### Assets and Manifests
+## Agent Working Notes
+- Prefer small, focused edits that respect existing module boundaries.
+- Keep browser behavior aligned across `manifest.json` and `manifest.firefox.json`.
+- Treat `dist/` as generated output only.
+- Preserve local-first behavior in all feature changes.
+- When touching Nostr paths, keep sync optional and key handling private.
+- Before handoff, run syntax checks on changed JS files.
 
-- Store icons and assets in `icons/` or entry folders.
-- Update both manifests when changing permissions or assets.
-- Keep permissions minimal and aligned across browsers.
-- Avoid adding third-party libraries unless necessary.
-- Ensure new assets are referenced by HTML or manifests.
-
-## Build and Release Notes
-
-- Use `./build-release.sh` to bump versions and produce ZIPs.
-- Do not edit `dist/` manually.
-- `RELEASE_TIMESTAMP` is injected by the release script.
-
-## Cursor/Copilot Rules
-
-- No `.cursor/rules`, `.cursorrules`, or `.github/copilot-instructions.md` found.
-- If new rules are added, mirror them here.
-
-## Commit & Pull Request Guidelines
-
-- Commit messages use a type prefix:
-  - `feat`, `fix`, `docs`, `refactor`, `style`, `test`, `perf`, `build`, `ci`, `revert`.
-- PRs include a concise summary and manual verification steps.
-- For UI changes, include screenshots when practical.
-
-## Notes
-
-- Background entry point: `src/entries/background/index.js` (module service worker).
-- Popup entry point: `src/entries/popup/script.js`.
-- Options entry point: `src/entries/options/script.js`.
-- Release metadata is injected by `./build-release.sh`.
+## Quick Reference
+- Background entry: `src/entries/background/index.js`
+- Popup entry: `src/entries/popup/script.js`
+- Options entry: `src/entries/options/script.js`
+- Domain facade: `src/domain/appService.js`
+- Storage wrapper: `src/repo/db.js`
+- Release script: `./build-release.sh`
