@@ -17,12 +17,12 @@
  */
 
 import {
-  saveProfile as persistProfile,
-  saveProfiles as persistProfiles,
   deleteProfile as removeProfile,
   getProfile as loadProfile,
   getProfiles as loadProfiles,
-} from "./db.js";
+  saveProfile as persistProfile,
+  saveProfiles as persistProfiles,
+} from "./profilesIndexedDb.js";
 
 export async function getProfiles() {
   return loadProfiles();

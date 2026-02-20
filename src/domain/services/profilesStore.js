@@ -16,9 +16,11 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { readLocal, readSync, STORAGE_KEY } from "../../repo/db.js";
+import { readLocal, readSync, setState, STORAGE_KEY } from "../../repo/db.js";
 import {
   deleteProfile as removeProfile,
+  getProfile as loadProfile,
+  getProfiles as loadProfiles,
   saveProfile as persistProfile,
   saveProfiles as persistProfiles,
 } from "../../repo/profiles.js";
@@ -30,53 +32,91 @@ import {
 } from "../migrations/profiles.js";
 import { applyProfileView } from "../profileViews.js";
 
-export async function getProfiles() {
-  const keys = [STORAGE_KEY, ...LEGACY_PROFILE_KEYS];
-  const data = await readLocal(keys);
-  let { profiles, shouldPersist } = migrateProfilesFromStorage({
-    data,
-    storageKey: STORAGE_KEY,
-    legacyKeys: LEGACY_PROFILE_KEYS,
-  });
+const PROFILES_IDB_MIGRATED_STATE_KEY = "camkeeper_profiles_idb_migrated_v1";
 
-  if (!profiles.length) {
-    const syncData = await readSync(keys);
-    const syncResult = migrateProfilesFromStorage({
-      data: syncData,
-      storageKey: STORAGE_KEY,
-      legacyKeys: LEGACY_PROFILE_KEYS,
+let migrationReady = false;
+let migrationPromise = null;
+
+async function markProfilesMigrationComplete() {
+  await setState(PROFILES_IDB_MIGRATED_STATE_KEY, true);
+  migrationReady = true;
+}
+
+async function ensureProfilesMigration() {
+  if (migrationReady) return;
+  if (!migrationPromise) {
+    migrationPromise = (async () => {
+      const migrationState = await readLocal(PROFILES_IDB_MIGRATED_STATE_KEY);
+      if (migrationState[PROFILES_IDB_MIGRATED_STATE_KEY]) {
+        migrationReady = true;
+        return;
+      }
+
+      const existingProfiles = await loadProfiles();
+      if (existingProfiles.length) {
+        await markProfilesMigrationComplete();
+        return;
+      }
+
+      const keys = [STORAGE_KEY, ...LEGACY_PROFILE_KEYS];
+      const data = await readLocal(keys);
+      let { profiles } = migrateProfilesFromStorage({
+        data,
+        storageKey: STORAGE_KEY,
+        legacyKeys: LEGACY_PROFILE_KEYS,
+      });
+
+      if (!profiles.length) {
+        const syncData = await readSync(keys);
+        const syncResult = migrateProfilesFromStorage({
+          data: syncData,
+          storageKey: STORAGE_KEY,
+          legacyKeys: LEGACY_PROFILE_KEYS,
+        });
+        profiles = syncResult.profiles;
+      }
+
+      if (profiles.length) {
+        await persistProfiles(profiles);
+      }
+
+      await markProfilesMigrationComplete();
+    })().finally(() => {
+      migrationPromise = null;
     });
-    profiles = syncResult.profiles;
-    shouldPersist = syncResult.shouldPersist || shouldPersist;
   }
+  await migrationPromise;
+}
 
-  if (profiles.length && shouldPersist) {
-    await saveProfiles(profiles);
-  }
-
-  return profiles;
+export async function getProfiles() {
+  await ensureProfilesMigration();
+  return loadProfiles();
 }
 
 export async function getProfile(id) {
-  const profiles = await getProfiles();
-  return profiles.find((profile) => profile.id === id) || null;
+  await ensureProfilesMigration();
+  return loadProfile(id);
 }
 
 export async function saveProfile(profile) {
+  await ensureProfilesMigration();
   const normalized = normalizeProfileForStorage(profile);
   return persistProfile(normalized);
 }
 
 export async function saveProfiles(profiles) {
+  await ensureProfilesMigration();
   const normalized = normalizeProfilesForStorage(profiles);
   return persistProfiles(normalized);
 }
 
 export async function deleteProfile(id) {
+  await ensureProfilesMigration();
   return removeProfile(id);
 }
 
 export async function recordProfileView({ site, username, endedAt, durationMs }) {
+  await ensureProfilesMigration();
   const profiles = await getProfiles();
   const result = applyProfileView({
     profiles,
