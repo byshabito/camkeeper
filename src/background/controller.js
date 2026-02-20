@@ -17,6 +17,7 @@
  */
 
 import { SETTINGS_DEFAULTS } from "../domain/settings.js";
+import { debugLog } from "../domain/debugLogging.js";
 import {
   getSettings,
   getSiteRegistry,
@@ -33,11 +34,7 @@ export function initBackground() {
   const settings = { ...SETTINGS_DEFAULTS };
 
   const logVisitDebug = (message, details) => {
-    if (typeof details === "undefined") {
-      console.log(`[CamKeeper][view-timer] ${message}`);
-      return;
-    }
-    console.log(`[CamKeeper][view-timer] ${message}`, details);
+    debugLog("[CamKeeper][view-timer]", message, details);
   };
 
   const visits = initVisitTracking(state, logVisitDebug);

@@ -16,8 +16,8 @@
 - Localize the Buy Me a Coffee badge asset so the options page no longer fetches a remote CDN image
 - Remove unused `src/assets/camkeeper-logo.png` to keep the packaged extension lean
 - Migrate profile/bookmark persistence from `chrome.storage` to IndexedDB with one-time legacy import and backup keys kept intact
-- Add migration debug logs plus write-path CRUD logs for profiles/settings/state with sensitive-state redaction
-- Enable background view timer debug logs for session start/stop and recorded view durations
+- Add migration and write-path debug logs behind a store-safe toggle, with sensitive-state redaction
+- Add optional background view timer debug logs for session start/stop and recorded view durations
 
 ## v1.0.3
 

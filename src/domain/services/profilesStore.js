@@ -31,6 +31,7 @@ import {
   normalizeProfilesForStorage,
 } from "../migrations/profiles.js";
 import { applyProfileView } from "../profileViews.js";
+import { debugLog } from "../debugLogging.js";
 
 const PROFILES_IDB_MIGRATED_STATE_KEY = "camkeeper_profiles_idb_migrated_v1";
 const MIGRATION_LOG_PREFIX = "[CamKeeper][profiles-migration]";
@@ -40,19 +41,11 @@ let migrationReady = false;
 let migrationPromise = null;
 
 function logMigration(message, details) {
-  if (typeof details === "undefined") {
-    console.log(`${MIGRATION_LOG_PREFIX} ${message}`);
-    return;
-  }
-  console.log(`${MIGRATION_LOG_PREFIX} ${message}`, details);
+  debugLog(MIGRATION_LOG_PREFIX, message, details);
 }
 
 function logProfilesCrud(message, details) {
-  if (typeof details === "undefined") {
-    console.log(`${CRUD_LOG_PREFIX} ${message}`);
-    return;
-  }
-  console.log(`${CRUD_LOG_PREFIX} ${message}`, details);
+  debugLog(CRUD_LOG_PREFIX, message, details);
 }
 
 async function markProfilesMigrationComplete() {

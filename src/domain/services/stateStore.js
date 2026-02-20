@@ -19,20 +19,21 @@
 import { getState as loadState, setState as persistState } from "../../repo/state.js";
 import {
   ACTIVE_VIEW_SESSIONS_STATE_KEY,
+  DEBUG_LOGGING_STATE_KEY,
   NOSTR_SYNC_NSEC_STATE_KEY,
 } from "../stateKeys.js";
+import { debugLog } from "../debugLogging.js";
 
 const STATE_CRUD_LOG_PREFIX = "[CamKeeper][crud][state]";
 
 function logStateCrud(message, details) {
-  if (typeof details === "undefined") {
-    console.log(`${STATE_CRUD_LOG_PREFIX} ${message}`);
-    return;
-  }
-  console.log(`${STATE_CRUD_LOG_PREFIX} ${message}`, details);
+  debugLog(STATE_CRUD_LOG_PREFIX, message, details);
 }
 
 function summarizeStateValue(key, value) {
+  if (key === DEBUG_LOGGING_STATE_KEY) {
+    return Boolean(value);
+  }
   if (key === NOSTR_SYNC_NSEC_STATE_KEY) {
     return "<redacted>";
   }

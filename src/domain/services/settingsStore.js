@@ -21,15 +21,12 @@ import {
   saveSettings as persistSettings,
 } from "../../repo/settings.js";
 import { applySettingsPatch, normalizeSettings } from "../settings.js";
+import { debugLog } from "../debugLogging.js";
 
 const SETTINGS_CRUD_LOG_PREFIX = "[CamKeeper][crud][settings]";
 
 function logSettingsCrud(message, details) {
-  if (typeof details === "undefined") {
-    console.log(`${SETTINGS_CRUD_LOG_PREFIX} ${message}`);
-    return;
-  }
-  console.log(`${SETTINGS_CRUD_LOG_PREFIX} ${message}`, details);
+  debugLog(SETTINGS_CRUD_LOG_PREFIX, message, details);
 }
 
 function areSameSettingsValue(left, right) {
