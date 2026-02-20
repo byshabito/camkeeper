@@ -32,7 +32,7 @@
 ### Release Packaging
 - `./build-release.sh <version>`
 - Example: `./build-release.sh 1.1.0`
-- Requires: `bash`, `python3` (or `python`), and `zip`.
+- Requires: `bash`, `python3` (or `python`), `zip`, and `node`.
 - Updates version fields in both manifests.
 
 ### Linting and Syntax Checks

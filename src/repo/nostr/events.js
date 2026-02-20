@@ -16,12 +16,9 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import {
-  getPublicKeyHexFromPrivateKeyHex,
-  signSchnorr,
-  verifySchnorr,
-} from "./crypto.js";
-import { bytesToHex, hexToBytes, sha256Bytes, utf8ToBytes } from "./encoding.js";
+import { finalizeEvent, getEventHash, verifyEvent } from "nostr-tools/pure";
+import { hexToBytes } from "./encoding.js";
+import { normalizePrivateKeyHex } from "./crypto.js";
 
 function normalizeContent(content) {
   return typeof content === "string" ? content : "";
@@ -69,6 +66,15 @@ function normalizeEventTemplate({ kind, pubkey, created_at, tags, content }) {
   };
 }
 
+function normalizeEventForSigning({ kind, created_at, tags, content }) {
+  return {
+    kind: normalizeKind(kind),
+    created_at: normalizeCreatedAt(created_at),
+    tags: normalizeTags(tags),
+    content: normalizeContent(content),
+  };
+}
+
 export function serializeEventForId(event) {
   const normalized = normalizeEventTemplate(event);
   return JSON.stringify([
@@ -82,9 +88,7 @@ export function serializeEventForId(event) {
 }
 
 export async function computeEventIdHex(event) {
-  const serialized = serializeEventForId(event);
-  const digest = await sha256Bytes(utf8ToBytes(serialized));
-  return bytesToHex(digest);
+  return getEventHash(normalizeEventTemplate(event));
 }
 
 export async function createSignedEvent({
@@ -94,36 +98,33 @@ export async function createSignedEvent({
   createdAt = Math.floor(Date.now() / 1000),
   privateKeyHex,
 }) {
-  const pubkey = getPublicKeyHexFromPrivateKeyHex(privateKeyHex);
-  const event = normalizeEventTemplate({
-    kind,
-    pubkey,
-    created_at: createdAt,
-    tags,
-    content,
-  });
-
-  const id = await computeEventIdHex(event);
-  const sig = await signSchnorr(hexToBytes(id), privateKeyHex);
+  const secretKey = hexToBytes(normalizePrivateKeyHex(privateKeyHex));
+  const signed = finalizeEvent(
+    normalizeEventForSigning({
+      kind,
+      created_at: createdAt,
+      tags,
+      content,
+    }),
+    secretKey,
+  );
 
   return {
-    id,
-    pubkey,
-    created_at: event.created_at,
-    kind: event.kind,
-    tags: event.tags,
-    content: event.content,
-    sig,
+    id: signed.id,
+    pubkey: signed.pubkey,
+    created_at: signed.created_at,
+    kind: signed.kind,
+    tags: signed.tags,
+    content: signed.content,
+    sig: signed.sig,
   };
 }
 
 export async function verifySignedEvent(event) {
   if (!event || typeof event !== "object") return false;
-  const signature = typeof event.sig === "string" ? event.sig.trim().toLowerCase() : "";
-  if (!/^[0-9a-f]{128}$/.test(signature)) return false;
-
-  const expectedId = await computeEventIdHex(event);
-  if (expectedId !== String(event.id || "").trim().toLowerCase()) return false;
-
-  return verifySchnorr(signature, hexToBytes(expectedId), event.pubkey);
+  try {
+    return verifyEvent(event);
+  } catch (error) {
+    return false;
+  }
 }

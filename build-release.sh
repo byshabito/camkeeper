@@ -29,11 +29,13 @@ fi
 
 require_tool "$PYTHON_BIN"
 require_tool zip
+require_tool node
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DIST_DIR="${ROOT_DIR}/dist"
 TMP_CHROME="${DIST_DIR}/tmp-chrome"
 TMP_FIREFOX="${DIST_DIR}/tmp-firefox"
+BUILD_SCRIPT="${ROOT_DIR}/scripts/build-extension.mjs"
 
 if [[ ! -f "${ROOT_DIR}/manifest.json" ]]; then
   echo "Missing manifest.json"
@@ -42,6 +44,11 @@ fi
 
 if [[ ! -f "${ROOT_DIR}/manifest.firefox.json" ]]; then
   echo "Missing manifest.firefox.json"
+  exit 1
+fi
+
+if [[ ! -f "${BUILD_SCRIPT}" ]]; then
+  echo "Missing scripts/build-extension.mjs"
   exit 1
 fi
 
@@ -72,19 +79,22 @@ mkdir -p "${DIST_DIR}"
 rm -rf "${TMP_CHROME}" "${TMP_FIREFOX}"
 mkdir -p "${TMP_CHROME}" "${TMP_FIREFOX}"
 
-copy_release_assets() {
+build_release_assets() {
   local target="$1"
-  cp -R "${ROOT_DIR}/src" "${ROOT_DIR}/icons" "${ROOT_DIR}/README.md" \
+  node "${BUILD_SCRIPT}" --outdir="${target}"
+  cp -R "${ROOT_DIR}/icons" "${ROOT_DIR}/README.md" \
     "${ROOT_DIR}/LICENSE" "${ROOT_DIR}/CHANGELOG.md" "${ROOT_DIR}/PRIVACY.md" \
     "${ROOT_DIR}/THIRD_PARTY_NOTICES.md" \
     "$target"
 }
 
-copy_release_assets "${TMP_CHROME}/"
+build_release_assets "${TMP_CHROME}/"
 cp "${ROOT_DIR}/manifest.json" "${TMP_CHROME}/manifest.json"
 
-copy_release_assets "${TMP_FIREFOX}/"
+build_release_assets "${TMP_FIREFOX}/"
 cp "${ROOT_DIR}/manifest.firefox.json" "${TMP_FIREFOX}/manifest.json"
+
+rm -f "${DIST_DIR}/camkeeper-v${VERSION}-chrome.zip" "${DIST_DIR}/camkeeper-v${VERSION}-firefox.zip"
 
 (
   cd "${TMP_CHROME}" \

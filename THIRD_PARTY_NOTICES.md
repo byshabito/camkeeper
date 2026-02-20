@@ -1,24 +1,13 @@
 # Third-Party Notices
 
-This project vendors a small set of third-party libraries directly in source form under `src/vendor`.
+CamKeeper bundles third-party runtime code during extension build and release packaging.
 
 ## Included Dependencies
 
-### noble-secp256k1
+### nostr-tools
 
-- Package: `@noble/secp256k1`
-- Version: `2.2.3`
-- License: MIT
-- Copyright: Paul Miller
-- Upstream: https://github.com/paulmillr/noble-secp256k1
-- Vendored file: `src/vendor/noble-secp256k1/index.js`
-
-### bech32
-
-- Package: `bech32`
-- Version: `2.0.0`
-- License: MIT
-- Copyright: bitcoinjs contributors
-- Upstream: https://github.com/bitcoinjs/bech32
-- Vendored file: `src/vendor/bech32/index.js`
-- Local adaptation: CommonJS exports were converted to ESM exports for extension module usage
+- Package: `nostr-tools`
+- Version: `2.23.1`
+- License: Unlicense
+- Upstream: https://github.com/nbd-wtf/nostr-tools
+- Notes: Used for Nostr key handling, event signing/verification, and relay pool transport.

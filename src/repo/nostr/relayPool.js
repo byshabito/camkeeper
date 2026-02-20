@@ -16,7 +16,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { createRelayClient, normalizeRelayUrl, DEFAULT_RELAY_TIMEOUT_MS } from "./relayClient.js";
+import { SimplePool } from "nostr-tools/pool";
+import { DEFAULT_RELAY_TIMEOUT_MS, normalizeRelayUrl } from "./relayClient.js";
 
 function normalizeRelayList(relays) {
   const list = Array.isArray(relays) ? relays : [];
@@ -32,41 +33,85 @@ function normalizeRelayList(relays) {
   return normalized;
 }
 
+function normalizeFilter(filter) {
+  if (!filter || typeof filter !== "object") return {};
+  return { ...filter };
+}
+
+function normalizeFilterList(filters) {
+  if (Array.isArray(filters)) {
+    return filters.map((filter) => normalizeFilter(filter)).filter((filter) => Object.keys(filter).length > 0);
+  }
+  const normalized = normalizeFilter(filters);
+  return Object.keys(normalized).length ? [normalized] : [];
+}
+
+function toErrorMessage(reason, fallback) {
+  if (reason instanceof Error) {
+    return reason.message || fallback;
+  }
+  if (typeof reason === "string" && reason) {
+    return reason;
+  }
+  return fallback;
+}
+
+function shouldReplaceEvent(existing, next) {
+  if (!existing) return true;
+  const existingCreatedAt = Number.isFinite(existing.created_at) ? existing.created_at : 0;
+  const nextCreatedAt = Number.isFinite(next.created_at) ? next.created_at : 0;
+  return nextCreatedAt >= existingCreatedAt;
+}
+
 export async function publishEventToRelays({
   relays,
   event,
   timeoutMs = DEFAULT_RELAY_TIMEOUT_MS,
 } = {}) {
   const relayUrls = normalizeRelayList(relays);
-  const tasks = relayUrls.map(async (url) => {
-    const client = createRelayClient({ url, timeoutMs });
-    try {
-      const result = await client.publish(event, { timeoutMs });
-      return {
-        url,
-        ok: true,
-        accepted: Boolean(result.accepted),
-        message: result.message || "",
-      };
-    } catch (error) {
+  if (!relayUrls.length) {
+    return {
+      results: [],
+      relayCount: 0,
+      successCount: 0,
+      acceptedCount: 0,
+    };
+  }
+
+  const pool = new SimplePool();
+  try {
+    const attempts = pool.publish(relayUrls, event, { maxWait: timeoutMs });
+    const settled = await Promise.allSettled(attempts);
+    const results = settled.map((item, index) => {
+      const url = relayUrls[index] || "";
+      if (item.status === "fulfilled") {
+        const message = typeof item.value === "string" ? item.value : "";
+        const accepted = !message.startsWith("connection failure:");
+        return {
+          url,
+          ok: accepted,
+          accepted,
+          message,
+        };
+      }
       return {
         url,
         ok: false,
         accepted: false,
-        message: error?.message || "Relay publish failed.",
+        message: toErrorMessage(item.reason, "Relay publish failed."),
       };
-    } finally {
-      client.close();
-    }
-  });
+    });
 
-  const results = await Promise.all(tasks);
-  return {
-    results,
-    relayCount: results.length,
-    successCount: results.filter((item) => item.ok).length,
-    acceptedCount: results.filter((item) => item.accepted).length,
-  };
+    return {
+      results,
+      relayCount: results.length,
+      successCount: results.filter((item) => item.ok).length,
+      acceptedCount: results.filter((item) => item.accepted).length,
+    };
+  } finally {
+    pool.close(relayUrls);
+    pool.destroy();
+  }
 }
 
 export async function queryEventsFromRelays({
@@ -75,52 +120,66 @@ export async function queryEventsFromRelays({
   timeoutMs = DEFAULT_RELAY_TIMEOUT_MS,
 } = {}) {
   const relayUrls = normalizeRelayList(relays);
-  const tasks = relayUrls.map(async (url) => {
-    const client = createRelayClient({ url, timeoutMs });
-    try {
-      const result = await client.query({ filters, timeoutMs });
-      return {
-        url,
-        ok: true,
-        timedOut: Boolean(result.timedOut),
-        closedReason: result.closedReason || "",
-        events: Array.isArray(result.events) ? result.events : [],
-      };
-    } catch (error) {
-      return {
-        url,
-        ok: false,
-        timedOut: false,
-        closedReason: "",
-        events: [],
-        error: error?.message || "Relay query failed.",
-      };
-    } finally {
-      client.close();
-    }
-  });
+  if (!relayUrls.length) {
+    return {
+      events: [],
+      relays: [],
+    };
+  }
 
-  const relayResults = await Promise.all(tasks);
-  const eventsById = new Map();
+  const normalizedFilters = normalizeFilterList(filters);
+  const pool = new SimplePool();
 
-  relayResults.forEach((result) => {
-    (result.events || []).forEach((event) => {
-      if (!event || typeof event.id !== "string") return;
-      const existing = eventsById.get(event.id);
-      if (!existing) {
-        eventsById.set(event.id, event);
-        return;
+  try {
+    const relayResults = await Promise.all(relayUrls.map(async (url) => {
+      const eventsById = new Map();
+      try {
+        for (const filter of normalizedFilters) {
+          const events = await pool.querySync([url], filter, { maxWait: timeoutMs });
+          (events || []).forEach((event) => {
+            if (!event || typeof event.id !== "string") return;
+            const existing = eventsById.get(event.id);
+            if (shouldReplaceEvent(existing, event)) {
+              eventsById.set(event.id, event);
+            }
+          });
+        }
+        return {
+          url,
+          ok: true,
+          timedOut: false,
+          closedReason: "",
+          events: Array.from(eventsById.values()),
+        };
+      } catch (error) {
+        return {
+          url,
+          ok: false,
+          timedOut: false,
+          closedReason: "",
+          events: [],
+          error: toErrorMessage(error, "Relay query failed."),
+        };
       }
-      const existingCreatedAt = Number.isFinite(existing.created_at) ? existing.created_at : 0;
-      const nextCreatedAt = Number.isFinite(event.created_at) ? event.created_at : 0;
-      if (nextCreatedAt >= existingCreatedAt) {
-        eventsById.set(event.id, event);
-      }
+    }));
+
+    const allEventsById = new Map();
+    relayResults.forEach((result) => {
+      (result.events || []).forEach((event) => {
+        if (!event || typeof event.id !== "string") return;
+        const existing = allEventsById.get(event.id);
+        if (shouldReplaceEvent(existing, event)) {
+          allEventsById.set(event.id, event);
+        }
+      });
     });
-  });
 
-  return {
-    events: Array.from(eventsById.values()),
-    relays: relayResults,
-  };
+    return {
+      events: Array.from(allEventsById.values()),
+      relays: relayResults,
+    };
+  } finally {
+    pool.close(relayUrls);
+    pool.destroy();
+  }
 }
