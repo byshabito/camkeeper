@@ -33,9 +33,18 @@ import {
 import { applyProfileView } from "../profileViews.js";
 
 const PROFILES_IDB_MIGRATED_STATE_KEY = "camkeeper_profiles_idb_migrated_v1";
+const MIGRATION_LOG_PREFIX = "[CamKeeper][profiles-migration]";
 
 let migrationReady = false;
 let migrationPromise = null;
+
+function logMigration(message, details) {
+  if (typeof details === "undefined") {
+    console.log(`${MIGRATION_LOG_PREFIX} ${message}`);
+    return;
+  }
+  console.log(`${MIGRATION_LOG_PREFIX} ${message}`, details);
+}
 
 async function markProfilesMigrationComplete() {
   await setState(PROFILES_IDB_MIGRATED_STATE_KEY, true);
@@ -46,41 +55,58 @@ async function ensureProfilesMigration() {
   if (migrationReady) return;
   if (!migrationPromise) {
     migrationPromise = (async () => {
-      const migrationState = await readLocal(PROFILES_IDB_MIGRATED_STATE_KEY);
-      if (migrationState[PROFILES_IDB_MIGRATED_STATE_KEY]) {
-        migrationReady = true;
-        return;
-      }
+      try {
+        logMigration("checking migration state");
 
-      const existingProfiles = await loadProfiles();
-      if (existingProfiles.length) {
-        await markProfilesMigrationComplete();
-        return;
-      }
+        const migrationState = await readLocal(PROFILES_IDB_MIGRATED_STATE_KEY);
+        if (migrationState[PROFILES_IDB_MIGRATED_STATE_KEY]) {
+          migrationReady = true;
+          logMigration("marker already set, skipping migration");
+          return;
+        }
 
-      const keys = [STORAGE_KEY, ...LEGACY_PROFILE_KEYS];
-      const data = await readLocal(keys);
-      let { profiles } = migrateProfilesFromStorage({
-        data,
-        storageKey: STORAGE_KEY,
-        legacyKeys: LEGACY_PROFILE_KEYS,
-      });
+        const existingProfiles = await loadProfiles();
+        if (existingProfiles.length) {
+          await markProfilesMigrationComplete();
+          logMigration("IndexedDB already has profiles, migration skipped", {
+            count: existingProfiles.length,
+          });
+          return;
+        }
 
-      if (!profiles.length) {
-        const syncData = await readSync(keys);
-        const syncResult = migrateProfilesFromStorage({
-          data: syncData,
+        const keys = [STORAGE_KEY, ...LEGACY_PROFILE_KEYS];
+        logMigration("reading legacy profiles from chrome.storage.local");
+        const data = await readLocal(keys);
+        let { profiles } = migrateProfilesFromStorage({
+          data,
           storageKey: STORAGE_KEY,
           legacyKeys: LEGACY_PROFILE_KEYS,
         });
-        profiles = syncResult.profiles;
-      }
 
-      if (profiles.length) {
-        await persistProfiles(profiles);
-      }
+        if (!profiles.length) {
+          logMigration("no local legacy profiles found, checking chrome.storage.sync");
+          const syncData = await readSync(keys);
+          const syncResult = migrateProfilesFromStorage({
+            data: syncData,
+            storageKey: STORAGE_KEY,
+            legacyKeys: LEGACY_PROFILE_KEYS,
+          });
+          profiles = syncResult.profiles;
+        }
 
-      await markProfilesMigrationComplete();
+        if (profiles.length) {
+          logMigration("persisting migrated profiles to IndexedDB", { count: profiles.length });
+          await persistProfiles(profiles);
+        } else {
+          logMigration("no legacy profiles found to migrate");
+        }
+
+        await markProfilesMigrationComplete();
+        logMigration("migration complete and marker saved");
+      } catch (error) {
+        console.warn(`${MIGRATION_LOG_PREFIX} migration failed`, error);
+        throw error;
+      }
     })().finally(() => {
       migrationPromise = null;
     });
