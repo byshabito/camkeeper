@@ -23,12 +23,78 @@ import {
   normalizeNostrSyncSettings,
   normalizeNostrSyncStatus,
 } from "../nostrSync.js";
-import { NOSTR_SYNC_NSEC_STATE_KEY, NOSTR_SYNC_STATUS_STATE_KEY } from "../stateKeys.js";
+import {
+  NOSTR_SYNC_NSEC_STATE_KEY,
+  NOSTR_SYNC_SECRET_VAULT_STATE_KEY,
+  NOSTR_SYNC_STATUS_STATE_KEY,
+} from "../stateKeys.js";
 import {
   generateNsec,
   normalizePrivateKeyHex,
   privateKeyHexFromNsec,
 } from "../../repo/nostr/index.js";
+import {
+  decryptSecret,
+  encryptSecret,
+  isSecretVault,
+} from "../../repo/nostr/secretVault.js";
+
+let cachedNostrSecret = "";
+
+function clearCachedNostrSecret() {
+  cachedNostrSecret = "";
+}
+
+function setCachedNostrSecret(secret) {
+  cachedNostrSecret = normalizeNostrSecret(secret);
+}
+
+function normalizePassphrase(value) {
+  return typeof value === "string" ? value : "";
+}
+
+function requirePassphrase(passphrase, { confirmPassphrase = null, requireConfirm = false } = {}) {
+  const normalizedPassphrase = normalizePassphrase(passphrase);
+  if (!normalizedPassphrase) {
+    throw new Error("Passphrase is required to unlock your Nostr key.");
+  }
+  if (requireConfirm && normalizedPassphrase !== normalizePassphrase(confirmPassphrase)) {
+    throw new Error("Passphrase confirmation does not match.");
+  }
+  return normalizedPassphrase;
+}
+
+function normalizeSecretForStorage(secret) {
+  const rawSecret = normalizeNostrSecret(secret);
+  if (!rawSecret) {
+    throw new Error("Nostr secret is required.");
+  }
+  const normalizedNsecCandidate = rawSecret.toLowerCase();
+  if (normalizedNsecCandidate.startsWith("nsec1")) {
+    privateKeyHexFromNsec(normalizedNsecCandidate);
+    return normalizedNsecCandidate;
+  }
+  return normalizePrivateKeyHex(rawSecret);
+}
+
+async function readSecretVaultState() {
+  const stored = await getState(NOSTR_SYNC_SECRET_VAULT_STATE_KEY);
+  return isSecretVault(stored) ? stored : null;
+}
+
+async function readLegacySecretState() {
+  const stored = await getState(NOSTR_SYNC_NSEC_STATE_KEY);
+  return normalizeNostrSecret(stored);
+}
+
+async function persistSecretVault({ normalizedSecret, passphrase }) {
+  const vault = await encryptSecret({
+    secret: normalizedSecret,
+    passphrase,
+  });
+  await setState(NOSTR_SYNC_SECRET_VAULT_STATE_KEY, vault);
+  await setState(NOSTR_SYNC_NSEC_STATE_KEY, "");
+}
 
 export async function getNostrSyncConfig() {
   const settings = await getSettings();
@@ -68,33 +134,71 @@ export async function updateNostrSyncConfig(patch) {
 }
 
 export async function getNostrSyncSecret() {
-  const stored = await getState(NOSTR_SYNC_NSEC_STATE_KEY);
-  return normalizeNostrSecret(stored);
+  return cachedNostrSecret;
 }
 
 export async function hasNostrSyncSecret() {
-  const secret = await getNostrSyncSecret();
-  return Boolean(secret);
+  if (cachedNostrSecret) return true;
+  const vault = await readSecretVaultState();
+  if (vault) return true;
+  const legacySecret = await readLegacySecretState();
+  return Boolean(legacySecret);
 }
 
-export async function setNostrSyncSecret(value) {
+export async function resolveNostrSyncSecretForSync({ passphrase } = {}) {
+  if (cachedNostrSecret) {
+    return cachedNostrSecret;
+  }
+
+  const vault = await readSecretVaultState();
+  if (vault) {
+    const passphraseValue = requirePassphrase(passphrase);
+    const decrypted = await decryptSecret({
+      vault,
+      passphrase: passphraseValue,
+    });
+    const normalizedSecret = normalizeSecretForStorage(decrypted);
+    setCachedNostrSecret(normalizedSecret);
+    return normalizedSecret;
+  }
+
+  const legacySecret = await readLegacySecretState();
+  if (!legacySecret) {
+    throw new Error("No local Nostr private key is configured.");
+  }
+
+  const passphraseValue = requirePassphrase(passphrase);
+  const normalizedSecret = normalizeSecretForStorage(legacySecret);
+  await persistSecretVault({
+    normalizedSecret,
+    passphrase: passphraseValue,
+  });
+  setCachedNostrSecret(normalizedSecret);
+  return normalizedSecret;
+}
+
+export async function setNostrSyncSecret(value, { passphrase, confirmPassphrase } = {}) {
   const rawSecret = normalizeNostrSecret(value);
   if (!rawSecret) {
-    await setState(NOSTR_SYNC_NSEC_STATE_KEY, "");
+    await clearNostrSyncSecret();
     return false;
   }
-  const normalizedNsecCandidate = rawSecret.toLowerCase();
-  const normalized = normalizedNsecCandidate.startsWith("nsec1")
-    ? (() => {
-      privateKeyHexFromNsec(normalizedNsecCandidate);
-      return normalizedNsecCandidate;
-    })()
-    : normalizePrivateKeyHex(rawSecret);
-  await setState(NOSTR_SYNC_NSEC_STATE_KEY, normalized);
+  const passphraseValue = requirePassphrase(passphrase, {
+    confirmPassphrase,
+    requireConfirm: true,
+  });
+  const normalizedSecret = normalizeSecretForStorage(rawSecret);
+  await persistSecretVault({
+    normalizedSecret,
+    passphrase: passphraseValue,
+  });
+  setCachedNostrSecret(normalizedSecret);
   return true;
 }
 
 export async function clearNostrSyncSecret() {
+  clearCachedNostrSecret();
+  await setState(NOSTR_SYNC_SECRET_VAULT_STATE_KEY, null);
   await setState(NOSTR_SYNC_NSEC_STATE_KEY, "");
 }
 
@@ -114,8 +218,16 @@ export async function clearNostrSyncStatus() {
   return normalizeNostrSyncStatus(null);
 }
 
-export async function generateNostrSyncSecret() {
+export async function generateNostrSyncSecret({ passphrase, confirmPassphrase } = {}) {
+  const passphraseValue = requirePassphrase(passphrase, {
+    confirmPassphrase,
+    requireConfirm: true,
+  });
   const generatedNsec = generateNsec();
-  await setState(NOSTR_SYNC_NSEC_STATE_KEY, generatedNsec);
+  await persistSecretVault({
+    normalizedSecret: generatedNsec,
+    passphrase: passphraseValue,
+  });
+  setCachedNostrSecret(generatedNsec);
   return generatedNsec;
 }

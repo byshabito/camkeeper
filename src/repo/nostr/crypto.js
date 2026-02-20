@@ -25,6 +25,11 @@ function normalizePrivateKeyBytes(bytes) {
   if (source.length !== 32) {
     throw new Error("Private key must be 32 bytes.");
   }
+  try {
+    getPublicKey(source);
+  } catch (error) {
+    throw new Error("Private key must be a valid secp256k1 scalar.");
+  }
   return source;
 }
 

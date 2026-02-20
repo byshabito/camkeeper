@@ -58,6 +58,8 @@ No account is required. CamKeeper works fully local and offline by default, with
 
 - Optional Nostr sync is disabled by default
 - Uses encrypted NIP-78 payloads and local private key signing
+- Stores your sync key as encrypted local vault data protected by your passphrase
+- Passphrase is never stored by CamKeeper
 - Uses user-configured relays only; no CamKeeper backend service
 - Manual sync flow is available from Options
 

@@ -26,8 +26,8 @@ import { getProfiles, saveProfiles } from "../services/profilesStore.js";
 import { getState, setState } from "../services/stateStore.js";
 import {
   getNostrSyncConfig,
-  getNostrSyncSecret,
   getNostrSyncStatus,
+  resolveNostrSyncSecretForSync,
   setNostrSyncStatus,
 } from "./nostrSyncSettings.js";
 import {
@@ -46,6 +46,9 @@ import {
 
 const MAX_SYNC_TOMBSTONES = 5000;
 const MAX_SYNC_SHADOW = 5000;
+const MAX_PULL_EVENTS = 2500;
+const MAX_EVENT_CONTENT_CHARS = 65536;
+const MAX_EVENT_DECODE_FAILURES = 500;
 
 const NOSTR_SYNC_ACTION_UPSERT = "upsert";
 const NOSTR_SYNC_ACTION_DELETE = "delete";
@@ -201,6 +204,7 @@ function normalizeTimeoutMs(timeoutMs) {
 export async function syncNostrNow({
   now = Date.now,
   timeoutMs,
+  passphrase,
   queryEventsFn = queryEventsFromRelays,
   publishEventFn = publishEventToRelays,
   verifySignedEventFn = verifySignedEvent,
@@ -214,7 +218,7 @@ export async function syncNostrNow({
   getStateFn = getState,
   setStateFn = setState,
   getNostrSyncConfigFn = getNostrSyncConfig,
-  getNostrSyncSecretFn = getNostrSyncSecret,
+  resolveNostrSyncSecretForSyncFn = resolveNostrSyncSecretForSync,
   getNostrSyncStatusFn = getNostrSyncStatus,
   setNostrSyncStatusFn = setNostrSyncStatus,
 } = {}) {
@@ -251,7 +255,7 @@ export async function syncNostrNow({
 
   let privateKeyHex;
   try {
-    const secret = await getNostrSyncSecretFn();
+    const secret = await resolveNostrSyncSecretForSyncFn({ passphrase });
     privateKeyHex = resolvePrivateKeyHex(secret);
   } catch (error) {
     const status = await setStatus({
@@ -304,6 +308,7 @@ export async function syncNostrNow({
 
   let pulledCount = 0;
   const remoteByProfileId = new Map();
+  const pullWarnings = [];
 
   try {
     const pubkey = getPublicKeyHexFn(privateKeyHex);
@@ -313,12 +318,28 @@ export async function syncNostrNow({
       timeoutMs: normalizedTimeoutMs,
     });
 
-    for (const event of events || []) {
+    const allEvents = Array.isArray(events) ? events : [];
+    if (allEvents.length > MAX_PULL_EVENTS) {
+      pullWarnings.push(`Ignored ${allEvents.length - MAX_PULL_EVENTS} remote events over processing limit.`);
+    }
+
+    let decodeFailures = 0;
+
+    for (const event of allEvents.slice(0, MAX_PULL_EVENTS)) {
       if (!(await verifySignedEventFn(event))) continue;
+      const eventContent = typeof event?.content === "string" ? event.content : "";
+      if (eventContent.length > MAX_EVENT_CONTENT_CHARS) {
+        continue;
+      }
       let envelope;
       try {
         envelope = await decodeProfileEventContentFn(privateKeyHex, event);
       } catch (error) {
+        decodeFailures += 1;
+        if (decodeFailures >= MAX_EVENT_DECODE_FAILURES) {
+          pullWarnings.push("Stopped decoding remote events after repeated decode failures.");
+          break;
+        }
         continue;
       }
       if (envelope.entity !== NOSTR_SYNC_ENTITY_PROFILE) continue;
@@ -576,7 +597,9 @@ export async function syncNostrNow({
     previousStatus,
     pushedCount,
     pulledCount,
-    lastError: publishFailures.length ? `${publishFailures.length} event(s) failed to publish.` : "",
+    lastError: publishFailures.length
+      ? `${publishFailures.length} event(s) failed to publish.`
+      : pullWarnings.join(" "),
     success: publishFailures.length === 0,
   });
 

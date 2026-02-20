@@ -30,7 +30,7 @@ import {
   updateSettings,
   getNostrSyncConfig,
   updateNostrSyncConfig,
-  getNostrSyncSecret,
+  hasNostrSyncSecret,
   setNostrSyncSecret,
   generateNostrSyncSecret,
   clearNostrSyncSecret,
@@ -67,6 +67,9 @@ export function initSettingsPanel({
     nostrSyncSaveConfigButton,
     nostrSyncSecretInput,
     nostrSyncShowSecret,
+    nostrSyncPassphraseInput,
+    nostrSyncPassphraseConfirmInput,
+    nostrSyncShowPassphrase,
     nostrSyncSaveSecretButton,
     nostrSyncGenerateSecretButton,
     nostrSyncClearSecretButton,
@@ -232,6 +235,15 @@ export function initSettingsPanel({
     if (nostrSyncClearSecretButton) {
       nostrSyncClearSecretButton.disabled = nostrSyncInProgress || !nostrSecretStored;
     }
+    if (nostrSyncPassphraseInput) {
+      nostrSyncPassphraseInput.disabled = nostrSyncInProgress;
+    }
+    if (nostrSyncPassphraseConfirmInput) {
+      nostrSyncPassphraseConfirmInput.disabled = nostrSyncInProgress;
+    }
+    if (nostrSyncShowPassphrase) {
+      nostrSyncShowPassphrase.disabled = nostrSyncInProgress;
+    }
     if (nostrSyncNowButton) {
       nostrSyncNowButton.disabled = nostrSyncInProgress || !readiness.ready;
       nostrSyncNowButton.textContent = nostrSyncInProgress ? "Syncing..." : "Sync now";
@@ -242,7 +254,7 @@ export function initSettingsPanel({
     const readiness = getNostrReadiness();
     if (nostrSyncSecretState) {
       nostrSyncSecretState.textContent = nostrSecretStored
-        ? "Private key is stored locally on this device."
+        ? "Encrypted private key is stored locally on this device."
         : "No private key stored.";
     }
     if (nostrSyncReady) {
@@ -279,12 +291,18 @@ export function initSettingsPanel({
   }
 
   async function refreshNostrSecretField() {
-    const storedSecret = await getNostrSyncSecret();
-    nostrSecretStored = Boolean(storedSecret);
+    nostrSecretStored = await hasNostrSyncSecret();
     if (nostrSyncSecretInput) {
-      nostrSyncSecretInput.value = storedSecret || "";
+      nostrSyncSecretInput.value = "";
       nostrSyncSecretInput.type = nostrSyncShowSecret?.checked ? "text" : "password";
     }
+  }
+
+  function getNostrPassphrasePayload() {
+    return {
+      passphrase: nostrSyncPassphraseInput?.value || "",
+      confirmPassphrase: nostrSyncPassphraseConfirmInput?.value || "",
+    };
   }
 
   async function loadNostrSyncSettings() {
@@ -705,6 +723,19 @@ export function initSettingsPanel({
       },
     },
     {
+      element: nostrSyncShowPassphrase,
+      event: "change",
+      handler: () => {
+        const inputType = nostrSyncShowPassphrase?.checked ? "text" : "password";
+        if (nostrSyncPassphraseInput) {
+          nostrSyncPassphraseInput.type = inputType;
+        }
+        if (nostrSyncPassphraseConfirmInput) {
+          nostrSyncPassphraseConfirmInput.type = inputType;
+        }
+      },
+    },
+    {
       element: nostrSyncSaveSecretButton,
       event: "click",
       handler: async () => {
@@ -715,15 +746,16 @@ export function initSettingsPanel({
           return;
         }
         try {
-          await setNostrSyncSecret(secret);
+          await setNostrSyncSecret(secret, getNostrPassphrasePayload());
           await refreshNostrSecretField();
           refreshNostrControls();
           renderNostrStatusText();
-          showNostrFeedback("Private key saved locally.");
-          setNostrInlineMessage("Private key saved locally.", "success");
+          showNostrFeedback("Private key encrypted and saved locally.");
+          setNostrInlineMessage("Private key encrypted and saved locally.", "success");
         } catch (error) {
-          showNostrFeedback("Could not save private key. Expected nsec1... or 64-char hex.");
-          setNostrInlineMessage("Could not save private key. Expected nsec1... or 64-char hex.", "error");
+          const message = error?.message || "Could not save private key.";
+          showNostrFeedback(message);
+          setNostrInlineMessage(message, "error");
         }
       },
     },
@@ -738,15 +770,16 @@ export function initSettingsPanel({
           if (!confirmed) return;
         }
         try {
-          await generateNostrSyncSecret();
+          await generateNostrSyncSecret(getNostrPassphrasePayload());
           await refreshNostrSecretField();
           refreshNostrControls();
           renderNostrStatusText();
-          showNostrFeedback("New private key generated and stored locally (masked in field).");
-          setNostrInlineMessage("New private key generated and stored locally (masked in field).", "success");
+          showNostrFeedback("New private key generated, encrypted, and saved locally.");
+          setNostrInlineMessage("New private key generated, encrypted, and saved locally.", "success");
         } catch (error) {
-          showNostrFeedback("Could not generate a new private key.");
-          setNostrInlineMessage("Could not generate a new private key.", "error");
+          const message = error?.message || "Could not generate a new private key.";
+          showNostrFeedback(message);
+          setNostrInlineMessage(message, "error");
         }
       },
     },
@@ -788,7 +821,10 @@ export function initSettingsPanel({
         nostrSyncInProgress = true;
         refreshNostrControls();
         try {
-          const result = await syncNostrNow();
+          const passphrase = nostrSyncPassphraseInput?.value || "";
+          const result = await syncNostrNow({
+            passphrase: passphrase || undefined,
+          });
           nostrStatus = result?.status || (await getNostrSyncStatus());
           lastPublishFailures = Array.isArray(result?.publishFailures) ? result.publishFailures : [];
           await refreshNostrSecretField();

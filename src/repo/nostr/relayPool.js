@@ -128,6 +128,19 @@ export async function queryEventsFromRelays({
   }
 
   const normalizedFilters = normalizeFilterList(filters);
+  if (!normalizedFilters.length) {
+    return {
+      events: [],
+      relays: relayUrls.map((url) => ({
+        url,
+        ok: true,
+        timedOut: false,
+        closedReason: "",
+        events: [],
+      })),
+    };
+  }
+
   const pool = new SimplePool();
 
   try {

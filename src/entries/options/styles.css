@@ -635,6 +635,10 @@ body.embedded .settings-scope {
   flex: 1;
 }
 
+.settings-scope .nostr-passphrase-row {
+  margin-top: 2px;
+}
+
 .settings-scope .nostr-inline-actions {
   justify-content: flex-start;
   flex-wrap: wrap;

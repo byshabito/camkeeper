@@ -177,7 +177,7 @@
         <div class="export stacked nostr-block">
           <div>
             <h3>Private key</h3>
-            <p id="nostr-sync-secret-help">Stored locally on this device only. Accepts <code>nsec</code> or 32-byte hex key. Never share your <code>nsec</code> with anyone, including support.</p>
+            <p id="nostr-sync-secret-help">Stored locally in encrypted form on this device. Accepts <code>nsec</code> or 32-byte hex key. Never share your <code>nsec</code> with anyone, including support.</p>
           </div>
           <div class="actions nostr-actions">
             <div class="nostr-secret-row">
@@ -194,6 +194,31 @@
                 <span>Show</span>
               </label>
             </div>
+            <div class="nostr-secret-row nostr-passphrase-row">
+              <input
+                id="nostr-sync-passphrase"
+                type="password"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="Passphrase"
+                aria-describedby="nostr-sync-passphrase-help"
+              />
+            </div>
+            <div class="nostr-secret-row nostr-passphrase-row">
+              <input
+                id="nostr-sync-passphrase-confirm"
+                type="password"
+                autocomplete="off"
+                spellcheck="false"
+                placeholder="Confirm passphrase"
+                aria-describedby="nostr-sync-passphrase-help"
+              />
+              <label class="toggle" for="nostr-sync-show-passphrase">
+                <input id="nostr-sync-show-passphrase" type="checkbox" />
+                <span>Show</span>
+              </label>
+            </div>
+            <p id="nostr-sync-passphrase-help" class="nostr-hint">Passphrase is required to save, generate, or unlock the encrypted key. It is never stored by CamKeeper.</p>
             <div class="actions nostr-inline-actions">
               <button id="nostr-sync-save-secret" class="ghost" type="button">Save key</button>
               <button id="nostr-sync-generate-secret" class="ghost" type="button">Generate key</button>
