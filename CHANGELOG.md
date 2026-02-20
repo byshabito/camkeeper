@@ -15,6 +15,9 @@
 - Remove build-time metadata from Settings and stop release-script timestamp stamping in favor of version-only packaging updates
 - Localize the Buy Me a Coffee badge asset so the options page no longer fetches a remote CDN image
 - Remove unused `src/assets/camkeeper-logo.png` to keep the packaged extension lean
+- Migrate profile/bookmark persistence from `chrome.storage` to IndexedDB with one-time legacy import and backup keys kept intact
+- Add migration debug logs plus write-path CRUD logs for profiles/settings/state with sensitive-state redaction
+- Enable background view timer debug logs for session start/stop and recorded view durations
 
 ## v1.0.3
 
