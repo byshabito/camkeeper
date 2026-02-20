@@ -34,6 +34,7 @@ import { applyProfileView } from "../profileViews.js";
 
 const PROFILES_IDB_MIGRATED_STATE_KEY = "camkeeper_profiles_idb_migrated_v1";
 const MIGRATION_LOG_PREFIX = "[CamKeeper][profiles-migration]";
+const CRUD_LOG_PREFIX = "[CamKeeper][crud][profiles]";
 
 let migrationReady = false;
 let migrationPromise = null;
@@ -44,6 +45,14 @@ function logMigration(message, details) {
     return;
   }
   console.log(`${MIGRATION_LOG_PREFIX} ${message}`, details);
+}
+
+function logProfilesCrud(message, details) {
+  if (typeof details === "undefined") {
+    console.log(`${CRUD_LOG_PREFIX} ${message}`);
+    return;
+  }
+  console.log(`${CRUD_LOG_PREFIX} ${message}`, details);
 }
 
 async function markProfilesMigrationComplete() {
@@ -127,18 +136,31 @@ export async function getProfile(id) {
 export async function saveProfile(profile) {
   await ensureProfilesMigration();
   const normalized = normalizeProfileForStorage(profile);
-  return persistProfile(normalized);
+  const saved = await persistProfile(normalized);
+  logProfilesCrud("saveProfile", {
+    id: saved?.id || normalized?.id || null,
+  });
+  return saved;
 }
 
 export async function saveProfiles(profiles) {
   await ensureProfilesMigration();
   const normalized = normalizeProfilesForStorage(profiles);
-  return persistProfiles(normalized);
+  const saved = await persistProfiles(normalized);
+  logProfilesCrud("saveProfiles", {
+    count: Array.isArray(saved) ? saved.length : 0,
+  });
+  return saved;
 }
 
 export async function deleteProfile(id) {
   await ensureProfilesMigration();
-  return removeProfile(id);
+  const remaining = await removeProfile(id);
+  logProfilesCrud("deleteProfile", {
+    id: id || null,
+    remainingCount: Array.isArray(remaining) ? remaining.length : 0,
+  });
+  return remaining;
 }
 
 export async function recordProfileView({ site, username, endedAt, durationMs }) {
@@ -152,6 +174,11 @@ export async function recordProfileView({ site, username, endedAt, durationMs })
     durationMs,
   });
   if (!result.updated) return false;
+  logProfilesCrud("recordProfileView", {
+    site,
+    username,
+    durationMs,
+  });
   await saveProfiles(result.profiles);
   return true;
 }

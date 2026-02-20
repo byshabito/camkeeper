@@ -77,7 +77,7 @@ export function initVisitTracking(state, logDebug) {
       durationMs,
     });
     if (!updated) return;
-    logDebug("[CamKeeper] View time recorded", {
+    logDebug("View time recorded", {
       tabId: session.tabId,
       site: session.site,
       username: session.username,
@@ -97,7 +97,7 @@ export function initVisitTracking(state, logDebug) {
     activeSessions.delete(tabId);
     await persistSessions();
     await recordActiveTimeForTab(session, endedAt);
-    logDebug("[CamKeeper] View session ended", {
+    logDebug("View session ended", {
       tabId: session.tabId,
       site: session.site,
       username: session.username,
@@ -113,7 +113,7 @@ export function initVisitTracking(state, logDebug) {
     await persistSessions();
     for (const session of sessions) {
       await recordActiveTimeForTab(session, Date.now());
-      logDebug("[CamKeeper] View session ended", {
+      logDebug("View session ended", {
         tabId: session.tabId,
         site: session.site,
         username: session.username,
@@ -149,7 +149,7 @@ export function initVisitTracking(state, logDebug) {
     if (!session) return;
     activeSessions.set(tab.id, session);
     await persistSessions();
-    logDebug("[CamKeeper] View session started", {
+    logDebug("View session started", {
       tabId: tab.id,
       site: parsed.site,
       username: parsed.username,
@@ -175,7 +175,7 @@ export function initVisitTracking(state, logDebug) {
     if (!session) return;
     activeSessions.set(tab.id, session);
     await persistSessions();
-    logDebug("[CamKeeper] View session started", {
+    logDebug("View session started", {
       tabId: tab.id,
       site: session.site,
       username: session.username,

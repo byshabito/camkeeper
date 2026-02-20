@@ -32,7 +32,15 @@ export function initBackground() {
   };
   const settings = { ...SETTINGS_DEFAULTS };
 
-  const visits = initVisitTracking(state, () => {});
+  const logVisitDebug = (message, details) => {
+    if (typeof details === "undefined") {
+      console.log(`[CamKeeper][view-timer] ${message}`);
+      return;
+    }
+    console.log(`[CamKeeper][view-timer] ${message}`, details);
+  };
+
+  const visits = initVisitTracking(state, logVisitDebug);
 
   async function loadSettings() {
     const nextSettings = await getSettings();

@@ -22,6 +22,33 @@ import {
 } from "../../repo/settings.js";
 import { applySettingsPatch, normalizeSettings } from "../settings.js";
 
+const SETTINGS_CRUD_LOG_PREFIX = "[CamKeeper][crud][settings]";
+
+function logSettingsCrud(message, details) {
+  if (typeof details === "undefined") {
+    console.log(`${SETTINGS_CRUD_LOG_PREFIX} ${message}`);
+    return;
+  }
+  console.log(`${SETTINGS_CRUD_LOG_PREFIX} ${message}`, details);
+}
+
+function areSameSettingsValue(left, right) {
+  if (left === right) return true;
+  try {
+    return JSON.stringify(left) === JSON.stringify(right);
+  } catch (error) {
+    return false;
+  }
+}
+
+function getChangedTopLevelKeys(current, next) {
+  const keys = new Set([
+    ...Object.keys(current || {}),
+    ...Object.keys(next || {}),
+  ]);
+  return Array.from(keys).filter((key) => !areSameSettingsValue(current?.[key], next?.[key]));
+}
+
 export async function getSettings() {
   return normalizeSettings(await loadSettings());
 }
@@ -29,6 +56,9 @@ export async function getSettings() {
 export async function saveSettings(settings) {
   const normalized = normalizeSettings(settings);
   await persistSettings(normalized);
+  logSettingsCrud("saveSettings", {
+    keys: Object.keys(normalized),
+  });
   return normalized;
 }
 
@@ -36,5 +66,8 @@ export async function updateSettings(patch) {
   const current = await loadSettings();
   const next = applySettingsPatch(current, patch);
   await persistSettings(next);
+  logSettingsCrud("updateSettings", {
+    changedKeys: getChangedTopLevelKeys(current, next),
+  });
   return next;
 }
