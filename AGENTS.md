@@ -1,59 +1,56 @@
 # Repository Guidelines
 
-## Project Structure and Module Organization
-- `src/` contains extension runtime source code.
+## Project Structure
+- `src/` is extension runtime code.
 - `src/entries/` contains entry points for `background/`, `popup/`, and `options/`.
-- `src/background/` contains service-worker orchestration and visit tracking.
-- `src/domain/` contains business logic, normalization, models, and use-cases.
-- `src/domain/useCases/` contains user workflows consumed by UI/background.
+- `src/background/` handles service-worker orchestration and visit tracking.
+- `src/domain/` contains business rules, models, normalizers, and use cases.
+- `src/domain/useCases/` is the workflow layer consumed by UI/background.
 - `src/domain/services/` contains domain-facing adapters.
-- `src/domain/appService.js` is the primary facade used by UI/background layers.
+- `src/domain/appService.js` is the main facade for UI/background.
 - `src/repo/` contains storage and Nostr transport implementations.
 - `src/repo/db.js` is the central `chrome.storage` wrapper.
-- `src/ui/` contains controllers, components, selectors, and state.
-- `src/styles/common.css` contains shared style tokens and button/input patterns.
-- `icons/` contains manifest-referenced extension icons.
-- `manifest.json` and `manifest.firefox.json` define browser-specific packages.
-- `docs/` contains the VitePress site.
-- `docs/nostr/index.md` is the Nostr learning guide.
-- `docs/changelog/index.md` mirrors release history for docs readers.
-- `dist/` is generated release output from the build script; do not edit.
-- `src/vendor/` stores vendored third-party code; keep notices in sync.
+- `src/ui/` contains controllers, components, selectors, and UI state.
+- `src/styles/common.css` contains shared tokens and control patterns.
+- `src/vendor/` contains vendored third-party runtime code.
+- `icons/` contains extension icons referenced by manifests.
+- `manifest.json` and `manifest.firefox.json` define browser packages.
+- `docs/` contains the VitePress docs site.
+- `dist/` is generated output from release packaging; never edit manually.
 
 ## Build, Lint, and Test Commands
-Install dependencies (docs tooling):
-- `bun install`
-- Note: `package.json` currently includes docs scripts only (no app build/lint/test scripts).
 
-Docs:
+### Install
+- `bun install`
+- Note: `package.json` currently includes docs scripts only.
+
+### Docs
 - Dev server: `bun run docs:dev`
 - Build docs: `bun run docs:build`
-- Preview built docs: `bun run docs:preview`
+- Preview build: `bun run docs:preview`
 
-Release packaging:
+### Release Packaging
 - `./build-release.sh <version>`
 - Example: `./build-release.sh 1.1.0`
 - Requires: `bash`, `python3` (or `python`), and `zip`.
-- Updates both manifest versions.
+- Updates version fields in both manifests.
 
-Linting:
-- No dedicated linter is currently configured.
+### Linting and Syntax Checks
+- No dedicated linter is configured.
 - Do not add lint tooling without explicit project agreement.
+- Recommended per-file syntax check: `node --check path/to/file.js`
+- Run syntax checks for every changed JS file before PR.
 
-Syntax checks (recommended before PR):
-- Single file: `node --check src/ui/components/settingsPanel.js`
-- Run for every changed JS file.
-
-Testing:
-- No active automated test suite is configured right now.
-- Single-test command is unavailable until a runner is added.
-- `npm test` / `bun test` are expected to fail unless tests are introduced.
-- If Bun tests are added later:
+### Testing
+- No active automated test suite is configured.
+- `npm test` / `bun test` are expected to fail unless tests are added.
+- Single-test command is currently unavailable.
+- If Bun tests are introduced later:
   - Run all tests: `bun test`
   - Run one test file: `bun test tests/path/to/file.test.js`
 
-Manual verification checklist:
-- Popup: create/edit/delete/merge profiles and verify search/sort/folder flows.
+### Manual Verification Checklist
+- Popup: create/edit/delete/merge profiles; verify search/sort/folder flows.
 - Options: import/export, site settings edits, persistence, feedback toasts.
 - Background: page detection and local view/session tracking behavior.
 - Nostr sync (if touched): enable/disable, relay save, key save/clear, sync status.
@@ -65,23 +62,23 @@ Manual verification checklist:
 - Use semicolons.
 - Use double quotes for strings.
 - Prefer trailing commas in multiline arrays/objects.
-- Keep long expressions readable; split lines as needed.
-- Preserve existing GPL header blocks at top of JS files.
+- Keep long expressions readable by splitting lines as needed.
+- Preserve existing GPL headers at the top of JS files.
 
 ### Imports and Modules
-- Use ES modules only (`import` / `export`).
-- Keep imports at file top.
+- Use ES modules only (`import`/`export`).
+- Keep imports at the top of files.
 - Include `.js` in relative imports.
 - Group imports consistently (external first, then internal).
-- Prefer named exports over default exports.
+- Prefer named exports.
 - Avoid circular dependencies.
-- Respect architecture flow: UI/background -> domain -> repo.
+- Respect architecture direction: UI/background -> domain -> repo.
 
 ### Naming
 - Variables/functions: `lowerCamelCase`.
 - Constants: `SCREAMING_SNAKE_CASE`.
-- Files/folders: follow existing style (`lowerCamelCase` or `kebab-case`).
-- Event handlers: prefer `handleX` or `onX`.
+- Files/folders: follow existing `lowerCamelCase`/`kebab-case` style.
+- Event handlers: prefer `handleX` or `onX` names.
 - Avoid one-letter names except simple loop indices.
 
 ### Types and Data Contracts
@@ -89,59 +86,55 @@ Manual verification checklist:
 - Keep object shapes explicit and stable across layers.
 - Add JSDoc only for non-obvious contracts/public APIs.
 - Reuse existing sanitizers/normalizers in `src/domain/`.
-- Do not add transpilers/new build steps without agreement.
+- Do not add transpilers or new build steps without agreement.
 
 ### Error Handling and Async
 - Prefer early returns for invalid state.
 - Guard `chrome.*` calls with feature checks/optional chaining.
-- Wrap JSON parsing and provide safe fallbacks.
+- Wrap JSON parsing with safe fallbacks.
 - Avoid throwing in user-facing popup/options flows unless surfaced clearly.
-- `await` async operations and keep graceful fallback behavior.
-- Log useful warnings only; never log secrets.
+- Always `await` async operations that affect flow/state.
+- Log actionable warnings only; never log secrets.
 
 ### Architecture Boundaries
 - Keep business rules in `src/domain/`.
-- UI/background should call use-cases via `src/domain/appService.js`.
-- Persist through repo modules (`src/repo/*`), not ad-hoc storage calls.
+- UI/background should consume domain use cases via `src/domain/appService.js`.
+- Persist only through repo modules (`src/repo/*`).
 - Keep `src/repo/` focused on IO/storage/transport concerns.
 - Keep pure logic separate from browser-specific side effects.
 - Avoid mutating shared state outside dedicated state/store modules.
 
-### UI and DOM
-- Cache/reuse DOM nodes accessed repeatedly.
+### UI, DOM, and CSS
+- Cache/reuse frequently accessed DOM nodes.
 - Prefer `textContent` over `innerHTML` unless HTML injection is intentional and safe.
 - Use `classList` for visibility/style toggles.
 - Keep selectors stable and straightforward.
 - Preserve keyboard navigation and focus behavior.
-
-### CSS and Visual Consistency
 - Reuse tokens and shared patterns from `src/styles/common.css`.
-- Keep entry-specific styles in each entry `styles.css`.
-- Reuse existing button/chip/card patterns before adding new variants.
-- Keep layout changes consistent with existing options/popup visual language.
+- Keep entry-specific styles in each entry's `styles.css`.
 
-### Browser Extension and Privacy Rules
+### Extension and Privacy Rules
 - Background entry is a module service worker; avoid window-only APIs there.
 - Use `chrome.runtime` messaging for cross-entry communication.
 - Validate `chrome.tabs` fields before using URL/tab properties.
 - Keep permission changes minimal and aligned in both manifests.
 - Do not add analytics, telemetry, or tracking.
 - Preserve local-first/offline-first behavior.
-- For Nostr changes: keep sync optional and disabled by default.
+- Nostr sync must remain optional and disabled by default.
 - Never log, export, import, or share private keys (`nsec`).
 
-### Assets, Manifests, and Releases
-- Store assets in `icons/` or relevant entry folders.
-- Update both manifests when permissions/assets/metadata change.
+### Assets, Manifests, and Release Artifacts
+- Store assets under `icons/` or the relevant entry folder.
+- Update both manifests when metadata/permissions/assets change.
 - Keep browser metadata aligned unless intentionally browser-specific.
-- Never edit generated `dist/` artifacts manually.
-- Ensure release bundles include `LICENSE`, `README.md`, `CHANGELOG.md`, `PRIVACY.md`, and `THIRD_PARTY_NOTICES.md`.
+- Never hand-edit `dist/` artifacts.
+- Release bundles must include `LICENSE`, `README.md`, `CHANGELOG.md`, `PRIVACY.md`, and `THIRD_PARTY_NOTICES.md`.
 
-## Docs Authoring Notes
-- Keep docs pages concise and practical for end users.
-- Cross-link Nostr-related pages (`/nostr/`, `/privacy/`, `/support/`) when relevant.
+## Docs Guidance
+- Keep docs concise and practical for end users.
+- Cross-link Nostr pages (`/nostr/`, `/privacy/`, `/support/`) when relevant.
 - Keep `docs/changelog/index.md` in sync with root `CHANGELOG.md`.
-- After docs edits, run `bun run docs:build` to verify rendering and links.
+- Run `bun run docs:build` after docs edits to validate rendering and links.
 
 ## Commit and Pull Request Guidance
 - Use conventional prefixes: `feat`, `fix`, `docs`, `refactor`, `style`, `test`, `perf`, `build`, `ci`, `revert`.
@@ -153,6 +146,6 @@ Manual verification checklist:
 - No Cursor rules found:
   - `.cursor/rules/` does not exist.
   - `.cursorrules` does not exist.
-- No Copilot instructions found:
+- No Copilot rules found:
   - `.github/copilot-instructions.md` does not exist.
 - If these files are added later, mirror relevant actionable rules here.
