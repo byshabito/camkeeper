@@ -3,14 +3,15 @@
 ## v1.1.0
 
 - Add optional Nostr sync based on NIP-78 with encrypted payloads and privacy-preserving opaque coordinates
-- Add manual "Sync now" workflow with pull/merge/push conflict handling and profile tombstones for deletions
+- Add manual "Pull now" and "Push now" workflows with split pull/merge and push-only publishing controls
 - Add Nostr Sync settings in Options (enable toggle, relay list, local key save/clear, sync status)
 - Prefill Nostr sync with three relay defaults and add one-click local key generation
 - Keep local-first behavior and offline functionality unchanged when sync is disabled or relays fail
 - Vendor audited Nostr cryptography dependencies and add third-party notice documentation
 - Refine Nostr Sync settings layout with cleaner alignment, compact manual sync actions, and clearer status placement
-- Disable and visually dim "Sync now" until setup is complete (enabled toggle, relay configured, and local key saved)
+- Disable and visually dim manual sync actions until setup is complete (enabled toggle, relay configured, and local key saved)
 - Improve relay save feedback and private key UX with detailed validation messages and clear-key confirmation
+- Store Nostr private keys directly in extension storage and show saved keys masked in settings
 - Replace the Settings About block with a compact footnote row and quick links to docs, changelog, privacy, and support
 - Remove build-time metadata from Settings and stop release-script timestamp stamping in favor of version-only packaging updates
 - Localize the Buy Me a Coffee badge asset so the options page no longer fetches a remote CDN image
