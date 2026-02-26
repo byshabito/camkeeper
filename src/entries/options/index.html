@@ -159,25 +159,24 @@
           </div>
         </div>
         <div class="export stacked nostr-block">
-          <div>
-            <h3>Relays</h3>
-            <p id="nostr-sync-relays-help">One relay per line. Only <code>wss://</code> relays are accepted.</p>
+          <div class="nostr-manual-header">
+            <div>
+              <h3>Manual sync</h3>
+              <p>Run pull or push manually. Local usage is unaffected if relays fail.</p>
+            </div>
+            <div class="actions nostr-manual-buttons">
+              <button id="nostr-sync-pull-now" class="primary" type="button">Pull now</button>
+              <button id="nostr-sync-push-now" class="ghost" type="button">Push now</button>
+            </div>
           </div>
-          <div class="actions nostr-actions">
-            <textarea
-              id="nostr-sync-relays"
-              class="nostr-relays"
-              placeholder="wss://relay.damus.io"
-              rows="4"
-              aria-describedby="nostr-sync-relays-help"
-            ></textarea>
-            <button id="nostr-sync-save-config" class="ghost nostr-action-right" type="button">Save relays</button>
+          <div class="actions nostr-actions nostr-manual-actions">
+            <p id="nostr-sync-status" class="nostr-status" role="status" aria-live="polite"></p>
           </div>
         </div>
         <div class="export stacked nostr-block">
           <div>
             <h3>Private key</h3>
-            <p id="nostr-sync-secret-help">Stored locally in encrypted form on this device. Accepts <code>nsec</code> or 32-byte hex key. Never share your <code>nsec</code> with anyone, including support.</p>
+            <p id="nostr-sync-secret-help">Stored in browser extension storage on this device. Accepts <code>nsec</code> or 32-byte hex key. Never share your <code>nsec</code> with anyone, including support.</p>
           </div>
           <div class="actions nostr-actions">
             <div class="nostr-secret-row">
@@ -194,31 +193,6 @@
                 <span>Show</span>
               </label>
             </div>
-            <div class="nostr-secret-row nostr-passphrase-row">
-              <input
-                id="nostr-sync-passphrase"
-                type="password"
-                autocomplete="off"
-                spellcheck="false"
-                placeholder="Passphrase"
-                aria-describedby="nostr-sync-passphrase-help"
-              />
-            </div>
-            <div class="nostr-secret-row nostr-passphrase-row">
-              <input
-                id="nostr-sync-passphrase-confirm"
-                type="password"
-                autocomplete="off"
-                spellcheck="false"
-                placeholder="Confirm passphrase"
-                aria-describedby="nostr-sync-passphrase-help"
-              />
-              <label class="toggle" for="nostr-sync-show-passphrase">
-                <input id="nostr-sync-show-passphrase" type="checkbox" />
-                <span>Show</span>
-              </label>
-            </div>
-            <p id="nostr-sync-passphrase-help" class="nostr-hint">Passphrase is required to save, generate, or unlock the encrypted key. It is never stored by CamKeeper.</p>
             <div class="actions nostr-inline-actions">
               <button id="nostr-sync-save-secret" class="ghost" type="button">Save key</button>
               <button id="nostr-sync-generate-secret" class="ghost" type="button">Generate key</button>
@@ -228,15 +202,19 @@
           </div>
         </div>
         <div class="export stacked nostr-block">
-          <div class="nostr-manual-header">
-            <div>
-              <h3>Manual sync</h3>
-              <p>Runs one pull/merge/push cycle now. Local usage is unaffected if relays fail.</p>
-            </div>
-            <button id="nostr-sync-now" class="primary" type="button">Sync now</button>
+          <div>
+            <h3>Relays</h3>
+            <p id="nostr-sync-relays-help">One relay per line. Only <code>wss://</code> relays are accepted.</p>
           </div>
-          <div class="actions nostr-actions nostr-manual-actions">
-            <p id="nostr-sync-status" class="nostr-status" role="status" aria-live="polite"></p>
+          <div class="actions nostr-actions">
+            <textarea
+              id="nostr-sync-relays"
+              class="nostr-relays"
+              placeholder="wss://relay.damus.io"
+              rows="4"
+              aria-describedby="nostr-sync-relays-help"
+            ></textarea>
+            <button id="nostr-sync-save-config" class="ghost nostr-action-right" type="button">Save relays</button>
           </div>
         </div>
       </section>

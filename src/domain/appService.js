@@ -145,12 +145,12 @@ export async function hasNostrSyncSecret() {
   return hasNostrSyncSecretUseCase();
 }
 
-export async function setNostrSyncSecret(value, options) {
-  return setNostrSyncSecretUseCase(value, options);
+export async function setNostrSyncSecret(value) {
+  return setNostrSyncSecretUseCase(value);
 }
 
-export async function generateNostrSyncSecret(options) {
-  return generateNostrSyncSecretUseCase(options);
+export async function generateNostrSyncSecret() {
+  return generateNostrSyncSecretUseCase();
 }
 
 export async function clearNostrSyncSecret() {

@@ -54,6 +54,10 @@ const NOSTR_SYNC_ACTION_UPSERT = "upsert";
 const NOSTR_SYNC_ACTION_DELETE = "delete";
 const NOSTR_SYNC_ENTITY_PROFILE = "profile";
 
+const NOSTR_SYNC_MODE_FULL = "full";
+const NOSTR_SYNC_MODE_PULL = "pull";
+const NOSTR_SYNC_MODE_PUSH = "push";
+
 const SHADOW_STATE_UPSERT = NOSTR_SYNC_ACTION_UPSERT;
 const SHADOW_STATE_DELETE = NOSTR_SYNC_ACTION_DELETE;
 
@@ -201,10 +205,17 @@ function normalizeTimeoutMs(timeoutMs) {
   return normalized;
 }
 
+function normalizeSyncMode(mode) {
+  if (mode === NOSTR_SYNC_MODE_PULL || mode === NOSTR_SYNC_MODE_PUSH) {
+    return mode;
+  }
+  return NOSTR_SYNC_MODE_FULL;
+}
+
 export async function syncNostrNow({
   now = Date.now,
+  mode = NOSTR_SYNC_MODE_FULL,
   timeoutMs,
-  passphrase,
   queryEventsFn = queryEventsFromRelays,
   publishEventFn = publishEventToRelays,
   verifySignedEventFn = verifySignedEvent,
@@ -223,6 +234,7 @@ export async function syncNostrNow({
   setNostrSyncStatusFn = setNostrSyncStatus,
 } = {}) {
   const attemptAt = getNowMs(now);
+  const syncMode = normalizeSyncMode(mode);
   const previousStatus = await getNostrSyncStatusFn();
 
   const config = await getNostrSyncConfigFn();
@@ -255,7 +267,7 @@ export async function syncNostrNow({
 
   let privateKeyHex;
   try {
-    const secret = await resolveNostrSyncSecretForSyncFn({ passphrase });
+    const secret = await resolveNostrSyncSecretForSyncFn();
     privateKeyHex = resolvePrivateKeyHex(secret);
   } catch (error) {
     const status = await setStatus({
@@ -307,165 +319,167 @@ export async function syncNostrNow({
   });
 
   let pulledCount = 0;
-  const remoteByProfileId = new Map();
   const pullWarnings = [];
 
-  try {
-    const pubkey = getPublicKeyHexFn(privateKeyHex);
-    const { events } = await queryEventsFn({
-      relays,
-      filters: [{ kinds: [NIP78_EVENT_KIND], authors: [pubkey], limit: 5000 }],
-      timeoutMs: normalizedTimeoutMs,
-    });
+  if (syncMode !== NOSTR_SYNC_MODE_PUSH) {
+    const remoteByProfileId = new Map();
+    try {
+      const pubkey = getPublicKeyHexFn(privateKeyHex);
+      const { events } = await queryEventsFn({
+        relays,
+        filters: [{ kinds: [NIP78_EVENT_KIND], authors: [pubkey], limit: 5000 }],
+        timeoutMs: normalizedTimeoutMs,
+      });
 
-    const allEvents = Array.isArray(events) ? events : [];
-    if (allEvents.length > MAX_PULL_EVENTS) {
-      pullWarnings.push(`Ignored ${allEvents.length - MAX_PULL_EVENTS} remote events over processing limit.`);
+      const allEvents = Array.isArray(events) ? events : [];
+      if (allEvents.length > MAX_PULL_EVENTS) {
+        pullWarnings.push(`Ignored ${allEvents.length - MAX_PULL_EVENTS} remote events over processing limit.`);
+      }
+
+      let decodeFailures = 0;
+
+      for (const event of allEvents.slice(0, MAX_PULL_EVENTS)) {
+        if (!(await verifySignedEventFn(event))) continue;
+        const eventContent = typeof event?.content === "string" ? event.content : "";
+        if (eventContent.length > MAX_EVENT_CONTENT_CHARS) {
+          continue;
+        }
+        let envelope;
+        try {
+          envelope = await decodeProfileEventContentFn(privateKeyHex, event);
+        } catch (error) {
+          decodeFailures += 1;
+          if (decodeFailures >= MAX_EVENT_DECODE_FAILURES) {
+            pullWarnings.push("Stopped decoding remote events after repeated decode failures.");
+            break;
+          }
+          continue;
+        }
+        if (envelope.entity !== NOSTR_SYNC_ENTITY_PROFILE) continue;
+        const profileId = isNonEmptyString(envelope.profileId) ? envelope.profileId : "";
+        if (!profileId) continue;
+        const candidate = {
+          action: envelope.action,
+          profileId,
+          profile: envelope.payload,
+          updatedAt: normalizeTimestamp(envelope.updatedAt, 0),
+          deletedAt: normalizeTimestamp(envelope.deletedAt, 0),
+          eventId: typeof event.id === "string" ? event.id : "",
+          eventCreatedAt: normalizeTimestamp(event.created_at, 0) * 1000,
+        };
+        if (
+          candidate.action !== NOSTR_SYNC_ACTION_UPSERT
+          && candidate.action !== NOSTR_SYNC_ACTION_DELETE
+        ) {
+          continue;
+        }
+        const current = remoteByProfileId.get(profileId) || null;
+        if (shouldReplaceRemoteOperation(current, candidate)) {
+          remoteByProfileId.set(profileId, candidate);
+        }
+      }
+    } catch (error) {
+      const status = await setStatus({
+        nowMs: attemptAt,
+        setNostrSyncStatusFn,
+        previousStatus,
+        pushedCount: 0,
+        pulledCount: 0,
+        lastError: "Failed to query Nostr relays.",
+        success: false,
+      });
+      return buildFailureResult({ code: "pull_failed", message: status.lastError, status });
     }
 
-    let decodeFailures = 0;
+    let localProfilesChanged = false;
 
-    for (const event of allEvents.slice(0, MAX_PULL_EVENTS)) {
-      if (!(await verifySignedEventFn(event))) continue;
-      const eventContent = typeof event?.content === "string" ? event.content : "";
-      if (eventContent.length > MAX_EVENT_CONTENT_CHARS) {
-        continue;
-      }
-      let envelope;
-      try {
-        envelope = await decodeProfileEventContentFn(privateKeyHex, event);
-      } catch (error) {
-        decodeFailures += 1;
-        if (decodeFailures >= MAX_EVENT_DECODE_FAILURES) {
-          pullWarnings.push("Stopped decoding remote events after repeated decode failures.");
-          break;
+    for (const remote of remoteByProfileId.values()) {
+      const profileId = remote.profileId;
+      const localProfile = localById.get(profileId) || null;
+      const localUpdatedAt = normalizeTimestamp(localProfile?.updatedAt, 0);
+      const localDeletedAt = normalizeTimestamp(tombstonesState[profileId], 0);
+      const remoteTimestamp = getRemoteOperationTimestamp(remote);
+
+      if (remote.action === NOSTR_SYNC_ACTION_DELETE) {
+        if (remoteTimestamp >= localUpdatedAt && remoteTimestamp >= localDeletedAt) {
+          if (localProfile) {
+            localById.delete(profileId);
+            localProfilesChanged = true;
+          }
+          if (tombstonesState[profileId] !== remoteTimestamp) {
+            tombstonesState[profileId] = remoteTimestamp;
+            tombstonesChanged = true;
+          }
+          pulledCount += 1;
         }
         continue;
       }
-      if (envelope.entity !== NOSTR_SYNC_ENTITY_PROFILE) continue;
-      const profileId = isNonEmptyString(envelope.profileId) ? envelope.profileId : "";
-      if (!profileId) continue;
-      const candidate = {
-        action: envelope.action,
-        profileId,
-        profile: envelope.payload,
-        updatedAt: normalizeTimestamp(envelope.updatedAt, 0),
-        deletedAt: normalizeTimestamp(envelope.deletedAt, 0),
-        eventId: typeof event.id === "string" ? event.id : "",
-        eventCreatedAt: normalizeTimestamp(event.created_at, 0) * 1000,
-      };
-      if (
-        candidate.action !== NOSTR_SYNC_ACTION_UPSERT
-        && candidate.action !== NOSTR_SYNC_ACTION_DELETE
-      ) {
+
+      if (remoteTimestamp <= localDeletedAt) {
         continue;
       }
-      const current = remoteByProfileId.get(profileId) || null;
-      if (shouldReplaceRemoteOperation(current, candidate)) {
-        remoteByProfileId.set(profileId, candidate);
-      }
-    }
-  } catch (error) {
-    const status = await setStatus({
-      nowMs: attemptAt,
-      setNostrSyncStatusFn,
-      previousStatus,
-      pushedCount: 0,
-      pulledCount: 0,
-      lastError: "Failed to query Nostr relays.",
-      success: false,
-    });
-    return buildFailureResult({ code: "pull_failed", message: status.lastError, status });
-  }
 
-  let localProfilesChanged = false;
-
-  for (const remote of remoteByProfileId.values()) {
-    const profileId = remote.profileId;
-    const localProfile = localById.get(profileId) || null;
-    const localUpdatedAt = normalizeTimestamp(localProfile?.updatedAt, 0);
-    const localDeletedAt = normalizeTimestamp(tombstonesState[profileId], 0);
-    const remoteTimestamp = getRemoteOperationTimestamp(remote);
-
-    if (remote.action === NOSTR_SYNC_ACTION_DELETE) {
-      if (remoteTimestamp >= localUpdatedAt && remoteTimestamp >= localDeletedAt) {
-        if (localProfile) {
-          localById.delete(profileId);
-          localProfilesChanged = true;
-        }
-        if (tombstonesState[profileId] !== remoteTimestamp) {
-          tombstonesState[profileId] = remoteTimestamp;
-          tombstonesChanged = true;
-        }
-        pulledCount += 1;
-      }
-      continue;
-    }
-
-    if (remoteTimestamp <= localDeletedAt) {
-      continue;
-    }
-
-    const remoteProfile = normalizeProfileForStorage({
-      ...(remote.profile || {}),
-      id: profileId,
-      updatedAt: remoteTimestamp,
-      createdAt: normalizeTimestamp(remote.profile?.createdAt, remoteTimestamp),
-    });
-
-    if (!localProfile) {
-      localById.set(profileId, remoteProfile);
-      localProfilesChanged = true;
-      pulledCount += 1;
-      if (Object.hasOwn(tombstonesState, profileId)) {
-        delete tombstonesState[profileId];
-        tombstonesChanged = true;
-      }
-      continue;
-    }
-
-    if (remoteTimestamp > localUpdatedAt) {
-      const merged = mergeProfiles(localProfile, remoteProfile);
-      const normalizedMerged = normalizeProfileForStorage({
-        ...merged,
+      const remoteProfile = normalizeProfileForStorage({
+        ...(remote.profile || {}),
         id: profileId,
         updatedAt: remoteTimestamp,
-        createdAt: normalizeTimestamp(localProfile.createdAt, remoteProfile.createdAt || remoteTimestamp),
+        createdAt: normalizeTimestamp(remote.profile?.createdAt, remoteTimestamp),
       });
-      if (profileToComparable(normalizedMerged) !== profileToComparable(localProfile)) {
-        localById.set(profileId, normalizedMerged);
+
+      if (!localProfile) {
+        localById.set(profileId, remoteProfile);
         localProfilesChanged = true;
         pulledCount += 1;
+        if (Object.hasOwn(tombstonesState, profileId)) {
+          delete tombstonesState[profileId];
+          tombstonesChanged = true;
+        }
+        continue;
       }
-      if (Object.hasOwn(tombstonesState, profileId)) {
-        delete tombstonesState[profileId];
-        tombstonesChanged = true;
+
+      if (remoteTimestamp > localUpdatedAt) {
+        const merged = mergeProfiles(localProfile, remoteProfile);
+        const normalizedMerged = normalizeProfileForStorage({
+          ...merged,
+          id: profileId,
+          updatedAt: remoteTimestamp,
+          createdAt: normalizeTimestamp(localProfile.createdAt, remoteProfile.createdAt || remoteTimestamp),
+        });
+        if (profileToComparable(normalizedMerged) !== profileToComparable(localProfile)) {
+          localById.set(profileId, normalizedMerged);
+          localProfilesChanged = true;
+          pulledCount += 1;
+        }
+        if (Object.hasOwn(tombstonesState, profileId)) {
+          delete tombstonesState[profileId];
+          tombstonesChanged = true;
+        }
+        continue;
       }
-      continue;
+
+      if (remoteTimestamp === localUpdatedAt) {
+        const merged = mergeProfiles(localProfile, remoteProfile);
+        const normalizedMerged = normalizeProfileForStorage({
+          ...merged,
+          id: profileId,
+          updatedAt: localUpdatedAt,
+          createdAt: normalizeTimestamp(localProfile.createdAt, remoteProfile.createdAt || localUpdatedAt),
+        });
+        if (profileToComparable(normalizedMerged) !== profileToComparable(localProfile)) {
+          localById.set(profileId, normalizedMerged);
+          localProfilesChanged = true;
+          pulledCount += 1;
+        }
+        if (Object.hasOwn(tombstonesState, profileId)) {
+          delete tombstonesState[profileId];
+          tombstonesChanged = true;
+        }
+      }
     }
 
-    if (remoteTimestamp === localUpdatedAt) {
-      const merged = mergeProfiles(localProfile, remoteProfile);
-      const normalizedMerged = normalizeProfileForStorage({
-        ...merged,
-        id: profileId,
-        updatedAt: localUpdatedAt,
-        createdAt: normalizeTimestamp(localProfile.createdAt, remoteProfile.createdAt || localUpdatedAt),
-      });
-      if (profileToComparable(normalizedMerged) !== profileToComparable(localProfile)) {
-        localById.set(profileId, normalizedMerged);
-        localProfilesChanged = true;
-        pulledCount += 1;
-      }
-      if (Object.hasOwn(tombstonesState, profileId)) {
-        delete tombstonesState[profileId];
-        tombstonesChanged = true;
-      }
+    if (localProfilesChanged) {
+      await saveProfilesFn(Array.from(localById.values()));
     }
-  }
-
-  if (localProfilesChanged) {
-    await saveProfilesFn(Array.from(localById.values()));
   }
 
   const localIds = new Set(localById.keys());
@@ -504,82 +518,84 @@ export async function syncNostrNow({
   let pushedCount = 0;
   const publishFailures = [];
 
-  for (const item of upsertQueue) {
-    try {
-      const template = await buildProfileUpsertEventTemplateFn(privateKeyHex, item.profile, {
-        updatedAt: item.updatedAt,
-      });
-      const signedEvent = await createSignedEventFn({
-        ...template,
-        privateKeyHex,
-        createdAt: Math.floor(item.updatedAt / 1000),
-      });
-      const publishResult = await publishEventFn({
-        relays,
-        event: signedEvent,
-        timeoutMs: normalizedTimeoutMs,
-      });
-      if (publishResult.acceptedCount > 0) {
-        shadowState[item.profileId] = {
-          state: SHADOW_STATE_UPSERT,
-          timestamp: item.updatedAt,
-        };
-        pushedCount += 1;
-        if (Object.hasOwn(tombstonesState, item.profileId)) {
-          delete tombstonesState[item.profileId];
-          tombstonesChanged = true;
+  if (syncMode !== NOSTR_SYNC_MODE_PULL) {
+    for (const item of upsertQueue) {
+      try {
+        const template = await buildProfileUpsertEventTemplateFn(privateKeyHex, item.profile, {
+          updatedAt: item.updatedAt,
+        });
+        const signedEvent = await createSignedEventFn({
+          ...template,
+          privateKeyHex,
+          createdAt: Math.floor(item.updatedAt / 1000),
+        });
+        const publishResult = await publishEventFn({
+          relays,
+          event: signedEvent,
+          timeoutMs: normalizedTimeoutMs,
+        });
+        if (publishResult.acceptedCount > 0) {
+          shadowState[item.profileId] = {
+            state: SHADOW_STATE_UPSERT,
+            timestamp: item.updatedAt,
+          };
+          pushedCount += 1;
+          if (Object.hasOwn(tombstonesState, item.profileId)) {
+            delete tombstonesState[item.profileId];
+            tombstonesChanged = true;
+          }
+        } else {
+          publishFailures.push({
+            type: SHADOW_STATE_UPSERT,
+            profileId: item.profileId,
+          });
         }
-      } else {
+      } catch (error) {
         publishFailures.push({
           type: SHADOW_STATE_UPSERT,
           profileId: item.profileId,
         });
       }
-    } catch (error) {
-      publishFailures.push({
-        type: SHADOW_STATE_UPSERT,
-        profileId: item.profileId,
-      });
     }
-  }
 
-  for (const item of deleteQueue) {
-    try {
-      const template = await buildProfileDeleteEventTemplateFn(privateKeyHex, {
-        profileId: item.profileId,
-        deletedAt: item.deletedAt,
-      });
-      const signedEvent = await createSignedEventFn({
-        ...template,
-        privateKeyHex,
-        createdAt: Math.floor(item.deletedAt / 1000),
-      });
-      const publishResult = await publishEventFn({
-        relays,
-        event: signedEvent,
-        timeoutMs: normalizedTimeoutMs,
-      });
-      if (publishResult.acceptedCount > 0) {
-        shadowState[item.profileId] = {
-          state: SHADOW_STATE_DELETE,
-          timestamp: item.deletedAt,
-        };
-        pushedCount += 1;
-        if (tombstonesState[item.profileId] !== item.deletedAt) {
-          tombstonesState[item.profileId] = item.deletedAt;
-          tombstonesChanged = true;
+    for (const item of deleteQueue) {
+      try {
+        const template = await buildProfileDeleteEventTemplateFn(privateKeyHex, {
+          profileId: item.profileId,
+          deletedAt: item.deletedAt,
+        });
+        const signedEvent = await createSignedEventFn({
+          ...template,
+          privateKeyHex,
+          createdAt: Math.floor(item.deletedAt / 1000),
+        });
+        const publishResult = await publishEventFn({
+          relays,
+          event: signedEvent,
+          timeoutMs: normalizedTimeoutMs,
+        });
+        if (publishResult.acceptedCount > 0) {
+          shadowState[item.profileId] = {
+            state: SHADOW_STATE_DELETE,
+            timestamp: item.deletedAt,
+          };
+          pushedCount += 1;
+          if (tombstonesState[item.profileId] !== item.deletedAt) {
+            tombstonesState[item.profileId] = item.deletedAt;
+            tombstonesChanged = true;
+          }
+        } else {
+          publishFailures.push({
+            type: SHADOW_STATE_DELETE,
+            profileId: item.profileId,
+          });
         }
-      } else {
+      } catch (error) {
         publishFailures.push({
           type: SHADOW_STATE_DELETE,
           profileId: item.profileId,
         });
       }
-    } catch (error) {
-      publishFailures.push({
-        type: SHADOW_STATE_DELETE,
-        profileId: item.profileId,
-      });
     }
   }
 

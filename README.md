@@ -26,7 +26,7 @@ CamKeeper is a browser extension that helps you organize and manage creator prof
 
 It allows you to create a single local profile that can reference multiple usernames or pages on different platforms, making it easier to keep notes, links, and metadata in one place.
 
-No account is required. CamKeeper works fully local and offline by default, with optional encrypted Nostr sync if you choose to enable it.
+No account is required. CamKeeper works fully local and offline by default, with optional Nostr sync if you choose to enable it.
 
 ## Features
 
@@ -54,12 +54,11 @@ No account is required. CamKeeper works fully local and offline by default, with
 - Local tracking of view time for saved livestream pages
 - All activity data is stored only in the browser
 
-### Optional encrypted Nostr sync
+### Optional Nostr sync
 
 - Optional Nostr sync is disabled by default
 - Uses encrypted NIP-78 payloads and local private key signing
-- Stores your sync key as encrypted local vault data protected by your passphrase
-- Passphrase is never stored by CamKeeper
+- Stores your sync key (`nsec`) in browser extension storage on your local device
 - Uses user-configured relays only; no CamKeeper backend service
 - Manual sync flow is available from Options
 
@@ -131,6 +130,17 @@ Get it from the official Chrome or Firefox stores:
 These changes are not required on standard Firefox release builds when installing a signed add-on.
 
 </details>
+
+## Development (unpacked)
+
+To load a local unpacked build in Chrome with bundled runtime modules:
+
+1. Run `bun run dev:unpacked`
+2. Open `chrome://extensions`
+3. Enable **Developer mode**
+4. Click **Load unpacked** and select `dist/unpacked-chrome`
+
+For Firefox, run `bun run dev:unpacked:firefox` and load `dist/unpacked-firefox`.
 
 ## Data & privacy
 

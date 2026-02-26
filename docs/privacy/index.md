@@ -1,6 +1,6 @@
 # Privacy Policy
 
-Last updated: 2026-02-20
+Last updated: 2026-02-26
 
 ## Overview
 
@@ -19,7 +19,7 @@ CamKeeper accesses the minimum browser data required for core features:
 If you enable optional Nostr sync, CamKeeper also accesses:
 
 - User-configured relay URLs.
-- A locally encrypted Nostr private key vault (protected with your passphrase).
+- A locally stored Nostr private key (`nsec`) in extension storage.
 - Encrypted sync payloads used for profile/settings synchronization.
 
 This data is used only by the extension while it runs in your browser.
@@ -42,9 +42,7 @@ No extra permissions are requested beyond what is needed for these features.
 - Data is stored locally in your browser via extension storage.
 - Data stays on your device unless you explicitly export it.
 - You can delete data by clearing extension data or uninstalling CamKeeper.
-- If Nostr sync is enabled, your Nostr key is stored locally as encrypted vault data.
-- Your passphrase is never stored by CamKeeper.
-- The decrypted key may be cached only in memory for the current extension session after unlock.
+- If Nostr sync is enabled, your Nostr key is stored locally in extension storage.
 
 ## Export and import
 
@@ -65,7 +63,6 @@ The extension has no analytics, telemetry, or advertising integrations.
 - Sync payloads are encrypted and signed.
 - Local usage and offline usage remain available whether sync is enabled or not.
 - Backup export/import does not include your Nostr private key.
-- The key vault remains encrypted at rest and requires your passphrase to unlock.
 - Relay operators and network intermediaries may still observe metadata such as IP address, public key, and timing.
 - Your private key (`nsec`) must remain secret and should never be shared with anyone, including project maintainers or support.
 

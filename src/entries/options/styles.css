@@ -431,8 +431,8 @@ body.embedded .settings-scope {
     align-items: stretch;
   }
 
-  .settings-scope .nostr-manual-header button {
-    align-self: flex-end;
+  .settings-scope .nostr-manual-buttons {
+    justify-content: flex-end;
   }
 }
 
@@ -557,6 +557,20 @@ body.embedded .settings-scope {
   align-self: flex-start;
 }
 
+.settings-scope .nostr-manual-buttons {
+  display: inline-flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.settings-scope .export.stacked .nostr-manual-buttons {
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+
 .settings-scope .nostr-title-state {
   font-weight: 600;
   color: var(--muted);
@@ -635,10 +649,6 @@ body.embedded .settings-scope {
   flex: 1;
 }
 
-.settings-scope .nostr-passphrase-row {
-  margin-top: 2px;
-}
-
 .settings-scope .nostr-inline-actions {
   justify-content: flex-start;
   flex-wrap: wrap;
@@ -652,8 +662,10 @@ body.embedded .settings-scope {
   gap: 0;
 }
 
-.settings-scope #nostr-sync-now:disabled,
-.settings-scope #nostr-sync-now:disabled:hover {
+.settings-scope #nostr-sync-pull-now:disabled,
+.settings-scope #nostr-sync-push-now:disabled,
+.settings-scope #nostr-sync-pull-now:disabled:hover,
+.settings-scope #nostr-sync-push-now:disabled:hover {
   background: #1a1f24;
   border-color: var(--border);
   color: var(--muted);

@@ -30,6 +30,7 @@ import {
   updateSettings,
   getNostrSyncConfig,
   updateNostrSyncConfig,
+  getNostrSyncSecret,
   hasNostrSyncSecret,
   setNostrSyncSecret,
   generateNostrSyncSecret,
@@ -45,6 +46,9 @@ const PRIVACY_URL = "https://shabito.net/camkeeper/privacy/";
 const SUPPORT_URL = "https://shabito.net/camkeeper/support/";
 const SOURCE_URL = "https://github.com/byshabito/camkeeper";
 const LICENSE_URL = "https://www.gnu.org/licenses/gpl-3.0.en.html";
+
+const SYNC_MODE_PULL = "pull";
+const SYNC_MODE_PUSH = "push";
 
 export function initSettingsPanel({
   elements,
@@ -67,14 +71,12 @@ export function initSettingsPanel({
     nostrSyncSaveConfigButton,
     nostrSyncSecretInput,
     nostrSyncShowSecret,
-    nostrSyncPassphraseInput,
-    nostrSyncPassphraseConfirmInput,
-    nostrSyncShowPassphrase,
     nostrSyncSaveSecretButton,
     nostrSyncGenerateSecretButton,
     nostrSyncClearSecretButton,
     nostrSyncSecretState,
-    nostrSyncNowButton,
+    nostrSyncPullNowButton,
+    nostrSyncPushNowButton,
     nostrSyncStatus,
     nostrSyncInlineMessage,
     nostrSyncReady,
@@ -121,6 +123,7 @@ export function initSettingsPanel({
   let nostrStatus = null;
   let nostrSecretStored = false;
   let nostrSyncInProgress = false;
+  let nostrSyncActiveMode = "";
   let lastPublishFailures = [];
 
   function formatStatusTimestamp(timestamp) {
@@ -235,18 +238,15 @@ export function initSettingsPanel({
     if (nostrSyncClearSecretButton) {
       nostrSyncClearSecretButton.disabled = nostrSyncInProgress || !nostrSecretStored;
     }
-    if (nostrSyncPassphraseInput) {
-      nostrSyncPassphraseInput.disabled = nostrSyncInProgress;
+    const pullActive = nostrSyncInProgress && nostrSyncActiveMode === SYNC_MODE_PULL;
+    const pushActive = nostrSyncInProgress && nostrSyncActiveMode === SYNC_MODE_PUSH;
+    if (nostrSyncPullNowButton) {
+      nostrSyncPullNowButton.disabled = nostrSyncInProgress || !readiness.ready;
+      nostrSyncPullNowButton.textContent = pullActive ? "Pulling..." : "Pull now";
     }
-    if (nostrSyncPassphraseConfirmInput) {
-      nostrSyncPassphraseConfirmInput.disabled = nostrSyncInProgress;
-    }
-    if (nostrSyncShowPassphrase) {
-      nostrSyncShowPassphrase.disabled = nostrSyncInProgress;
-    }
-    if (nostrSyncNowButton) {
-      nostrSyncNowButton.disabled = nostrSyncInProgress || !readiness.ready;
-      nostrSyncNowButton.textContent = nostrSyncInProgress ? "Syncing..." : "Sync now";
+    if (nostrSyncPushNowButton) {
+      nostrSyncPushNowButton.disabled = nostrSyncInProgress || !readiness.ready;
+      nostrSyncPushNowButton.textContent = pushActive ? "Pushing..." : "Push now";
     }
   }
 
@@ -254,7 +254,7 @@ export function initSettingsPanel({
     const readiness = getNostrReadiness();
     if (nostrSyncSecretState) {
       nostrSyncSecretState.textContent = nostrSecretStored
-        ? "Encrypted private key is stored locally on this device."
+        ? "Private key is stored in browser extension storage on this device."
         : "No private key stored.";
     }
     if (nostrSyncReady) {
@@ -291,18 +291,12 @@ export function initSettingsPanel({
   }
 
   async function refreshNostrSecretField() {
-    nostrSecretStored = await hasNostrSyncSecret();
+    const storedSecret = await getNostrSyncSecret();
+    nostrSecretStored = Boolean(storedSecret) || await hasNostrSyncSecret();
     if (nostrSyncSecretInput) {
-      nostrSyncSecretInput.value = "";
+      nostrSyncSecretInput.value = storedSecret || "";
       nostrSyncSecretInput.type = nostrSyncShowSecret?.checked ? "text" : "password";
     }
-  }
-
-  function getNostrPassphrasePayload() {
-    return {
-      passphrase: nostrSyncPassphraseInput?.value || "",
-      confirmPassphrase: nostrSyncPassphraseConfirmInput?.value || "",
-    };
   }
 
   async function loadNostrSyncSettings() {
@@ -634,6 +628,68 @@ export function initSettingsPanel({
     showBitcoinToast("Copied!");
   };
 
+  async function handleManualNostrSync(mode) {
+    if (nostrSyncInProgress) return;
+    const readiness = getNostrReadiness();
+    if (!readiness.ready) {
+      const message = "Sync requires enabled toggle, at least one relay, and a saved private key.";
+      showNostrFeedback(message);
+      setNostrInlineMessage(message, "warning");
+      return;
+    }
+
+    nostrSyncInProgress = true;
+    nostrSyncActiveMode = mode;
+    refreshNostrControls();
+    try {
+      const result = await syncNostrNow({ mode });
+      nostrStatus = result?.status || (await getNostrSyncStatus());
+      lastPublishFailures = Array.isArray(result?.publishFailures) ? result.publishFailures : [];
+      await refreshNostrSecretField();
+      renderNostrStatusText();
+
+      if (result?.ok) {
+        if (mode === SYNC_MODE_PULL) {
+          const message = `Pull completed. Pulled ${result.pulledCount || 0}.`;
+          showNostrFeedback(message);
+          setNostrInlineMessage(message, "success");
+        } else {
+          const message = `Push completed. Pushed ${result.pushedCount || 0}.`;
+          showNostrFeedback(message);
+          setNostrInlineMessage(message, "success");
+        }
+      } else {
+        if (mode === SYNC_MODE_PUSH) {
+          const failureCount = lastPublishFailures.length;
+          const issueMessage = failureCount
+            ? `Push completed with issues. ${failureCount} event${failureCount === 1 ? "" : "s"} failed to publish.`
+            : (result?.error || "Push finished with issues.");
+          showNostrFeedback(issueMessage);
+          setNostrInlineMessage(issueMessage, "warning");
+        } else {
+          const issueMessage = result?.error || "Pull finished with issues.";
+          showNostrFeedback(issueMessage);
+          setNostrInlineMessage(issueMessage, "warning");
+        }
+      }
+    } catch (error) {
+      nostrStatus = await getNostrSyncStatus();
+      lastPublishFailures = [];
+      renderNostrStatusText();
+      if (mode === SYNC_MODE_PULL) {
+        showNostrFeedback("Pull failed. Local data is unchanged.");
+        setNostrInlineMessage("Pull failed. Local data is unchanged.", "error");
+      } else {
+        showNostrFeedback("Push failed. Local data is unchanged.");
+        setNostrInlineMessage("Push failed. Local data is unchanged.", "error");
+      }
+    } finally {
+      nostrSyncInProgress = false;
+      nostrSyncActiveMode = "";
+      refreshNostrControls();
+    }
+  }
+
   const bindEvents = (bindings) => {
     bindings.forEach(({ element, event, handler }) => {
       if (!element) return;
@@ -723,19 +779,6 @@ export function initSettingsPanel({
       },
     },
     {
-      element: nostrSyncShowPassphrase,
-      event: "change",
-      handler: () => {
-        const inputType = nostrSyncShowPassphrase?.checked ? "text" : "password";
-        if (nostrSyncPassphraseInput) {
-          nostrSyncPassphraseInput.type = inputType;
-        }
-        if (nostrSyncPassphraseConfirmInput) {
-          nostrSyncPassphraseConfirmInput.type = inputType;
-        }
-      },
-    },
-    {
       element: nostrSyncSaveSecretButton,
       event: "click",
       handler: async () => {
@@ -746,12 +789,12 @@ export function initSettingsPanel({
           return;
         }
         try {
-          await setNostrSyncSecret(secret, getNostrPassphrasePayload());
+          await setNostrSyncSecret(secret);
           await refreshNostrSecretField();
           refreshNostrControls();
           renderNostrStatusText();
-          showNostrFeedback("Private key encrypted and saved locally.");
-          setNostrInlineMessage("Private key encrypted and saved locally.", "success");
+          showNostrFeedback("Private key saved locally.");
+          setNostrInlineMessage("Private key saved locally.", "success");
         } catch (error) {
           const message = error?.message || "Could not save private key.";
           showNostrFeedback(message);
@@ -770,12 +813,12 @@ export function initSettingsPanel({
           if (!confirmed) return;
         }
         try {
-          await generateNostrSyncSecret(getNostrPassphrasePayload());
+          await generateNostrSyncSecret();
           await refreshNostrSecretField();
           refreshNostrControls();
           renderNostrStatusText();
-          showNostrFeedback("New private key generated, encrypted, and saved locally.");
-          setNostrInlineMessage("New private key generated, encrypted, and saved locally.", "success");
+          showNostrFeedback("New private key generated and saved locally.");
+          setNostrInlineMessage("New private key generated and saved locally.", "success");
         } catch (error) {
           const message = error?.message || "Could not generate a new private key.";
           showNostrFeedback(message);
@@ -807,50 +850,14 @@ export function initSettingsPanel({
       },
     },
     {
-      element: nostrSyncNowButton,
+      element: nostrSyncPullNowButton,
       event: "click",
-      handler: async () => {
-        if (nostrSyncInProgress) return;
-        const readiness = getNostrReadiness();
-        if (!readiness.ready) {
-          const message = "Sync requires enabled toggle, at least one relay, and a saved private key.";
-          showNostrFeedback(message);
-          setNostrInlineMessage(message, "warning");
-          return;
-        }
-        nostrSyncInProgress = true;
-        refreshNostrControls();
-        try {
-          const passphrase = nostrSyncPassphraseInput?.value || "";
-          const result = await syncNostrNow({
-            passphrase: passphrase || undefined,
-          });
-          nostrStatus = result?.status || (await getNostrSyncStatus());
-          lastPublishFailures = Array.isArray(result?.publishFailures) ? result.publishFailures : [];
-          await refreshNostrSecretField();
-          renderNostrStatusText();
-          if (result?.ok) {
-            showNostrFeedback(`Sync completed. Pulled ${result.pulledCount || 0}, pushed ${result.pushedCount || 0}.`);
-            setNostrInlineMessage("Sync completed successfully.", "success");
-          } else {
-            const failureCount = lastPublishFailures.length;
-            const issueMessage = failureCount
-              ? `Sync completed with issues. ${failureCount} event${failureCount === 1 ? "" : "s"} failed to publish.`
-              : (result?.error || "Sync finished with issues.");
-            showNostrFeedback(issueMessage);
-            setNostrInlineMessage(issueMessage, "warning");
-          }
-        } catch (error) {
-          nostrStatus = await getNostrSyncStatus();
-          lastPublishFailures = [];
-          renderNostrStatusText();
-          showNostrFeedback("Sync failed. Local data is unchanged.");
-          setNostrInlineMessage("Sync failed. Local data is unchanged.", "error");
-        } finally {
-          nostrSyncInProgress = false;
-          refreshNostrControls();
-        }
-      },
+      handler: () => handleManualNostrSync(SYNC_MODE_PULL),
+    },
+    {
+      element: nostrSyncPushNowButton,
+      event: "click",
+      handler: () => handleManualNostrSync(SYNC_MODE_PUSH),
     },
     {
       element: bitcoinDonateButton,

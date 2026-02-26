@@ -21,7 +21,6 @@ import {
   ACTIVE_VIEW_SESSIONS_STATE_KEY,
   DEBUG_LOGGING_STATE_KEY,
   NOSTR_SYNC_NSEC_STATE_KEY,
-  NOSTR_SYNC_SECRET_VAULT_STATE_KEY,
 } from "../stateKeys.js";
 import { debugLog } from "../debugLogging.js";
 
@@ -36,9 +35,6 @@ function summarizeStateValue(key, value) {
     return Boolean(value);
   }
   if (key === NOSTR_SYNC_NSEC_STATE_KEY) {
-    return "<redacted>";
-  }
-  if (key === NOSTR_SYNC_SECRET_VAULT_STATE_KEY) {
     return "<redacted>";
   }
   if (key === ACTIVE_VIEW_SESSIONS_STATE_KEY) {
