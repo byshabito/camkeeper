@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v1.1.1
 
 - Remove the `Other` social type and use `Website` as the canonical fallback for unsupported socials and general links
 - Auto-normalize legacy saved fallback socials to `website` during profile normalization and storage migration
