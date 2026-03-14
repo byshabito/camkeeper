@@ -19,9 +19,7 @@ hero:
 features:
   - title: Unified profiles
     details: Keep one local profile per creator and attach usernames or URLs from multiple platforms.
-  - title: Fast page detection
-    details: Detects supported pages automatically, with Twitch and YouTube enabled by default.
-  - title: Organized by design
+  - title: Organized your profiles
     details: Use folders, tags, notes, sorting, and bulk actions to keep large lists manageable.
   - title: Privacy first
     details: No account, no telemetry, and no third-party tracking. Local-first with optional encrypted sync.
@@ -32,7 +30,7 @@ features:
 CamKeeper helps you manage creator profiles across sites from one extension popup.
 You can save profiles, attach multiple site identities, track local view time for configured livestream sites, and quickly find people again later.
 
-![CamKeeper profile details](./screenshots/details.png)
+![CamKeeper profile overview](./screenshots/store_overview.png)
 
 ## Quick start
 
@@ -54,22 +52,9 @@ CamKeeper stores profile data and settings in browser extension storage on your 
 Optional Nostr sync is disabled by default and can be enabled in Settings if you want multi-device sync.
 When enabled, encrypted payloads are sent only to relays you configure.
 
-## What is Nostr?
-
-Nostr is an open protocol that uses relays to exchange signed events.
-CamKeeper uses Nostr only as an optional sync transport for encrypted profile data between your devices.
-
-If you are new to Nostr, read: [Nostr Basics for CamKeeper Users](/nostr/)
-
 ## Keep your `nsec` private
 
 - `nsec` is your private key
 - Never share it with anyone
 - Never post it in bug reports, screenshots, or chat messages
 - CamKeeper support/maintainers should never ask for it, and you should never share it even with them
-
-Read the full policy here: [Privacy Policy](/privacy/)
-
-Need help? Visit [Support](/support/)
-
-Release history: [Changelog](/changelog/)
