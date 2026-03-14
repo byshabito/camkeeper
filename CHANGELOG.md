@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- Remove the `Other` social type and use `Website` as the canonical fallback for unsupported socials and general links
+- Auto-normalize legacy saved fallback socials to `website` during profile normalization and storage migration
+- Track all local Nostr-sync-relevant profile mutations, including recorded view time, through a dedicated local mutation ledger instead of relying only on profile `updatedAt`
+- Prevent Nostr pulls from overwriting newer local profile changes and avoid re-flagging pulled profile updates as fresh local dirty state
+- Republish current local profiles once after the new change-tracking rollout so previously missed local profile changes can sync
+- Sync the exact livestream site registry across devices over encrypted Nostr settings payloads with whole-list last-write-wins behavior
+- Refresh the settings UI after pulling newer remote livestream site changes so the current options page reflects synced site updates immediately
+- Store the matching local `npub` alongside the saved `nsec` in extension storage for debugging and auto-backfill it for older saved keys
+
 ## v1.1.0
 
 - Add optional Nostr sync based on NIP-78 with encrypted payloads and privacy-preserving opaque coordinates
