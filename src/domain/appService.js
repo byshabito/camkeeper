@@ -65,20 +65,20 @@ export async function getProfile(id) {
   return loadProfile(id);
 }
 
-export async function saveProfile(profile) {
-  return persistProfile(profile);
+export async function saveProfile(profile, options) {
+  return persistProfile(profile, options);
 }
 
-export async function saveProfiles(profiles) {
-  return persistProfiles(profiles);
+export async function saveProfiles(profiles, options) {
+  return persistProfiles(profiles, options);
 }
 
-export async function deleteProfile(id) {
-  return removeProfile(id);
+export async function deleteProfile(id, options) {
+  return removeProfile(id, options);
 }
 
-export async function recordProfileView(input) {
-  return persistProfileView(input);
+export async function recordProfileView(input, options) {
+  return persistProfileView(input, options);
 }
 
 export async function getSettings() {

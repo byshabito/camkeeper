@@ -25,6 +25,13 @@ import {
 import { getProfiles, saveProfiles } from "../services/profilesStore.js";
 import { getState, setState } from "../services/stateStore.js";
 import {
+  ensureNostrChangeTrackingBootstrap,
+  getLocalNostrProfileMutations,
+  NOSTR_LOCAL_MUTATION_STATE_DELETE,
+  NOSTR_LOCAL_MUTATION_STATE_UPSERT,
+  saveLocalNostrProfileMutations,
+} from "../services/nostrSyncMutationStore.js";
+import {
   getNostrSyncConfig,
   getNostrSyncStatus,
   resolveNostrSyncSecretForSync,
@@ -289,6 +296,15 @@ export async function syncNostrNow({
       .filter((profile) => isNonEmptyString(profile?.id))
       .map((profile) => [profile.id, profile]),
   );
+  let localMutationsState = await ensureNostrChangeTrackingBootstrap({
+    getProfilesFn: async () => Array.from(localById.values()),
+    getStateFn,
+    setStateFn,
+    now: () => attemptAt,
+  });
+  if (!localMutationsState || typeof localMutationsState !== "object") {
+    localMutationsState = await getLocalNostrProfileMutations({ getStateFn });
+  }
 
   const shadowState = normalizeShadowState(
     await getStateFn(NOSTR_SYNC_PROFILE_SHADOW_STATE_KEY),
@@ -298,26 +314,6 @@ export async function syncNostrNow({
   );
 
   let tombstonesChanged = false;
-  const localIdsAtStart = new Set(localById.keys());
-  Object.entries(shadowState).forEach(([profileId, entry]) => {
-    if (!isNonEmptyString(profileId)) return;
-    if (localIdsAtStart.has(profileId)) return;
-    if (!entry || typeof entry !== "object") return;
-    const existingDeletedAt = normalizeTimestamp(tombstonesState[profileId], 0);
-    const shadowTimestamp = normalizeTimestamp(entry.timestamp, 0);
-    if (!shadowTimestamp) return;
-    let inferredDeletedAt = existingDeletedAt;
-    if (entry.state === SHADOW_STATE_DELETE) {
-      inferredDeletedAt = shadowTimestamp;
-    } else if (entry.state === SHADOW_STATE_UPSERT && !existingDeletedAt) {
-      inferredDeletedAt = Math.max(attemptAt, shadowTimestamp + 1);
-    }
-    if (inferredDeletedAt > existingDeletedAt) {
-      tombstonesState[profileId] = inferredDeletedAt;
-      tombstonesChanged = true;
-    }
-  });
-
   let pulledCount = 0;
   const pullWarnings = [];
 
@@ -398,10 +394,18 @@ export async function syncNostrNow({
       const localProfile = localById.get(profileId) || null;
       const localUpdatedAt = normalizeTimestamp(localProfile?.updatedAt, 0);
       const localDeletedAt = normalizeTimestamp(tombstonesState[profileId], 0);
+      const localPendingMutation = localMutationsState[profileId] || null;
+      const localPendingTimestamp = normalizeTimestamp(localPendingMutation?.timestamp, 0);
+      const localEffectiveUpsertTs = localPendingMutation?.state === NOSTR_LOCAL_MUTATION_STATE_UPSERT
+        ? Math.max(localUpdatedAt, localPendingTimestamp)
+        : localUpdatedAt;
+      const localEffectiveDeleteTs = localPendingMutation?.state === NOSTR_LOCAL_MUTATION_STATE_DELETE
+        ? Math.max(localDeletedAt, localPendingTimestamp)
+        : localDeletedAt;
       const remoteTimestamp = getRemoteOperationTimestamp(remote);
 
       if (remote.action === NOSTR_SYNC_ACTION_DELETE) {
-        if (remoteTimestamp >= localUpdatedAt && remoteTimestamp >= localDeletedAt) {
+        if (remoteTimestamp >= Math.max(localEffectiveUpsertTs, localEffectiveDeleteTs)) {
           if (localProfile) {
             localById.delete(profileId);
             localProfilesChanged = true;
@@ -410,12 +414,15 @@ export async function syncNostrNow({
             tombstonesState[profileId] = remoteTimestamp;
             tombstonesChanged = true;
           }
+          if (Object.hasOwn(localMutationsState, profileId)) {
+            delete localMutationsState[profileId];
+          }
           pulledCount += 1;
         }
         continue;
       }
 
-      if (remoteTimestamp <= localDeletedAt) {
+      if (remoteTimestamp <= localEffectiveDeleteTs) {
         continue;
       }
 
@@ -430,6 +437,9 @@ export async function syncNostrNow({
         localById.set(profileId, remoteProfile);
         localProfilesChanged = true;
         pulledCount += 1;
+        if (Object.hasOwn(localMutationsState, profileId)) {
+          delete localMutationsState[profileId];
+        }
         if (Object.hasOwn(tombstonesState, profileId)) {
           delete tombstonesState[profileId];
           tombstonesChanged = true;
@@ -437,7 +447,7 @@ export async function syncNostrNow({
         continue;
       }
 
-      if (remoteTimestamp > localUpdatedAt) {
+      if (remoteTimestamp > localEffectiveUpsertTs) {
         const merged = mergeProfiles(localProfile, remoteProfile);
         const normalizedMerged = normalizeProfileForStorage({
           ...merged,
@@ -450,6 +460,9 @@ export async function syncNostrNow({
           localProfilesChanged = true;
           pulledCount += 1;
         }
+        if (Object.hasOwn(localMutationsState, profileId)) {
+          delete localMutationsState[profileId];
+        }
         if (Object.hasOwn(tombstonesState, profileId)) {
           delete tombstonesState[profileId];
           tombstonesChanged = true;
@@ -457,7 +470,7 @@ export async function syncNostrNow({
         continue;
       }
 
-      if (remoteTimestamp === localUpdatedAt) {
+      if (remoteTimestamp === localEffectiveUpsertTs) {
         const merged = mergeProfiles(localProfile, remoteProfile);
         const normalizedMerged = normalizeProfileForStorage({
           ...merged,
@@ -478,7 +491,7 @@ export async function syncNostrNow({
     }
 
     if (localProfilesChanged) {
-      await saveProfilesFn(Array.from(localById.values()));
+      await saveProfilesFn(Array.from(localById.values()), { syncOrigin: "remote" });
     }
   }
 
@@ -490,25 +503,35 @@ export async function syncNostrNow({
     }
   });
 
-  Object.entries(shadowState).forEach(([profileId, entry]) => {
-    if (entry.state === SHADOW_STATE_UPSERT && !localIds.has(profileId) && !tombstonesState[profileId]) {
-      tombstonesState[profileId] = attemptAt;
-      tombstonesChanged = true;
+  Object.entries(localMutationsState).forEach(([profileId, mutation]) => {
+    if (mutation?.state === NOSTR_LOCAL_MUTATION_STATE_UPSERT && !localIds.has(profileId)) {
+      delete localMutationsState[profileId];
+    }
+    if (mutation?.state === NOSTR_LOCAL_MUTATION_STATE_DELETE && localIds.has(profileId)) {
+      delete localMutationsState[profileId];
     }
   });
 
   const upsertQueue = [];
-  localById.forEach((profile, profileId) => {
-    const updatedAt = normalizeTimestamp(profile.updatedAt, attemptAt);
+  Object.entries(localMutationsState).forEach(([profileId, mutation]) => {
+    if (mutation?.state !== NOSTR_LOCAL_MUTATION_STATE_UPSERT) return;
+    const profile = localById.get(profileId) || null;
+    if (!profile) return;
+    const updatedAt = normalizeTimestamp(mutation.timestamp, attemptAt);
     const shadow = shadowState[profileId];
     if (!shadow || shadow.state !== SHADOW_STATE_UPSERT || updatedAt > shadow.timestamp) {
       upsertQueue.push({ profileId, profile, updatedAt });
     }
   });
 
-  const deleteQueue = Object.entries(tombstonesState)
-    .map(([profileId, deletedAt]) => ({ profileId, deletedAt: normalizeTimestamp(deletedAt, attemptAt) }))
+  const deleteQueue = Object.entries(localMutationsState)
+    .filter(([, mutation]) => mutation?.state === NOSTR_LOCAL_MUTATION_STATE_DELETE)
+    .map(([profileId, mutation]) => ({
+      profileId,
+      deletedAt: normalizeTimestamp(mutation.timestamp, attemptAt),
+    }))
     .filter(({ profileId, deletedAt }) => {
+      if (localById.has(profileId)) return false;
       const shadow = shadowState[profileId];
       if (!shadow) return true;
       if (shadow.state !== SHADOW_STATE_DELETE) return true;
@@ -539,6 +562,9 @@ export async function syncNostrNow({
             state: SHADOW_STATE_UPSERT,
             timestamp: item.updatedAt,
           };
+          if (Object.hasOwn(localMutationsState, item.profileId)) {
+            delete localMutationsState[item.profileId];
+          }
           pushedCount += 1;
           if (Object.hasOwn(tombstonesState, item.profileId)) {
             delete tombstonesState[item.profileId];
@@ -579,6 +605,9 @@ export async function syncNostrNow({
             state: SHADOW_STATE_DELETE,
             timestamp: item.deletedAt,
           };
+          if (Object.hasOwn(localMutationsState, item.profileId)) {
+            delete localMutationsState[item.profileId];
+          }
           pushedCount += 1;
           if (tombstonesState[item.profileId] !== item.deletedAt) {
             tombstonesState[item.profileId] = item.deletedAt;
@@ -606,6 +635,7 @@ export async function syncNostrNow({
   if (tombstonesChanged || Object.keys(prunedTombstones).length !== Object.keys(tombstonesState).length) {
     await setStateFn(NOSTR_SYNC_PROFILE_TOMBSTONES_STATE_KEY, prunedTombstones);
   }
+  await saveLocalNostrProfileMutations(localMutationsState, { setStateFn });
 
   const status = await setStatus({
     nowMs: attemptAt,

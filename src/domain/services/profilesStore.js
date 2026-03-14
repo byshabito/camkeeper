@@ -18,10 +18,8 @@
 
 import { readLocal, readSync, setState, STORAGE_KEY } from "../../repo/db.js";
 import {
-  deleteProfile as removeProfile,
   getProfile as loadProfile,
   getProfiles as loadProfiles,
-  saveProfile as persistProfile,
   saveProfiles as persistProfiles,
 } from "../../repo/profiles.js";
 import {
@@ -32,10 +30,12 @@ import {
 } from "../migrations/profiles.js";
 import { applyProfileView } from "../profileViews.js";
 import { debugLog } from "../debugLogging.js";
+import { trackLocalProfilePersistence } from "./nostrSyncMutationStore.js";
 
 const PROFILES_IDB_MIGRATED_STATE_KEY = "camkeeper_profiles_idb_migrated_v1";
 const MIGRATION_LOG_PREFIX = "[CamKeeper][profiles-migration]";
 const CRUD_LOG_PREFIX = "[CamKeeper][crud][profiles]";
+const SYNC_ORIGIN_LOCAL = "local";
 
 let migrationReady = false;
 let migrationPromise = null;
@@ -142,39 +142,64 @@ export async function getProfile(id) {
   return loadProfile(id);
 }
 
-export async function saveProfile(profile) {
+export async function saveProfile(profile, options = {}) {
   await ensureProfilesMigration();
+  const profiles = await loadProfiles();
   const normalized = normalizeProfileForStorage(profile);
-  const saved = await persistProfile(normalized);
+  const nextProfiles = profiles.some((item) => item.id === normalized.id)
+    ? profiles.map((item) => (item.id === normalized.id ? normalized : item))
+    : [...profiles, normalized];
+  const savedProfiles = await saveProfiles(nextProfiles, options);
+  const saved = savedProfiles.find((item) => item.id === normalized.id) || normalized;
   logProfilesCrud("saveProfile", {
     id: saved?.id || normalized?.id || null,
+    syncOrigin: options?.syncOrigin || SYNC_ORIGIN_LOCAL,
   });
   return saved;
 }
 
-export async function saveProfiles(profiles) {
+export async function saveProfiles(profiles, { syncOrigin = SYNC_ORIGIN_LOCAL } = {}) {
   await ensureProfilesMigration();
+  const previousProfiles = await loadProfiles();
   const normalized = normalizeProfilesForStorage(profiles);
   const saved = await persistProfiles(normalized);
+  if (syncOrigin === SYNC_ORIGIN_LOCAL) {
+    await trackLocalProfilePersistence({
+      previousProfiles,
+      nextProfiles: normalized,
+      getStateFn: readLocalState,
+      setStateFn: setState,
+      now: Date.now,
+    });
+  }
   logProfilesCrud("saveProfiles", {
     count: Array.isArray(saved) ? saved.length : 0,
+    syncOrigin,
   });
   return saved;
 }
 
-export async function deleteProfile(id) {
+async function readLocalState(key) {
+  const state = await readLocal(key);
+  return state[key];
+}
+
+export async function deleteProfile(id, options = {}) {
   await ensureProfilesMigration();
-  const remaining = await removeProfile(id);
+  const profiles = await loadProfiles();
+  const updated = profiles.filter((profile) => profile.id !== id);
+  const remaining = await saveProfiles(updated, options);
   logProfilesCrud("deleteProfile", {
     id: id || null,
     remainingCount: Array.isArray(remaining) ? remaining.length : 0,
+    syncOrigin: options?.syncOrigin || SYNC_ORIGIN_LOCAL,
   });
   return remaining;
 }
 
-export async function recordProfileView({ site, username, endedAt, durationMs }) {
+export async function recordProfileView({ site, username, endedAt, durationMs }, options = {}) {
   await ensureProfilesMigration();
-  const profiles = await getProfiles();
+  const profiles = await loadProfiles();
   const result = applyProfileView({
     profiles,
     site,
@@ -187,7 +212,10 @@ export async function recordProfileView({ site, username, endedAt, durationMs })
     site,
     username,
     durationMs,
+    syncOrigin: options?.syncOrigin || SYNC_ORIGIN_LOCAL,
   });
-  await saveProfiles(result.profiles);
+  await saveProfiles(result.profiles, {
+    syncOrigin: options?.syncOrigin || SYNC_ORIGIN_LOCAL,
+  });
   return true;
 }
