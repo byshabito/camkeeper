@@ -2,6 +2,8 @@
 
 Need help with CamKeeper? Use one of the channels below.
 
+Never share your private key (`nsec`) with anyone.
+
 ## Open an issue
 
 For bug reports, feature requests, or troubleshooting details, open a GitHub issue:
@@ -20,5 +22,3 @@ If CamKeeper is useful to you and you want to support development:
 
 - [Buy Me a Coffee](https://www.buymeacoffee.com/shabito)
 - Bitcoin Lightning address: `shabito@walletofsatoshi.com`
-
-Never share your private key (`nsec`) with anyone.
