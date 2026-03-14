@@ -17,7 +17,7 @@
  */
 
 import { generateSecretKey, getPublicKey } from "nostr-tools/pure";
-import { decode as decodeNip19, nsecEncode } from "nostr-tools/nip19";
+import { decode as decodeNip19, nsecEncode, npubEncode } from "nostr-tools/nip19";
 import { bytesToHex, hexToBytes } from "./encoding.js";
 
 function normalizePrivateKeyBytes(bytes) {
@@ -73,4 +73,9 @@ export function normalizePrivateKeyHex(privateKeyHex) {
 export function getPublicKeyHexFromPrivateKeyHex(privateKeyHex) {
   const privateKeyBytes = normalizePrivateKeyBytes(hexToBytes(privateKeyHex));
   return getPublicKey(privateKeyBytes);
+}
+
+export function getPublicKeyNpubFromPrivateKeyHex(privateKeyHex) {
+  const publicKeyHex = getPublicKeyHexFromPrivateKeyHex(privateKeyHex);
+  return npubEncode(publicKeyHex);
 }

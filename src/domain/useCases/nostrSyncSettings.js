@@ -25,10 +25,12 @@ import {
 } from "../nostrSync.js";
 import {
   NOSTR_SYNC_NSEC_STATE_KEY,
+  NOSTR_SYNC_NPUB_STATE_KEY,
   NOSTR_SYNC_STATUS_STATE_KEY,
 } from "../stateKeys.js";
 import {
   generateNsec,
+  getPublicKeyNpubFromPrivateKeyHex,
   normalizePrivateKeyHex,
   privateKeyHexToNsec,
   privateKeyHexFromNsec,
@@ -58,6 +60,12 @@ function normalizeSecretForStorage(secret) {
   }
   const normalizedHex = normalizePrivateKeyHex(rawSecret);
   return privateKeyHexToNsec(normalizedHex);
+}
+
+function deriveNpubFromStoredSecret(secret) {
+  const normalizedSecret = normalizeSecretForStorage(secret);
+  const privateKeyHex = privateKeyHexFromNsec(normalizedSecret);
+  return getPublicKeyNpubFromPrivateKeyHex(privateKeyHex);
 }
 
 async function readStoredNostrSecretState() {
@@ -123,6 +131,11 @@ export async function getNostrSyncSecret() {
   if (normalizedSecret !== storedSecret) {
     await setState(NOSTR_SYNC_NSEC_STATE_KEY, normalizedSecret);
   }
+  const derivedNpub = deriveNpubFromStoredSecret(normalizedSecret);
+  const storedNpub = normalizeNostrSecret(await getState(NOSTR_SYNC_NPUB_STATE_KEY));
+  if (derivedNpub !== storedNpub) {
+    await setState(NOSTR_SYNC_NPUB_STATE_KEY, derivedNpub);
+  }
   setCachedNostrSecret(normalizedSecret);
   return normalizedSecret;
 }
@@ -146,7 +159,9 @@ export async function setNostrSyncSecret(value) {
     return false;
   }
   const normalizedSecret = normalizeSecretForStorage(rawSecret);
+  const derivedNpub = deriveNpubFromStoredSecret(normalizedSecret);
   await setState(NOSTR_SYNC_NSEC_STATE_KEY, normalizedSecret);
+  await setState(NOSTR_SYNC_NPUB_STATE_KEY, derivedNpub);
   await clearLegacySecretVaultState();
   setCachedNostrSecret(normalizedSecret);
   return true;
@@ -155,6 +170,7 @@ export async function setNostrSyncSecret(value) {
 export async function clearNostrSyncSecret() {
   clearCachedNostrSecret();
   await setState(NOSTR_SYNC_NSEC_STATE_KEY, "");
+  await setState(NOSTR_SYNC_NPUB_STATE_KEY, "");
   await clearLegacySecretVaultState();
 }
 
@@ -176,7 +192,9 @@ export async function clearNostrSyncStatus() {
 
 export async function generateNostrSyncSecret() {
   const generatedNsec = generateNsec();
+  const derivedNpub = deriveNpubFromStoredSecret(generatedNsec);
   await setState(NOSTR_SYNC_NSEC_STATE_KEY, generatedNsec);
+  await setState(NOSTR_SYNC_NPUB_STATE_KEY, derivedNpub);
   await clearLegacySecretVaultState();
   setCachedNostrSecret(generatedNsec);
   return generatedNsec;
