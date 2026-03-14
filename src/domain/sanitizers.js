@@ -17,6 +17,7 @@
  */
 
 import { normalizeText } from "./text.js";
+import { normalizeSocialPlatform } from "./socialPlatforms.js";
 import { parseSocialUrl } from "./urls.js";
 
 const MAX_VIEW_HISTORY_DAYS = 200;
@@ -122,7 +123,7 @@ export function sanitizeCams(cams, { sites = {}, allowUnknownSites = false } = {
 export function sanitizeSocials(socials, { parseSocialUrl: parseSocialUrlOverride } = {}) {
   const cleaned = (socials || [])
     .map((social) => ({
-      platform: normalizeText(social.platform),
+      platform: normalizeSocialPlatform(social.platform),
       handle: normalizeText(social.handle),
     }))
     .filter((social) => social.platform && social.handle);
@@ -134,8 +135,13 @@ export function sanitizeSocials(socials, { parseSocialUrl: parseSocialUrlOverrid
       const parser = parseSocialUrlOverride || parseSocialUrl;
       if (!parser) return social;
       const parsed = parser(trimmed);
-      if (parsed && parsed.platform === social.platform) {
-        return { ...social, handle: normalizeText(parsed.handle) };
+      const parsedPlatform = normalizeSocialPlatform(parsed?.platform);
+      if (parsed && parsedPlatform === social.platform) {
+        return {
+          ...social,
+          platform: parsedPlatform,
+          handle: normalizeText(parsed.handle),
+        };
       }
     }
     const handle = trimmed.replace(/^@/, "").replace(/\/+$/, "");

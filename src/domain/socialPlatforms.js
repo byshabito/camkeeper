@@ -16,12 +16,24 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-export const SOCIAL_OPTIONS = [
-  { id: "x", label: "X" },
-  { id: "instagram", label: "Instagram" },
-  { id: "threads", label: "Threads" },
-  { id: "tiktok", label: "TikTok" },
-  { id: "telegram", label: "Telegram" },
-  { id: "youtube", label: "YouTube" },
-  { id: "website", label: "Website" },
+import { normalizeText } from "./text.js";
+
+export const SUPPORTED_SOCIAL_PLATFORM_IDS = [
+  "x",
+  "instagram",
+  "threads",
+  "tiktok",
+  "telegram",
+  "youtube",
+  "website",
 ];
+
+const SUPPORTED_SOCIAL_PLATFORM_SET = new Set(SUPPORTED_SOCIAL_PLATFORM_IDS);
+
+export function normalizeSocialPlatform(platform) {
+  const normalized = normalizeText(platform);
+  if (!normalized) return "";
+  if (normalized === "other") return "website";
+  if (SUPPORTED_SOCIAL_PLATFORM_SET.has(normalized)) return normalized;
+  return "website";
+}

@@ -48,6 +48,14 @@ function logProfilesCrud(message, details) {
   debugLog(CRUD_LOG_PREFIX, message, details);
 }
 
+function profilesDiffer(currentProfiles, normalizedProfiles) {
+  try {
+    return JSON.stringify(currentProfiles || []) !== JSON.stringify(normalizedProfiles || []);
+  } catch (error) {
+    return true;
+  }
+}
+
 async function markProfilesMigrationComplete() {
   await setState(PROFILES_IDB_MIGRATED_STATE_KEY, true);
   migrationReady = true;
@@ -69,6 +77,13 @@ async function ensureProfilesMigration() {
 
         const existingProfiles = await loadProfiles();
         if (existingProfiles.length) {
+          const normalizedExistingProfiles = normalizeProfilesForStorage(existingProfiles);
+          if (profilesDiffer(existingProfiles, normalizedExistingProfiles)) {
+            await persistProfiles(normalizedExistingProfiles);
+            logMigration("normalized existing IndexedDB profiles", {
+              count: normalizedExistingProfiles.length,
+            });
+          }
           await markProfilesMigrationComplete();
           logMigration("IndexedDB already has profiles, migration skipped", {
             count: existingProfiles.length,
@@ -79,7 +94,7 @@ async function ensureProfilesMigration() {
         const keys = [STORAGE_KEY, ...LEGACY_PROFILE_KEYS];
         logMigration("reading legacy profiles from chrome.storage.local");
         const data = await readLocal(keys);
-        let { profiles } = migrateProfilesFromStorage({
+        let { profiles, shouldPersist } = migrateProfilesFromStorage({
           data,
           storageKey: STORAGE_KEY,
           legacyKeys: LEGACY_PROFILE_KEYS,
@@ -94,9 +109,10 @@ async function ensureProfilesMigration() {
             legacyKeys: LEGACY_PROFILE_KEYS,
           });
           profiles = syncResult.profiles;
+          shouldPersist = syncResult.shouldPersist;
         }
 
-        if (profiles.length) {
+        if (profiles.length && shouldPersist) {
           logMigration("persisting migrated profiles to IndexedDB", { count: profiles.length });
           await persistProfiles(profiles);
         } else {

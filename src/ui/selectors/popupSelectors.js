@@ -20,6 +20,7 @@ import { sortBySelection } from "../sort.js";
 import { matchQuery } from "../../domain/profiles.js";
 import { getSiteRegistry } from "../../domain/siteRegistry.js";
 import { sanitizeCams } from "../../domain/sanitizers.js";
+import { normalizeSocialPlatform } from "../../domain/socialPlatforms.js";
 import { normalizeWebsiteHandle } from "../../domain/urls.js";
 import { normalizeText } from "../../domain/text.js";
 
@@ -347,7 +348,7 @@ export function formatSocialHandle(social) {
   const handle = (social.handle || "").trim();
   if (!handle) return "";
 
-  if (normalizeText(social.platform) === "website") {
+  if (normalizeSocialPlatform(social.platform) === "website") {
     return handle.replace(/^https?:\/\//i, "").replace(/\/+$/, "");
   }
 
@@ -355,7 +356,7 @@ export function formatSocialHandle(social) {
 }
 
 export function normalizeSocialHandle(platform, value) {
-  if (normalizeText(platform) === "website") {
+  if (normalizeSocialPlatform(platform) === "website") {
     return normalizeWebsiteHandle(value);
   }
   return normalizeText(normalizeHandle(value));

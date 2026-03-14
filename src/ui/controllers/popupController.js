@@ -18,6 +18,7 @@
 
 import { getSiteRegistry, getSiteRegistryKeys, setSiteRegistry } from "../../domain/siteRegistry.js";
 import { buildSocialUrl, parseCamInput, parseSocialInput } from "../../domain/urls.js";
+import { normalizeSocialPlatform } from "../../domain/socialPlatforms.js";
 import { normalizeText } from "../../domain/text.js";
 import { SOCIAL_OPTIONS } from "../../domain/socialOptions.js";
 import { SETTINGS_DEFAULTS } from "../../domain/settings.js";
@@ -416,7 +417,7 @@ export function initPopupController({ elements }) {
   }
 
   function getSocialIconSvg(platform) {
-    const key = normalizeText(platform);
+    const key = normalizeSocialPlatform(platform) || normalizeText(platform);
     return SOCIAL_ICON_CACHE.get(key) || SOCIAL_ICON_CACHE.get("link") || "";
   }
 
@@ -456,7 +457,6 @@ export function initPopupController({ elements }) {
     threads: "src/assets/social-icons/threads.svg",
     youtube: "src/assets/social-icons/youtube.svg",
     website: "src/assets/social-icons/website.svg",
-    other: "src/assets/social-icons/website.svg",
     link: "src/assets/social-icons/link.svg",
   };
 

@@ -18,6 +18,7 @@
 
 import { isYouTubeHost, normalizeHost } from "./sites.js";
 import { normalizeText } from "./text.js";
+import { normalizeSocialPlatform } from "./socialPlatforms.js";
 
 function normalizeWebsiteHandleFromUrl(url) {
   if (!url || !url.hostname) return "";
@@ -172,7 +173,7 @@ export function buildSocialUrl(social) {
   if (/^https?:\/\//i.test(handle)) return handle;
 
   const normalized = handle.replace(/^@/, "");
-  const platform = normalizeText(social?.platform);
+  const platform = normalizeSocialPlatform(social?.platform);
 
   switch (platform) {
     case "instagram":
@@ -188,7 +189,6 @@ export function buildSocialUrl(social) {
     case "tiktok":
       return `https://www.tiktok.com/@${normalized}`;
     case "website":
-    case "other":
       return `https://${handle}`;
     default:
       return null;

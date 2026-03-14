@@ -17,6 +17,7 @@
  */
 
 import { findDuplicateProfile } from "../../../domain/profiles.js";
+import { normalizeSocialPlatform } from "../../../domain/socialPlatforms.js";
 import { normalizeText } from "../../../domain/text.js";
 import { parseSocialUrl, parseUrl } from "../../../domain/urls.js";
 
@@ -148,7 +149,7 @@ export function createListController({
       const socialMatch = profiles.find((profile) =>
         (profile.socials || []).some(
           (social) =>
-            normalizeText(social.platform) === socialParsed.platform &&
+            normalizeSocialPlatform(social.platform) === normalizeSocialPlatform(socialParsed.platform) &&
             normalizeSocialHandle(social.platform, social.handle) === socialParsed.handle,
         ),
       );

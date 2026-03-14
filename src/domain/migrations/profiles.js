@@ -44,9 +44,11 @@ export function migrateProfilesFromStorage({
   const nowValue = now();
   let updated = false;
   const normalized = profiles.map((profile) => {
+    const before = JSON.stringify(profile || {});
     const cleaned = sanitizeProfile(profile, { sites, allowUnknownSites });
     const { profile: next, changed } = applyProfileMetadata(cleaned, nowValue);
-    if (changed) updated = true;
+    const after = JSON.stringify(next || {});
+    if (changed || before !== after) updated = true;
     return next;
   });
   return { profiles: normalized, shouldPersist: shouldPersist || updated };
