@@ -133,7 +133,10 @@
 ## Docs Guidance
 - Keep docs concise and practical for end users.
 - Cross-link Nostr pages (`/nostr/`, `/privacy/`, `/support/`) when relevant.
-- Keep `docs/changelog/index.md` in sync with root `CHANGELOG.md`.
+- `CHANGELOG.md` is the detailed technical/developer changelog.
+- `docs/changelog/index.md` is the concise user-facing changelog summary.
+- Both changelog files must cover the same releases, but they are intentionally not mirrors.
+- When a release is updated, update both changelog files for their respective audiences.
 - Run `bun run docs:build` after docs edits to validate rendering and links.
 
 ## Commit and Pull Request Guidance

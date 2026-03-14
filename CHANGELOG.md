@@ -2,208 +2,186 @@
 
 ## v1.1.1
 
-- Remove the `Other` social type and use `Website` as the canonical fallback for unsupported socials and general links
-- Auto-normalize legacy saved fallback socials to `website` during profile normalization and storage migration
-- Track all local Nostr-sync-relevant profile mutations, including recorded view time, through a dedicated local mutation ledger instead of relying only on profile `updatedAt`
-- Prevent Nostr pulls from overwriting newer local profile changes and avoid re-flagging pulled profile updates as fresh local dirty state
-- Republish current local profiles once after the new change-tracking rollout so previously missed local profile changes can sync
-- Sync the exact livestream site registry across devices over encrypted Nostr settings payloads with whole-list last-write-wins behavior
-- Refresh the settings UI after pulling newer remote livestream site changes so the current options page reflects synced site updates immediately
-- Store the matching local `npub` alongside the saved `nsec` in extension storage for debugging and auto-backfill it for older saved keys
+- Canonicalize unsupported and legacy social platform values from `other` to `website`, making Website the fallback type across sanitization and selector formatting.
+- Add persistence-time normalization and storage migration coverage so previously saved fallback socials are rewritten to `website` on load/save paths.
+- Replace Nostr dirty detection based only on profile `updatedAt` with a dedicated local mutation ledger that also tracks view-time-only profile updates.
+- Harden Nostr pull/merge resolution so older remote payloads cannot overwrite newer local mutations, and remote winners do not get re-flagged as fresh local dirty state.
+- Bootstrap a one-time republish of current local profiles after the change-tracking rollout so previously missed local edits are published.
+- Sync the livestream site registry over encrypted Nostr settings payloads with whole-list last-write-wins behavior and immediate settings UI refresh after newer remote site data is applied.
+- Store the derived local `npub` beside the saved `nsec`, and backfill missing `npub` values for older saved secrets to aid debugging.
+- Remove outer popup scroll padding so the scrolling list stays flush with the intended layout.
 
 ## v1.1.0
 
-- Add optional Nostr sync based on NIP-78 with encrypted payloads and privacy-preserving opaque coordinates
-- Add manual "Pull now" and "Push now" workflows with split pull/merge and push-only publishing controls
-- Add Nostr Sync settings in Options (enable toggle, relay list, local key save/clear, sync status)
-- Prefill Nostr sync with three relay defaults and add one-click local key generation
-- Keep local-first behavior and offline functionality unchanged when sync is disabled or relays fail
-- Vendor audited Nostr cryptography dependencies and add third-party notice documentation
-- Refine Nostr Sync settings layout with cleaner alignment, compact manual sync actions, and clearer status placement
-- Disable and visually dim manual sync actions until setup is complete (enabled toggle, relay configured, and local key saved)
-- Improve relay save feedback and private key UX with detailed validation messages and clear-key confirmation
-- Store Nostr private keys directly in extension storage and show saved keys masked in settings
-- Replace the Settings About block with a compact footnote row and quick links to docs, changelog, privacy, and support
-- Remove build-time metadata from Settings and stop release-script timestamp stamping in favor of version-only packaging updates
-- Localize the Buy Me a Coffee badge asset so the options page no longer fetches a remote CDN image
-- Remove unused `src/assets/camkeeper-logo.png` to keep the packaged extension lean
-- Migrate profile/bookmark persistence from `chrome.storage` to IndexedDB with one-time legacy import and backup keys kept intact
-- Add migration and write-path debug logs behind a store-safe toggle, with sensitive-state redaction
-- Add optional background view timer debug logs for session start/stop and recorded view durations
-- Replace custom Nostr signing/relay primitives with `nostr-tools` for maintained protocol internals
-- Add an esbuild-based extension bundling pipeline and package runtime-only files in release zips
+- Add optional NIP-78-based Nostr sync with encrypted payloads and privacy-preserving opaque coordinates while preserving local-first/offline behavior when sync is disabled or relays fail.
+- Implement explicit manual "Pull now" and "Push now" flows, including split pull/merge behavior and push-only publishing controls.
+- Add Nostr sync configuration to Options with enablement, relay management, saved-key handling, generated local `nsec` keys, and persisted sync status.
+- Seed sync setup with three default relays and add one-click local key generation.
+- Vendor audited Nostr cryptography/runtime dependencies and replace custom relay/signing primitives with `nostr-tools`.
+- Refine sync setup UX with clearer status placement, disabled actions until setup is complete, stronger relay validation feedback, and masked private-key handling.
+- Replace the Settings About block with a compact footnote row that links to docs, changelog, privacy, and support pages.
+- Remove build-time metadata from Settings and stop release-script timestamp stamping in favor of version-only packaging metadata.
+- Localize the Buy Me a Coffee badge asset and remove unused image assets to reduce packaged payload.
+- Migrate profile persistence from `chrome.storage` to IndexedDB with one-time legacy import while preserving existing backup keys.
+- Add migration/write-path debug logging behind a store-safe toggle plus optional background view-session debug logs with sensitive-state redaction.
+- Introduce an esbuild-based extension bundling pipeline and package runtime-only files in release archives.
 
 ## v1.0.3
 
-- Simplify architecture into three clear layers: UI/background -> domain -> repo
-- Move use-case orchestration into `src/domain/useCases` and add a unified domain app service facade
-- Refactor storage repositories to be storage-only and remove test suite/test-only dependencies
-- Sort the "add to existing profile" dropdown by most recently updated profiles first
-- Preserve imported cams from unknown livestream sites in storage and hide them in UI until the site is configured
+- Collapse the codebase into clearer `UI/background -> domain -> repo` layers.
+- Move workflow orchestration into `src/domain/useCases` and add `src/domain/appService.js` as the main facade consumed by UI and background entries.
+- Narrow repo modules to storage/transport responsibilities and remove test-only coupling from storage repositories.
+- Sort the "add to existing profile" flow by most recently updated profiles first.
+- Preserve imported creators from unsupported livestream sites in storage while hiding them from the UI until the site registry supports them.
 
 ## v1.0.2
 
-- Preserve folders when attaching to an exisiting profile
+- Preserve folder assignment when attaching a livestream identity to an existing profile.
 
 ## v1.0.1
 
-- Add configurable livestream site list with Twitch/YouTube defaults
-- Remove adult platform references and fixed host permissions
+- Add a configurable livestream site registry seeded with Twitch and YouTube defaults.
+- Remove adult platform references and the old fixed host-permission model.
 
 ## v1.0.0
 
-- Change placeholder tags
-- Add quick-add keyboard shortcut for saving the current creator page
-- Add confirmation badge for quick-add shortcut
-- Add keyboard shortcut to open the popup
+- Refresh placeholder tags used in profile editing flows.
+- Add a quick-add command for saving the current creator page.
+- Surface confirmation feedback for the quick-add shortcut.
+- Add a keyboard shortcut for opening the popup.
 
 ## v0.9.0
 
-- Remove online status checks
-- Remove context menu library shortcut
-- Refactor code
-- Add privacy policy
-- Remove Reddit from supported socials
-- Move settings to options page and keep popup settings button as a shortcut
-- Fix backup import flow and add import confirmation toast
-- Include timestamps in backup export filenames
-- Update About label and license text in settings
-- Add a view time metric setting (focus vs page sessions)
-- Remove the debug logs setting
-- Default view time metric to Livestream open
-- Add a stronger hover color for primary buttons
-- Remove Save button and save automatically when value changes
+- Remove online-status checks and the related context menu library shortcut from the product surface.
+- Continue architectural cleanup while moving Settings out of the popup into the dedicated options page, keeping the popup settings button as a shortcut.
+- Fix backup import confirmation flow and include timestamps in exported backup filenames.
+- Add a configurable view-time metric (focus sessions vs page sessions) and default it to livestream-open tracking.
+- Remove the user-facing debug logs setting.
+- Tighten settings/About copy, update license text, and strengthen primary-button hover contrast.
+- Remove the explicit Save button and persist settings automatically when values change.
+- Add privacy policy documentation and remove Reddit from supported socials.
 
 ## v0.8.4
 
-- Rename bookmarks to profiles across the UI and backup file name
-- Normalize website socials and improve URL matching for social detail views
-- Default online status checks to off with a 5-minute refresh interval
-- Clarify backup and configuration setting labels
-- Add multi-size favicons to the popup and options pages
-- Fix saving when attaching a new livestream username to an existing profile
+- Rename bookmark-oriented UI/data terminology to profiles, including backup naming.
+- Normalize website socials more aggressively and improve URL matching for social detail views.
+- Default online-status checks to disabled with a 5-minute refresh interval.
+- Clarify backup/configuration labels and fix attaching a new livestream username to an existing profile.
+- Add multi-size favicons to the popup and options pages.
 
 ## v0.8.3
 
-- Shorten folder filter label to "All"
-- Split backup tools into their own section with separate download/import rows
-- Rename settings section headers to Configuration and About
-- Add Bitcoin donation button and modal with copyable Lightning/LNURL/on-chain details
-- Tweak backup import button label and Bitcoin modal title
-- Add floating success feedback when settings are saved
+- Shorten the folder filter label to "All" and split backup tooling into dedicated download/import rows.
+- Rename settings sections to Configuration and About.
+- Add Bitcoin donation UI with copyable Lightning, LNURL, and on-chain values.
+- Tweak backup import copy and floating success feedback.
 
 ## v0.8.2
 
-- Add manual drag-and-drop ordering for folders
-- Persist custom folder order across folder list, filter, and editor
-- Add drag handle and tidy folder manager layout
+- Add manual drag-and-drop ordering for folders.
+- Persist custom folder order across list, filter, and editor state.
+- Add a drag handle and tighten the folder manager layout.
 
 ## v0.8.1
 
-- Improve icons and CK logo size
+- Refresh icon assets and adjust CK logo sizing.
 
 ## v0.8.0
 
-- Add most viewed (30 days) sort option
-- Track daily view history buckets for rolling view totals
-- Remember last selected sort in the popup
-- Add filter for currently online creators
-- Remember last selected folder filter in the popup
-- Hide the online filter when online checks are disabled (live update)
+- Add a "most viewed (30 days)" sort backed by rolling daily view-history buckets.
+- Persist the last selected sort and folder filter in popup state.
+- Add a filter for currently online creators.
+- Hide the online filter when online checks are disabled and keep it live-updated.
 
 ## v0.7.0
 
-- Add settings view to the popup with options page embedding it
+- Embed the settings view inside the popup while keeping the options page shell.
 
 ## v0.6.4
 
-- Rename platform references to livestream
+- Rename remaining platform terminology to livestream terminology.
 
 ## v0.6.3
 
-- Persist active view sessions for MV3 background suspends
+- Persist active view-session state so MV3 background suspends do not lose in-progress timing data.
 
 ## v0.6.2
 
-- Remove background command listener when commands are unused
-- Rename settings metadata label to "Build time"
+- Remove the unused background command listener when commands are not configured.
+- Rename the settings metadata label to "Build time".
 
 ## v0.6.1
 
-- Add homepage url to manifest
-- Remove commands
+- Add `homepage_url` to the manifest metadata.
+- Remove command definitions from the extension manifest.
 
 ## v0.6.0
 
-- Centralize storage access behind the unified API
-- Add shared online status API modules
-- Add shared background config defaults
-- Refactor background logic into modular services
-- Default folder selector to "No folder" for new or unfiled profiles
-- Track active view time instead of visit counts
-- Sort platform chips by most-viewed first
-- Expand socials support and auto-detect matching social profiles
-- Refresh popup layout and icon styling
-- Replace popup back labels with icon buttons
+- Centralize storage access behind a unified API layer.
+- Add shared online-status API modules and background configuration defaults.
+- Refactor background behavior into more modular services.
+- Default new or unfiled profiles to the "No folder" selector state.
+- Replace visit counting with active view-time tracking.
+- Sort platform chips by most-viewed first.
+- Expand supported socials and auto-detect matching social profiles.
+- Refresh popup layout and icon styling, and replace textual back labels with icon buttons.
 
 ## v0.5.1
 
-- Switch livestream status endpoint and parsing
+- Switch the livestream status endpoint and update parsing for the replacement response format.
 
 ## v0.5.0
 
-- Add extension metadata to settings page
-- Add background online check toggle and badge count
+- Add extension metadata to the settings page.
+- Add a background online-check toggle and badge-count integration.
 
 ## v0.4.2
 
-- Preserve pinned and online stats when editing profiles
-- Add BMC sponsor link
+- Preserve pinned and online stats when editing profiles.
+- Add the Buy Me a Coffee sponsor link.
 
 ## v0.4.1
 
-- Run online checks on popup open with cooldown (no background polling)
+- Move online checks to popup-open execution with cooldown-based throttling instead of background polling.
 
 ## v0.4.0
 
-- Add background online status checks
-- Add settings to enable checks and set the interval
+- Add background online-status checks.
+- Add settings to enable checks and control the polling interval.
 
 ## v0.3.0
 
-- Add folder organization with filter and manager
-- Add folder dropdown + new folder input in add/edit
-- Refine popup layout, titles, and search interactions
+- Add folder organization with filter and manager flows.
+- Add folder selection and inline new-folder creation in add/edit flows.
+- Refine popup layout, titles, and search interactions.
 
 ## v0.2.3
 
-- Fix firefox manifest version
+- Fix the Firefox manifest version metadata.
 
 ## v0.2.2
 
-- Pin profiles and prioritize pinned items in sorting
-- Refined popup search/sort row with icon-triggered search
-- Settings page is now settings-only
-- Platform chips support online/offline styling
+- Add pinned profiles and update sorting to prioritize pinned entries.
+- Refine the popup search/sort row with icon-triggered search behavior.
+- Make the settings page settings-only.
+- Add online/offline styling support for platform chips.
 
 ## v0.2.1
 
-- Separate Chrome/Firefox manifests with build script
-- Store-ready icon sizes (16/32/48/128/256)
+- Split Chrome and Firefox manifests and add build-script support for separate packages.
+- Add store-ready icon sizes (`16/32/48/128/256`).
 
 ## v0.2.0
 
-- Visit tracking with configurable focus time + cooldown
-- Sort by updated/name/visits
-- Settings library with modal add/edit and backup tools
-- Bulk merge/delete from settings
+- Add visit tracking with configurable focus-time and cooldown thresholds.
+- Extend sorting with `updated`, `name`, and `visits` modes.
+- Add settings-library tooling with modal add/edit flows and backup import/export.
+- Add bulk merge/delete actions from settings.
 
 ## v0.1.0
 
-- Multi-platform profiles with notes, tags, and socials
-- Smart URL parsing for platform/social inputs
-- Auto detail view on saved creator pages
-- Add current platform to an existing profile
-- Bulk select to merge or delete
-- Local-only storage with JSON export/import
-- Chrome and Firefox support (fallback library shortcut)
+- Introduce multi-platform creator profiles with notes, tags, and social links.
+- Add URL parsing for platform/social inputs and auto-open detail view on recognized saved creator pages.
+- Support attaching the current platform to an existing profile and bulk merge/delete flows.
+- Start with local-only storage plus JSON export/import backups.
+- Ship Chrome and Firefox support, including the fallback library shortcut.
