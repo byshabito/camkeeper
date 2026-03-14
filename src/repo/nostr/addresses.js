@@ -23,7 +23,7 @@ import { hkdfSha256, hmacSha256 } from "./kdf.js";
 const ADDRESS_KDF_SALT = utf8ToBytes("camkeeper/nostr-sync/v1/address");
 const ADDRESS_KDF_INFO = utf8ToBytes("camkeeper/address-key");
 const PROFILE_D_MESSAGE_PREFIX = "profile:";
-const SETTINGS_D_MESSAGE = "settings";
+const SETTINGS_D_MESSAGE_PREFIX = "settings:";
 
 async function deriveAddressKey(privateKeyHex) {
   const normalizedPrivateKeyHex = normalizePrivateKeyHex(privateKeyHex);
@@ -54,6 +54,7 @@ export async function deriveProfileDTag(privateKeyHex, profileId) {
   return deriveOpaqueDTagFromMessage(privateKeyHex, `${PROFILE_D_MESSAGE_PREFIX}${normalizedProfileId}`);
 }
 
-export async function deriveSettingsDTag(privateKeyHex) {
-  return deriveOpaqueDTagFromMessage(privateKeyHex, SETTINGS_D_MESSAGE);
+export async function deriveSettingsDTag(privateKeyHex, scope = "default") {
+  const normalizedScope = normalizeEntityId(scope, "Settings scope");
+  return deriveOpaqueDTagFromMessage(privateKeyHex, `${SETTINGS_D_MESSAGE_PREFIX}${normalizedScope}`);
 }

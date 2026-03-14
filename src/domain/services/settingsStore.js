@@ -20,10 +20,13 @@ import {
   getSettings as loadSettings,
   saveSettings as persistSettings,
 } from "../../repo/settings.js";
+import { readLocal, setState } from "../../repo/db.js";
 import { applySettingsPatch, normalizeSettings } from "../settings.js";
 import { debugLog } from "../debugLogging.js";
+import { markLivestreamSitesChanged } from "./nostrSyncSettingsMutationStore.js";
 
 const SETTINGS_CRUD_LOG_PREFIX = "[CamKeeper][crud][settings]";
+const SYNC_ORIGIN_LOCAL = "local";
 
 function logSettingsCrud(message, details) {
   debugLog(SETTINGS_CRUD_LOG_PREFIX, message, details);
@@ -50,21 +53,42 @@ export async function getSettings() {
   return normalizeSettings(await loadSettings());
 }
 
-export async function saveSettings(settings) {
+export async function saveSettings(settings, { syncOrigin = SYNC_ORIGIN_LOCAL } = {}) {
+  const current = normalizeSettings(await loadSettings());
   const normalized = normalizeSettings(settings);
   await persistSettings(normalized);
+  if (syncOrigin === SYNC_ORIGIN_LOCAL) {
+    await markLivestreamSitesChanged({
+      previousSettings: current,
+      nextSettings: normalized,
+      getStateFn: async (key) => (await readLocal(key))[key],
+      setStateFn: setState,
+      now: Date.now,
+    });
+  }
   logSettingsCrud("saveSettings", {
     keys: Object.keys(normalized),
+    syncOrigin,
   });
   return normalized;
 }
 
-export async function updateSettings(patch) {
-  const current = await loadSettings();
+export async function updateSettings(patch, { syncOrigin = SYNC_ORIGIN_LOCAL } = {}) {
+  const current = normalizeSettings(await loadSettings());
   const next = applySettingsPatch(current, patch);
   await persistSettings(next);
+  if (syncOrigin === SYNC_ORIGIN_LOCAL) {
+    await markLivestreamSitesChanged({
+      previousSettings: current,
+      nextSettings: next,
+      getStateFn: async (key) => (await readLocal(key))[key],
+      setStateFn: setState,
+      now: Date.now,
+    });
+  }
   logSettingsCrud("updateSettings", {
     changedKeys: getChangedTopLevelKeys(current, next),
+    syncOrigin,
   });
   return next;
 }

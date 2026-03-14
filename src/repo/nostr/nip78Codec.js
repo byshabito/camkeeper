@@ -203,7 +203,7 @@ export async function buildProfileDeleteEventTemplate(privateKeyHex, options) {
 
 export async function buildSettingsUpsertEventTemplate(privateKeyHex, settingsPayload, options = {}) {
   const envelope = buildSettingsUpsertEnvelope(settingsPayload, options);
-  const dTag = await deriveSettingsDTag(privateKeyHex);
+  const dTag = await deriveSettingsDTag(privateKeyHex, envelope.scope);
   const content = await encodeSettingsEnvelopeContent(privateKeyHex, envelope);
   return {
     kind: NIP78_EVENT_KIND,
@@ -243,7 +243,7 @@ export async function decodeSettingsEventContent(privateKeyHex, event) {
     throw new Error("NIP-78 event is missing the d tag.");
   }
   const envelope = await decodeSettingsEnvelopeContent(privateKeyHex, event.content);
-  const expectedDTag = await deriveSettingsDTag(privateKeyHex);
+  const expectedDTag = await deriveSettingsDTag(privateKeyHex, envelope.scope);
   if (expectedDTag !== dTag) {
     throw new Error("NIP-78 event d tag does not match settings scope.");
   }

@@ -24,3 +24,6 @@ export const NOSTR_SYNC_PROFILE_SHADOW_STATE_KEY = "camkeeper_nostr_sync_profile
 export const NOSTR_SYNC_PROFILE_TOMBSTONES_STATE_KEY = "camkeeper_nostr_sync_profile_tombstones_v1";
 export const NOSTR_SYNC_PROFILE_LOCAL_MUTATIONS_STATE_KEY = "camkeeper_nostr_sync_profile_local_mutations_v1";
 export const NOSTR_SYNC_CHANGE_TRACKING_VERSION_STATE_KEY = "camkeeper_nostr_sync_change_tracking_version_v1";
+export const NOSTR_SYNC_SETTINGS_SHADOW_STATE_KEY = "camkeeper_nostr_sync_settings_shadow_v1";
+export const NOSTR_SYNC_SETTINGS_LOCAL_MUTATIONS_STATE_KEY = "camkeeper_nostr_sync_settings_local_mutations_v1";
+export const NOSTR_SYNC_SETTINGS_CHANGE_TRACKING_VERSION_STATE_KEY = "camkeeper_nostr_sync_settings_change_tracking_version_v1";

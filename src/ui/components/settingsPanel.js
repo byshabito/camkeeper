@@ -353,6 +353,7 @@ export function initSettingsPanel({
     } catch (error) {
       showNostrFeedback("Could not load Nostr sync settings.");
     }
+    return settings;
   }
 
   async function persistSettings() {
@@ -643,6 +644,12 @@ export function initSettingsPanel({
     refreshNostrControls();
     try {
       const result = await syncNostrNow({ mode });
+      if (Array.isArray(result?.pulledSettingsScopes) && result.pulledSettingsScopes.includes("livestream_sites")) {
+        const refreshedSettings = await loadSettings();
+        if (onSitesChanged) {
+          await onSitesChanged(refreshedSettings);
+        }
+      }
       nostrStatus = result?.status || (await getNostrSyncStatus());
       lastPublishFailures = Array.isArray(result?.publishFailures) ? result.publishFailures : [];
       await refreshNostrSecretField();

@@ -85,12 +85,12 @@ export async function getSettings() {
   return loadSettings();
 }
 
-export async function saveSettings(settings) {
-  return persistSettings(settings);
+export async function saveSettings(settings, options) {
+  return persistSettings(settings, options);
 }
 
-export async function updateSettings(patch) {
-  return persistSettingsPatch(patch);
+export async function updateSettings(patch, options) {
+  return persistSettingsPatch(patch, options);
 }
 
 export async function getState(key) {

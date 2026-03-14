@@ -18,11 +18,14 @@
 
 import { mergeProfiles } from "../profiles.js";
 import { normalizeProfileForStorage } from "../migrations/profiles.js";
+import { normalizeSettings } from "../settings.js";
+import { normalizeLivestreamSiteEntries } from "../sites.js";
 import {
   NOSTR_SYNC_PROFILE_SHADOW_STATE_KEY,
   NOSTR_SYNC_PROFILE_TOMBSTONES_STATE_KEY,
 } from "../stateKeys.js";
 import { getProfiles, saveProfiles } from "../services/profilesStore.js";
+import { getSettings, saveSettings } from "../services/settingsStore.js";
 import { getState, setState } from "../services/stateStore.js";
 import {
   ensureNostrChangeTrackingBootstrap,
@@ -31,6 +34,14 @@ import {
   NOSTR_LOCAL_MUTATION_STATE_UPSERT,
   saveLocalNostrProfileMutations,
 } from "../services/nostrSyncMutationStore.js";
+import {
+  ensureNostrSettingsBootstrap,
+  getLocalNostrSettingsMutations,
+  getNostrSettingsShadow,
+  NOSTR_SYNC_SETTINGS_SCOPE_LIVESTREAM_SITES,
+  saveLocalNostrSettingsMutations,
+  saveNostrSettingsShadow,
+} from "../services/nostrSyncSettingsMutationStore.js";
 import {
   getNostrSyncConfig,
   getNostrSyncStatus,
@@ -41,8 +52,10 @@ import {
   NIP78_EVENT_KIND,
   buildProfileDeleteEventTemplate,
   buildProfileUpsertEventTemplate,
+  buildSettingsUpsertEventTemplate,
   createSignedEvent,
   decodeProfileEventContent,
+  decodeSettingsEventContent,
   getPublicKeyHexFromPrivateKeyHex,
   normalizePrivateKeyHex,
   privateKeyHexFromNsec,
@@ -60,6 +73,7 @@ const MAX_EVENT_DECODE_FAILURES = 500;
 const NOSTR_SYNC_ACTION_UPSERT = "upsert";
 const NOSTR_SYNC_ACTION_DELETE = "delete";
 const NOSTR_SYNC_ENTITY_PROFILE = "profile";
+const NOSTR_SYNC_ENTITY_SETTINGS = "settings";
 
 const NOSTR_SYNC_MODE_FULL = "full";
 const NOSTR_SYNC_MODE_PULL = "pull";
@@ -190,10 +204,17 @@ function buildFailureResult({ code, message, status }) {
     status,
     pushedCount: status?.pushedCount || 0,
     pulledCount: status?.pulledCount || 0,
+    pushedSettingsScopes: [],
+    pulledSettingsScopes: [],
   };
 }
 
-function buildSuccessResult({ status, publishFailures }) {
+function buildSuccessResult({
+  status,
+  publishFailures,
+  pushedSettingsScopes = [],
+  pulledSettingsScopes = [],
+}) {
   return {
     ok: publishFailures.length === 0,
     code: publishFailures.length === 0 ? "ok" : "partial_failure",
@@ -202,6 +223,8 @@ function buildSuccessResult({ status, publishFailures }) {
     pushedCount: status.pushedCount,
     pulledCount: status.pulledCount,
     publishFailures,
+    pushedSettingsScopes,
+    pulledSettingsScopes,
   };
 }
 
@@ -229,16 +252,20 @@ export async function syncNostrNow({
   decodeProfileEventContentFn = decodeProfileEventContent,
   buildProfileUpsertEventTemplateFn = buildProfileUpsertEventTemplate,
   buildProfileDeleteEventTemplateFn = buildProfileDeleteEventTemplate,
+  buildSettingsUpsertEventTemplateFn = buildSettingsUpsertEventTemplate,
   createSignedEventFn = createSignedEvent,
   getPublicKeyHexFn = getPublicKeyHexFromPrivateKeyHex,
   getProfilesFn = getProfiles,
   saveProfilesFn = saveProfiles,
+  getSettingsFn = getSettings,
+  saveSettingsFn = saveSettings,
   getStateFn = getState,
   setStateFn = setState,
   getNostrSyncConfigFn = getNostrSyncConfig,
   resolveNostrSyncSecretForSyncFn = resolveNostrSyncSecretForSync,
   getNostrSyncStatusFn = getNostrSyncStatus,
   setNostrSyncStatusFn = setNostrSyncStatus,
+  decodeSettingsEventContentFn = decodeSettingsEventContent,
 } = {}) {
   const attemptAt = getNowMs(now);
   const syncMode = normalizeSyncMode(mode);
@@ -291,6 +318,7 @@ export async function syncNostrNow({
 
   const normalizedTimeoutMs = normalizeTimeoutMs(timeoutMs);
   const localProfiles = await getProfilesFn();
+  let localSettings = normalizeSettings(await getSettingsFn());
   const localById = new Map(
     (Array.isArray(localProfiles) ? localProfiles : [])
       .filter((profile) => isNonEmptyString(profile?.id))
@@ -305,6 +333,15 @@ export async function syncNostrNow({
   if (!localMutationsState || typeof localMutationsState !== "object") {
     localMutationsState = await getLocalNostrProfileMutations({ getStateFn });
   }
+  let settingsLocalMutations = await ensureNostrSettingsBootstrap({
+    getSettingsFn,
+    getStateFn,
+    setStateFn,
+    now: () => attemptAt,
+  });
+  if (!settingsLocalMutations || typeof settingsLocalMutations !== "object") {
+    settingsLocalMutations = await getLocalNostrSettingsMutations({ getStateFn });
+  }
 
   const shadowState = normalizeShadowState(
     await getStateFn(NOSTR_SYNC_PROFILE_SHADOW_STATE_KEY),
@@ -312,13 +349,17 @@ export async function syncNostrNow({
   const tombstonesState = normalizeTombstonesState(
     await getStateFn(NOSTR_SYNC_PROFILE_TOMBSTONES_STATE_KEY),
   );
+  const settingsShadowState = await getNostrSettingsShadow({ getStateFn });
 
   let tombstonesChanged = false;
   let pulledCount = 0;
   const pullWarnings = [];
+  const pulledSettingsScopes = [];
+  const pushedSettingsScopes = [];
 
   if (syncMode !== NOSTR_SYNC_MODE_PUSH) {
     const remoteByProfileId = new Map();
+    const remoteBySettingsScope = new Map();
     try {
       const pubkey = getPublicKeyHexFn(privateKeyHex);
       const { events } = await queryEventsFn({
@@ -344,34 +385,60 @@ export async function syncNostrNow({
         try {
           envelope = await decodeProfileEventContentFn(privateKeyHex, event);
         } catch (error) {
-          decodeFailures += 1;
-          if (decodeFailures >= MAX_EVENT_DECODE_FAILURES) {
-            pullWarnings.push("Stopped decoding remote events after repeated decode failures.");
-            break;
+          try {
+            envelope = await decodeSettingsEventContentFn(privateKeyHex, event);
+          } catch (settingsError) {
+            decodeFailures += 1;
+            if (decodeFailures >= MAX_EVENT_DECODE_FAILURES) {
+              pullWarnings.push("Stopped decoding remote events after repeated decode failures.");
+              break;
+            }
+            continue;
+          }
+        }
+        if (envelope.entity === NOSTR_SYNC_ENTITY_PROFILE) {
+          const profileId = isNonEmptyString(envelope.profileId) ? envelope.profileId : "";
+          if (!profileId) continue;
+          const candidate = {
+            action: envelope.action,
+            profileId,
+            profile: envelope.payload,
+            updatedAt: normalizeTimestamp(envelope.updatedAt, 0),
+            deletedAt: normalizeTimestamp(envelope.deletedAt, 0),
+            eventId: typeof event.id === "string" ? event.id : "",
+            eventCreatedAt: normalizeTimestamp(event.created_at, 0) * 1000,
+          };
+          if (
+            candidate.action !== NOSTR_SYNC_ACTION_UPSERT
+            && candidate.action !== NOSTR_SYNC_ACTION_DELETE
+          ) {
+            continue;
+          }
+          const current = remoteByProfileId.get(profileId) || null;
+          if (shouldReplaceRemoteOperation(current, candidate)) {
+            remoteByProfileId.set(profileId, candidate);
           }
           continue;
         }
-        if (envelope.entity !== NOSTR_SYNC_ENTITY_PROFILE) continue;
-        const profileId = isNonEmptyString(envelope.profileId) ? envelope.profileId : "";
-        if (!profileId) continue;
-        const candidate = {
-          action: envelope.action,
-          profileId,
-          profile: envelope.payload,
-          updatedAt: normalizeTimestamp(envelope.updatedAt, 0),
-          deletedAt: normalizeTimestamp(envelope.deletedAt, 0),
-          eventId: typeof event.id === "string" ? event.id : "",
-          eventCreatedAt: normalizeTimestamp(event.created_at, 0) * 1000,
-        };
-        if (
-          candidate.action !== NOSTR_SYNC_ACTION_UPSERT
-          && candidate.action !== NOSTR_SYNC_ACTION_DELETE
-        ) {
-          continue;
-        }
-        const current = remoteByProfileId.get(profileId) || null;
-        if (shouldReplaceRemoteOperation(current, candidate)) {
-          remoteByProfileId.set(profileId, candidate);
+
+        if (envelope.entity === NOSTR_SYNC_ENTITY_SETTINGS) {
+          const scope = isNonEmptyString(envelope.scope) ? envelope.scope.trim() : "";
+          if (!scope) continue;
+          const candidate = {
+            action: envelope.action,
+            scope,
+            payload: envelope.payload,
+            updatedAt: normalizeTimestamp(envelope.updatedAt, 0),
+            eventId: typeof event.id === "string" ? event.id : "",
+            eventCreatedAt: normalizeTimestamp(event.created_at, 0) * 1000,
+          };
+          if (candidate.action !== NOSTR_SYNC_ACTION_UPSERT) {
+            continue;
+          }
+          const current = remoteBySettingsScope.get(scope) || null;
+          if (shouldReplaceRemoteOperation(current, candidate)) {
+            remoteBySettingsScope.set(scope, candidate);
+          }
         }
       }
     } catch (error) {
@@ -493,6 +560,44 @@ export async function syncNostrNow({
     if (localProfilesChanged) {
       await saveProfilesFn(Array.from(localById.values()), { syncOrigin: "remote" });
     }
+
+    for (const remote of remoteBySettingsScope.values()) {
+      if (remote.scope !== NOSTR_SYNC_SETTINGS_SCOPE_LIVESTREAM_SITES) continue;
+      const localSettingsMutationTs = normalizeTimestamp(
+        settingsLocalMutations[NOSTR_SYNC_SETTINGS_SCOPE_LIVESTREAM_SITES]?.timestamp,
+        0,
+      );
+      const settingsShadowTs = normalizeTimestamp(
+        settingsShadowState[NOSTR_SYNC_SETTINGS_SCOPE_LIVESTREAM_SITES]?.timestamp,
+        0,
+      );
+      const localEffectiveSettingsTs = Math.max(localSettingsMutationTs, settingsShadowTs);
+      const remoteUpdatedAt = normalizeTimestamp(remote.updatedAt, 0);
+      if (remoteUpdatedAt <= localEffectiveSettingsTs) {
+        continue;
+      }
+
+      const normalizedRemoteSites = normalizeLivestreamSiteEntries(remote.payload);
+      const nextSettings = normalizeSettings({
+        ...localSettings,
+        livestreamSites: normalizedRemoteSites,
+      });
+      const currentSites = normalizeLivestreamSiteEntries(localSettings.livestreamSites);
+      const changed = JSON.stringify(currentSites) !== JSON.stringify(normalizedRemoteSites);
+      if (changed) {
+        localSettings = await saveSettingsFn(nextSettings, { syncOrigin: "remote" });
+      } else {
+        localSettings = nextSettings;
+      }
+      delete settingsLocalMutations[NOSTR_SYNC_SETTINGS_SCOPE_LIVESTREAM_SITES];
+      settingsShadowState[NOSTR_SYNC_SETTINGS_SCOPE_LIVESTREAM_SITES] = {
+        timestamp: remoteUpdatedAt,
+      };
+      pulledCount += 1;
+      if (!pulledSettingsScopes.includes(NOSTR_SYNC_SETTINGS_SCOPE_LIVESTREAM_SITES)) {
+        pulledSettingsScopes.push(NOSTR_SYNC_SETTINGS_SCOPE_LIVESTREAM_SITES);
+      }
+    }
   }
 
   const localIds = new Set(localById.keys());
@@ -509,6 +614,12 @@ export async function syncNostrNow({
     }
     if (mutation?.state === NOSTR_LOCAL_MUTATION_STATE_DELETE && localIds.has(profileId)) {
       delete localMutationsState[profileId];
+    }
+  });
+
+  Object.keys(settingsLocalMutations).forEach((scope) => {
+    if (scope !== NOSTR_SYNC_SETTINGS_SCOPE_LIVESTREAM_SITES) {
+      delete settingsLocalMutations[scope];
     }
   });
 
@@ -537,6 +648,22 @@ export async function syncNostrNow({
       if (shadow.state !== SHADOW_STATE_DELETE) return true;
       return deletedAt > shadow.timestamp;
     });
+  const settingsUpsertQueue = [];
+  const settingsMutation = settingsLocalMutations[NOSTR_SYNC_SETTINGS_SCOPE_LIVESTREAM_SITES];
+  const settingsMutationTimestamp = normalizeTimestamp(settingsMutation?.timestamp, 0);
+  if (settingsMutationTimestamp) {
+    const shadowTimestamp = normalizeTimestamp(
+      settingsShadowState[NOSTR_SYNC_SETTINGS_SCOPE_LIVESTREAM_SITES]?.timestamp,
+      0,
+    );
+    if (!shadowTimestamp || settingsMutationTimestamp > shadowTimestamp) {
+      settingsUpsertQueue.push({
+        scope: NOSTR_SYNC_SETTINGS_SCOPE_LIVESTREAM_SITES,
+        payload: normalizeLivestreamSiteEntries(localSettings.livestreamSites),
+        updatedAt: settingsMutationTimestamp,
+      });
+    }
+  }
 
   let pushedCount = 0;
   const publishFailures = [];
@@ -626,6 +753,45 @@ export async function syncNostrNow({
         });
       }
     }
+
+    for (const item of settingsUpsertQueue) {
+      try {
+        const template = await buildSettingsUpsertEventTemplateFn(privateKeyHex, item.payload, {
+          scope: item.scope,
+          updatedAt: item.updatedAt,
+        });
+        const signedEvent = await createSignedEventFn({
+          ...template,
+          privateKeyHex,
+          createdAt: Math.floor(item.updatedAt / 1000),
+        });
+        const publishResult = await publishEventFn({
+          relays,
+          event: signedEvent,
+          timeoutMs: normalizedTimeoutMs,
+        });
+        if (publishResult.acceptedCount > 0) {
+          settingsShadowState[item.scope] = {
+            timestamp: item.updatedAt,
+          };
+          delete settingsLocalMutations[item.scope];
+          pushedCount += 1;
+          if (!pushedSettingsScopes.includes(item.scope)) {
+            pushedSettingsScopes.push(item.scope);
+          }
+        } else {
+          publishFailures.push({
+            type: "settings_upsert",
+            scope: item.scope,
+          });
+        }
+      } catch (error) {
+        publishFailures.push({
+          type: "settings_upsert",
+          scope: item.scope,
+        });
+      }
+    }
   }
 
   const prunedShadow = pruneMapByTimestamp(shadowState, MAX_SYNC_SHADOW);
@@ -636,6 +802,8 @@ export async function syncNostrNow({
     await setStateFn(NOSTR_SYNC_PROFILE_TOMBSTONES_STATE_KEY, prunedTombstones);
   }
   await saveLocalNostrProfileMutations(localMutationsState, { setStateFn });
+  await saveNostrSettingsShadow(settingsShadowState, { setStateFn });
+  await saveLocalNostrSettingsMutations(settingsLocalMutations, { setStateFn });
 
   const status = await setStatus({
     nowMs: attemptAt,
@@ -649,5 +817,10 @@ export async function syncNostrNow({
     success: publishFailures.length === 0,
   });
 
-  return buildSuccessResult({ status, publishFailures });
+  return buildSuccessResult({
+    status,
+    publishFailures,
+    pushedSettingsScopes,
+    pulledSettingsScopes,
+  });
 }
