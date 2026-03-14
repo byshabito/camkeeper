@@ -21,19 +21,4 @@ If CamKeeper is useful to you and you want to support development:
 - [Buy Me a Coffee](https://www.buymeacoffee.com/shabito)
 - Bitcoin Lightning address: `shabito@walletofsatoshi.com`
 
-## Tips for faster help
-
-When reporting a problem, include:
-
-- Browser and version
-- CamKeeper version
-- Steps to reproduce
-- Expected vs actual behavior
-
-For Nostr sync issues, also include:
-
-- Whether sync is enabled
-- Relay list you configured (omit private key)
-- Sync status output (pulled/pushed counts and last error)
-
-Never share your private key (`nsec`) with anyone, including CamKeeper maintainers/support.
+Never share your private key (`nsec`) with anyone.
