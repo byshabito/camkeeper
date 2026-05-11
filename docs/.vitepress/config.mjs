@@ -1,13 +1,8 @@
 import { defineConfig } from "vitepress";
 
-const repository = process.env.GITHUB_REPOSITORY || "byshabito/camkeeper";
-const repoName = repository.split("/")[1] || "camkeeper";
-const base = `/${repoName}/`;
-
 export default defineConfig({
   title: "CamKeeper",
   description: "Cross-site creator profile manager",
-  base,
   lastUpdated: true,
   head: [
     ["link", { rel: "icon", type: "image/png", sizes: "32x32", href: `${base}icon-32.png` }],
